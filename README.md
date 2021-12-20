@@ -1,5 +1,38 @@
 # Hexagonal Architecture Based On DDD
-![](https://image.slidesharecdn.com/javadev-hexagonalarchitectureforjavaapplications-150202062634-conversion-gate01/95/hexagonal-architecture-for-java-applications-11-638.jpg?cb=1423245064)
+
+## Diagram
+![](https://github.com/Sairyss/domain-driven-hexagon/raw/master/assets/images/DomainDrivenHexagon.png)
+
+## Architecture
+
+Mainly based on:
+
+- Domain-Driven Design (DDD)
+- Hexagonal (Ports and Adapters) Architecture
+- Secure by Design
+- Clean Architecture
+- Onion Architecture
+- SOLID Principles
+- Software Design Patterns
+
+And many other sources (more links below in every chapter).
+
+Before we begin, here are the PROS and CONS of using a complete architecture like this:
+
+### Pros
+
+- Independent of external frameworks, technologies, databases, etc. Frameworks and external resources can be plugged/unplugged with much less effort.
+- Easily testable and scalable.
+- More secure. Some security principles are baked in design itself.
+- The solution can be worked on and maintained by different teams, without stepping on each other's toes.
+- Easier to add new features. As the system grows over time, the difficulty in adding new features remains constant and relatively small.
+- If the solution is properly broken apart along bounded context lines, it becomes easy to convert pieces of it into microservices if needed.
+
+### Cons
+
+- This is a sophisticated architecture which requires a firm understanding of quality software principles, such as SOLID, Clean/Hexagonal Architecture, Domain-Driven Design, etc. Any team implementing such a solution will almost certainly require an expert to drive the solution and keep it from evolving the wrong way and accumulating technical debt.
+- Some of the practices presented here are not recommended for small-medium sized applications with not a lot of business logic. There is added up-front complexity to support all those building blocks and layers, boilerplate code, abstractions, data mapping etc. thus implementing a complete architecture like this is generally ill-suited to simple CRUD applications and could over-complicate such solutions. Some of the described below principles can be used in a smaller sized applications but must be implemented only after analyzing and understanding all pros and cons.
+
 
 # Project Layout
 
@@ -15,7 +48,7 @@ Don't put a lot of code in the `cmd` directory.
 
 If you think the code can be reused in other projects or package, then it should live in the `util` directory.
 
-If the code is not reusable or if you don't want others to reuse it, put that code in the `/internal` directory. 
+If the code is not reusable or if you don't want others to reuse it, put that code in the `/internal` directory.
 
 You'll be surprised what others will do, so be explicit about your intentions!
 
@@ -38,7 +71,7 @@ Note that you are not limited to the top level internal directory. You can have 
 ### /internal/domain.model
 The domain layer is the core of the project. It only focuses on the business and does not pay attention to the technical implementation details, so it does not rely on any other layers.
 
-Encapsulate the core business logic, and provide business entities and business logic calculations to the Application layer through the `Domain Service` and `Domain Entity` methods. 
+Encapsulate the core business logic, and provide business entities and business logic calculations to the Application layer through the `Domain Service` and `Domain Entity` methods.
 
 
 ### /internal/port.adapter
@@ -54,7 +87,7 @@ Encapsulate the core business logic, and provide business entities and business 
 ## /util
 
 # Reference
-[六边形架构](https://juejin.cn/post/6844903569947099143)
+[Domain Driven Hexagonal](https://github.com/Sairyss/domain-driven-hexagon)
 
 [Hexagonal Architecture using Go](https://cgarciarosales97.medium.com/hexagonal-architecture-using-go-fiber-b2925fd677b5)
 
