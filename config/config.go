@@ -72,7 +72,7 @@ func readYamlConfig(configPath string) {
     }
 }
 
-func init() {
+func Init() {
     configPath := util.GetCurrentPath()
 
     readYamlConfig(configPath + configFilePath)

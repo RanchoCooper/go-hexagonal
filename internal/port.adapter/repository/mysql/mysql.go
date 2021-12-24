@@ -1,18 +1,22 @@
 package mysql
 
 import (
+    "context"
     "fmt"
     "log"
     "os"
-    "sync"
     "time"
 
+    "github.com/DATA-DOG/go-sqlmock"
+    "github.com/pkg/errors"
+    "github.com/spf13/cast"
     driver "gorm.io/driver/mysql"
     "gorm.io/gorm"
-    "gorm.io/gorm/logger"
+    glogger "gorm.io/gorm/logger"
     "gorm.io/gorm/schema"
 
     "go-hexagonal/config"
+    "go-hexagonal/util/logger"
 )
 
 /**
@@ -20,24 +24,48 @@ import (
  * @date 2021/12/21
  */
 
-var (
-    once  sync.Once
-    MySQL *MySQLRepository
-)
-
-type MySQLRepository struct {
-    db *gorm.DB
-    // add other repository
+type IMySQL interface {
+    GetDB(ctx context.Context) *gorm.DB
+    Close(ctx context.Context)
+    MockClient() (*gorm.DB, sqlmock.Sqlmock)
 }
 
-func init() {
-    once.Do(func() {
-        var err error
-        MySQL, err = NewMySQLRepository()
+type client struct {
+    db *gorm.DB
+}
+
+func (c *client) GetDB(ctx context.Context) *gorm.DB {
+    return c.db.WithContext(ctx)
+}
+
+func (c *client) Close(ctx context.Context) {
+    sqlDB, _ := c.GetDB(ctx).DB()
+    if sqlDB != nil {
+        err := sqlDB.Close()
         if err != nil {
-            panic("init MySQL fail, err: " + err.Error())
+            logger.Log.Errorf(ctx, "close mysql client fail. err: %v", errors.WithStack(err))
         }
+    }
+    logger.Log.Info(ctx, "mysql client closed")
+}
+
+func (c *client) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
+    sqlDB, mock, err := sqlmock.New()
+    if err != nil {
+        panic("mock MySQLClient fail, err: " + err.Error())
+    }
+    dialector := driver.New(driver.Config{
+        Conn:       sqlDB,
+        DriverName: "mysql",
     })
+    // a SELECT VERSION() query will be run when gorm opens the database, so we need to expect that here
+    columns := []string{"version"}
+    mock.ExpectQuery("SELECT VERSION()").WithArgs().WillReturnRows(
+        mock.NewRows(columns).FromCSVString("1"),
+    )
+    db, err := gorm.Open(dialector, &gorm.Config{})
+
+    return db, mock
 }
 
 func NewGormDB() (*gorm.DB, error) {
@@ -55,11 +83,11 @@ func NewGormDB() (*gorm.DB, error) {
         NamingStrategy: schema.NamingStrategy{
             SingularTable: true,
         },
-        Logger: logger.New(
+        Logger: glogger.New(
             log.New(os.Stdout, "\r\n", log.LstdFlags),
-            logger.Config{
+            glogger.Config{
                 SlowThreshold:             200 * time.Millisecond,
-                LogLevel:                  logger.Info,
+                LogLevel:                  glogger.Info,
                 IgnoreRecordNotFoundError: false,
                 Colorful:                  true,
             }),
@@ -74,18 +102,16 @@ func NewGormDB() (*gorm.DB, error) {
     }
     sqlDB.SetMaxIdleConns(config.Config.MySQL.MaxIdleConns)
     sqlDB.SetMaxOpenConns(config.Config.MySQL.MaxOpenConns)
+    sqlDB.SetConnMaxLifetime(cast.ToDuration(config.Config.MySQL.MaxLifeTime))
+    sqlDB.SetConnMaxIdleTime(cast.ToDuration(config.Config.MySQL.MaxIdleTime))
 
     return db, nil
 }
 
-func NewMySQLRepository() (*MySQLRepository, error) {
+func NewMySQLClient() IMySQL {
     db, err := NewGormDB()
     if err != nil {
-        return nil, err
+        panic(err)
     }
-    MySQL = &MySQLRepository{
-        db: db,
-    }
-
-    return MySQL, nil
+    return &client{db: db}
 }

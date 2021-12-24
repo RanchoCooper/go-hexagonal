@@ -8,7 +8,7 @@ mysql:
   password: "root"
   host: "localhost"
   port: 3306
-  database: ""      # FIXME
+  database: "hexagonal"      # FIXME
   max_idle_conns: 50
   max_open_conns: 100
   max_life_time: "36000s"

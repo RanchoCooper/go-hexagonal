@@ -1,4 +1,4 @@
-package mysql
+package service
 
 import (
     "context"
@@ -7,7 +7,7 @@ import (
 
 /**
  * @author Rancho
- * @date 2021/12/21
+ * @date 2021/12/25
  */
 
 var ctx = context.Background()
