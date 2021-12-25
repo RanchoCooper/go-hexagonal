@@ -24,7 +24,7 @@ type Example struct {
     IMySQL
 }
 
-var _ repo.IExampleRepository = &Example{}
+var _ repo.IExampleRepo = &Example{}
 
 func (e *Example) Create(ctx context.Context, dto dto.CreateExampleReq) (*entity.Example, error) {
     record := &entity.Example{}
