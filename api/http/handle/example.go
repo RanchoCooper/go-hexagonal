@@ -24,11 +24,7 @@ func CreateExample(ctx *gin.Context) {
         return
     }
 
-    srv := service.NewDomainService(
-        service.WithExampleService(ctx),
-    )
-
-    example, err := srv.Create(ctx, body)
+    example, err := service.Service.Create(ctx, body)
     if err != nil {
         logger.Log.Errorf(ctx, "create example failed.%v", err.Error())
         ctx.Abort()

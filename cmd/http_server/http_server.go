@@ -5,7 +5,7 @@ import (
     "fmt"
     "net/http"
 
-    http2 "go-hexagonal/api/http"
+    http2 "go-hexagonal/api/http/handle"
     "go-hexagonal/config"
     "go-hexagonal/util/logger"
 )

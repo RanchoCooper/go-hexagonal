@@ -2,6 +2,7 @@ package service
 
 import (
     "context"
+    "sync"
 )
 
 /**
@@ -9,11 +10,22 @@ import (
  * @date 2021/12/10
  */
 
+var (
+    Service *DomainService
+    once    sync.Once
+)
+
 type DomainService struct {
     *ExampleService
 }
 
 type DomainServiceOption func(srv *DomainService)
+
+func Init(ctx context.Context) {
+    once.Do(func() {
+        Service = NewDomainService(WithExampleService(ctx))
+    })
+}
 
 func NewDomainService(opts ...DomainServiceOption) *DomainService {
     srv := &DomainService{}
