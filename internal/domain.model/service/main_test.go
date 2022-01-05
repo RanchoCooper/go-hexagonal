@@ -3,6 +3,8 @@ package service
 import (
     "context"
     "testing"
+
+    "go-hexagonal/internal/port.adapter/repository"
 )
 
 /**
@@ -13,5 +15,9 @@ import (
 var ctx = context.Background()
 
 func TestMain(m *testing.M) {
+    repository.Init(
+        repository.WithMySQL(ctx),
+        repository.WithRedis(ctx),
+    )
     m.Run()
 }

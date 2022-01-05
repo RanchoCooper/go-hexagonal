@@ -2,7 +2,6 @@ package repository
 
 import (
     "context"
-    "fmt"
 
     "go-hexagonal/config"
     "go-hexagonal/internal/port.adapter/repository/mysql"
@@ -36,11 +35,13 @@ func WithMySQL(ctx context.Context) Option {
         if c.MySQL == nil {
             if config.Config.MySQL != nil {
                 c.MySQL = mysql.NewMySQLClient()
+            } else {
+                panic("init repository with empty MySQL config")
             }
         }
         // inject repository
         if Example == nil {
-            Example = mysql.GetExampleInstance(Clients.MySQL)
+            Example = mysql.NewExampleInstance(Clients.MySQL)
         }
     }
 }
@@ -50,6 +51,8 @@ func WithRedis(ctx context.Context) Option {
         if c.Redis == nil {
             if config.Config.Redis != nil {
                 c.Redis = redis.NewRedisClient()
+            } else {
+                panic("init repository with empty Redis config")
             }
         }
     }
@@ -58,9 +61,6 @@ func WithRedis(ctx context.Context) Option {
 func Init(opts ...Option) {
     for _, opt := range opts {
         opt(Clients)
-    }
-    if Clients.MySQL == nil {
-        fmt.Println("opps!!!")
     }
     logger.Log.Info(context.Background(), "repository init successfully")
 }

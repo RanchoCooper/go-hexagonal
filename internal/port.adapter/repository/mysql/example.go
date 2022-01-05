@@ -14,7 +14,7 @@ import (
  * @date 2021/12/24
  */
 
-func GetExampleInstance(mysql IMySQL) *Example {
+func NewExampleInstance(mysql IMySQL) *Example {
     return &Example{
         IMySQL: mysql,
     }

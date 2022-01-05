@@ -21,10 +21,6 @@ type ExampleService struct {
 }
 
 func NewExampleService(ctx context.Context) *ExampleService {
-    repository.Init(
-        repository.WithMySQL(ctx),
-        repository.WithRedis(ctx),
-    )
     srv := &ExampleService{Repository: repository.Example}
     logger.Log.Info(ctx, "example service init successfully")
     return srv
