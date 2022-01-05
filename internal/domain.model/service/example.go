@@ -5,7 +5,7 @@ import (
 
     "github.com/jinzhu/copier"
 
-    "go-hexagonal/internal/domain.model/dto"
+    "go-hexagonal/api/http/dto"
     "go-hexagonal/internal/domain.model/repo"
     "go-hexagonal/internal/port.adapter/repository"
     "go-hexagonal/util/logger"

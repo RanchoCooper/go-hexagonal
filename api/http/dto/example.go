@@ -4,6 +4,11 @@ import (
     "time"
 )
 
+/**
+ * @author Rancho
+ * @date 2022/1/6
+ */
+
 type CreateExampleReq struct {
     Name  string `json:"name" validate:"required"`
     Alias string `json:"alias" validate:"required"`

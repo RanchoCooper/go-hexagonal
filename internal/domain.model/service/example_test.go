@@ -5,7 +5,7 @@ import (
 
     "github.com/stretchr/testify/assert"
 
-    "go-hexagonal/internal/domain.model/dto"
+    "go-hexagonal/api/http/dto"
 )
 
 /**

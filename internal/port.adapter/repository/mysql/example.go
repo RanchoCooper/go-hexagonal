@@ -4,7 +4,7 @@ import (
     "context"
     "errors"
 
-    "go-hexagonal/internal/domain.model/dto"
+    "go-hexagonal/api/http/dto"
     "go-hexagonal/internal/domain.model/entity"
     "go-hexagonal/internal/domain.model/repo"
 )

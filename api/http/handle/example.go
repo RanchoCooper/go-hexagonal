@@ -5,7 +5,7 @@ import (
 
     "github.com/gin-gonic/gin"
 
-    "go-hexagonal/internal/domain.model/dto"
+    "go-hexagonal/api/http/dto"
     "go-hexagonal/internal/domain.model/service"
     "go-hexagonal/util/logger"
 )
