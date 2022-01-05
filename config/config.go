@@ -19,6 +19,17 @@ const (
 
 var Config = &config{}
 
+type appConfig struct {
+    Name    string `yaml:"name"`
+    Version string `yaml:"version"`
+    Debug   bool   `yaml:"debug"`
+}
+
+type httpServerConfig struct {
+    Addr  string `yaml:"addr"`
+    Pprof bool   `yaml:"pprof"`
+}
+
 type logConfig struct {
     LogSavePath string `yaml:"log_save_path"`
     LogFileName string `yaml:"log_file_name"`
@@ -51,10 +62,11 @@ type redisConfig struct {
 }
 
 type config struct {
-    app   string       `yaml:"app"`
-    Log   *logConfig   `yaml:"log"`
-    MySQL *mysqlConfig `yaml:"mysql"`
-    Redis *redisConfig `yaml:"redis"`
+    App        *appConfig        `yaml:"app"`
+    HTTPServer *httpServerConfig `yaml:"http_server"`
+    Log        *logConfig        `yaml:"log"`
+    MySQL      *mysqlConfig      `yaml:"mysql"`
+    Redis      *redisConfig      `yaml:"redis"`
 }
 
 func readYamlConfig(configPath string) {

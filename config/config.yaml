@@ -1,4 +1,10 @@
-app: "go-hexagonal"
+app:
+  name: "go-hexagonal"
+  version: "v0.1.0"
+  debug: true
+http_server:
+  addr: ":3000"
+  pprof: false
 log:
   log_save_path: /tmp/logs
   log_file_name: ""     # FIXME

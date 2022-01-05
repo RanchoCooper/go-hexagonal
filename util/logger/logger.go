@@ -9,7 +9,6 @@ import (
     "runtime"
     "time"
 
-    "github.com/gin-gonic/gin"
     "gopkg.in/natefinch/lumberjack.v2"
 
     "go-hexagonal/config"
@@ -134,13 +133,13 @@ func (l *Logger) WithCallersFrames() *Logger {
 }
 
 func (l *Logger) WithTrace() *Logger {
-    ginCtx, ok := l.ctx.(*gin.Context)
-    if ok {
-        return l.WithFields(Fields{
-            "trace_id": ginCtx.MustGet("X-Trace-ID"),
-            "span_id":  ginCtx.MustGet("X-Span-ID"),
-        })
-    }
+    // ginCtx, ok := l.ctx.(*gin.Context)
+    // if ok {
+    //     return l.WithFields(Fields{
+    //         "trace_id": ginCtx.MustGet("X-Trace-ID"),
+    //         "span_id":  ginCtx.MustGet("X-Span-ID"),
+    //     })
+    // }
 
     return l
 }
