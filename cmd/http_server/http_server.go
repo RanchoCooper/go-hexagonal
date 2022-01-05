@@ -5,6 +5,8 @@ import (
     "fmt"
     "net/http"
 
+    "github.com/spf13/cast"
+
     http2 "go-hexagonal/api/http/handle"
     "go-hexagonal/config"
     "go-hexagonal/util/logger"
@@ -18,8 +20,10 @@ import (
 func Start(ctx context.Context, errChan chan error, httpCloseCh chan struct{}) {
     // init server
     srv := &http.Server{
-        Addr:    config.Config.HTTPServer.Addr,
-        Handler: http2.NewServerRoute(),
+        Addr:         config.Config.HTTPServer.Addr,
+        Handler:      http2.NewServerRoute(),
+        ReadTimeout:  cast.ToDuration(config.Config.HTTPServer.ReadTimeout),
+        WriteTimeout: cast.ToDuration(config.Config.HTTPServer.WriteTimeout),
     }
 
     // run server
