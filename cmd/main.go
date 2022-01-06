@@ -9,6 +9,7 @@ import (
 
     "go-hexagonal/cmd/http_server"
     "go-hexagonal/config"
+    "go-hexagonal/internal/domain.model/service"
     "go-hexagonal/internal/port.adapter/repository"
     "go-hexagonal/util/logger"
 )
@@ -29,6 +30,7 @@ func initRuntime(ctx context.Context) {
         repository.WithMySQL(ctx),
         repository.WithRedis(ctx),
     )
+    service.Init(ctx)
 }
 
 func initServer(ctx context.Context, cancel context.CancelFunc) {
