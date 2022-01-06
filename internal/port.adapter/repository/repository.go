@@ -10,8 +10,9 @@ import (
 )
 
 var (
-    Clients = &client{}
-    Example *mysql.Example
+    Clients     = &client{}
+    Example     *mysql.Example
+    HealthCheck *redis.HealthCheck
 )
 
 type client struct {
@@ -41,7 +42,7 @@ func WithMySQL(ctx context.Context) Option {
         }
         // inject repository
         if Example == nil {
-            Example = mysql.NewExampleInstance(Clients.MySQL)
+            Example = mysql.NewExample(Clients.MySQL)
         }
     }
 }
@@ -54,6 +55,9 @@ func WithRedis(ctx context.Context) Option {
             } else {
                 panic("init repository with empty Redis config")
             }
+        }
+        if HealthCheck == nil {
+            HealthCheck = redis.NewHealthCheck(Clients.Redis)
         }
     }
 }

@@ -19,3 +19,7 @@ type IExampleRepo interface {
     Get(ctx context.Context, ID int) (obj *entity.Example, e error)
     FindByName(ctx context.Context, name string) (*entity.Example, error)
 }
+
+type IHealthCheckRepository interface {
+    HealthCheck(ctx context.Context) error
+}
