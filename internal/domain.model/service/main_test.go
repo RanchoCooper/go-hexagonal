@@ -16,8 +16,8 @@ var ctx = context.Background()
 
 func TestMain(m *testing.M) {
     repository.Init(
-        repository.WithMySQL(ctx),
-        repository.WithRedis(ctx),
+        repository.WithMySQL(),
+        repository.WithRedis(),
     )
     m.Run()
 }
