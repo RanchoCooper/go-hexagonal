@@ -2,6 +2,7 @@ app:
   name: "go-hexagonal"
   version: "v0.1.0"
   debug: true
+  env: github
 http_server:
   addr: ":3000"
   pprof: false

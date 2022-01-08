@@ -6,6 +6,7 @@ import (
     "github.com/stretchr/testify/assert"
 
     "go-hexagonal/api/http/dto"
+    "go-hexagonal/config"
 )
 
 /**
@@ -14,8 +15,9 @@ import (
  */
 
 func TestExampleService_Create(t *testing.T) {
-    // FIXME create table in Github workflow env
-    t.SkipNow()
+    if config.Config.App.Env == config.EnvGithub {
+        t.SkipNow()
+    }
     srv := NewExampleService(ctx)
     assert.NotNil(t, srv)
     assert.NotNil(t, srv.Repository)

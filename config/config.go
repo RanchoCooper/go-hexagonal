@@ -15,6 +15,8 @@ import (
 const (
     configFilePath        = "/config.yaml"
     privateConfigFilePath = "/config.private.yaml"
+    EnvLocal              = "local"
+    EnvGithub             = "github"
 )
 
 var Config = &config{}
@@ -23,6 +25,7 @@ type appConfig struct {
     Name    string `yaml:"name"`
     Version string `yaml:"version"`
     Debug   bool   `yaml:"debug"`
+    Env     string `yaml:"env"`
 }
 
 type httpServerConfig struct {

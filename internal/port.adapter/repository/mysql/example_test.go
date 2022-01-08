@@ -8,6 +8,7 @@ import (
     "github.com/stretchr/testify/assert"
 
     "go-hexagonal/api/http/dto"
+    "go-hexagonal/config"
     "go-hexagonal/internal/domain.model/entity"
 )
 
@@ -73,7 +74,9 @@ func TestExample_Save(t *testing.T) {
 }
 
 func TestExample_Get(t *testing.T) {
-    t.SkipNow()
+    if config.Config.App.Env == config.EnvGithub {
+        t.SkipNow()
+    }
     exampleRepo := NewExample(NewMySQLClient())
     DB, mock := exampleRepo.MockClient()
     exampleRepo.SetDB(DB)
