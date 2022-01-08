@@ -39,32 +39,32 @@ func (e *Example) Create(ctx context.Context, dto dto.CreateExampleReq) (*entity
     return record, nil
 }
 
-func (e *Example) Delete(ctx context.Context, ID int) error {
-    if ID == 0 {
+func (e *Example) Delete(ctx context.Context, id int) error {
+    if id == 0 {
         return errors.New("delete fail. need Id")
     }
     example := &entity.Example{}
-    err := e.GetDB(ctx).Table(example.TableName()).Delete(example, ID).Error
+    err := e.GetDB(ctx).Table(example.TableName()).Delete(example, id).Error
     // hard delete with .Unscoped()
     // err := e.GetDB(ctx).Table(example.TableName()).Unscoped().Delete(example, Id).Error
     return err
 }
 
-func (e *Example) Get(ctx context.Context, ID int) (*entity.Example, error) {
-    var record *entity.Example
-    if ID == 0 {
+func (e *Example) Get(ctx context.Context, id int) (*entity.Example, error) {
+    record := &entity.Example{}
+    if id == 0 {
         return nil, errors.New("get fail. need Id")
     }
-    err := e.GetDB(ctx).Find(record, ID).Error
+    err := e.GetDB(ctx).Table(record.TableName()).Find(record, id).Error
     return record, err
 }
 
 func (e *Example) FindByName(ctx context.Context, name string) (*entity.Example, error) {
-    var record *entity.Example
+    record := &entity.Example{}
     if name == "" {
         return nil, errors.New("FindByName fail. need name")
     }
-    err := e.GetDB(ctx).Where("name = ?", name).Last(record).Error
+    err := e.GetDB(ctx).Table(record.TableName()).Where("name = ?", name).Last(record).Error
     return record, err
 }
 

@@ -60,3 +60,13 @@ func (e *ExampleService) Update(ctx context.Context, dto dto.UpdateExampleReq) e
     }
     return nil
 }
+
+func (e *ExampleService) Get(ctx context.Context, id int) (*dto.GetExampleResponse, error) {
+    result := &dto.GetExampleResponse{}
+    example, err := e.Repository.Get(ctx, id)
+    if err != nil {
+        return nil, err
+    }
+    _ = copier.Copy(result, example)
+    return result, nil
+}

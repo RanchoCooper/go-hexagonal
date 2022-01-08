@@ -78,5 +78,21 @@ func UpdateExample(ctx *gin.Context) {
 }
 
 func GetExample(ctx *gin.Context) {
+    response := NewResponse(ctx)
+    param := dto.GetExampleReq{}
 
+    valid, errs := validator.BindAndValid(ctx, &param, ctx.ShouldBindUri)
+    if !valid {
+        logger.Log.Errorf(ctx, "GetExample.BindAndValid errs: %v", errs)
+        errResp := errcode.InvalidParams.WithDetails(errs.Errors()...)
+        response.ToErrorResponse(errResp)
+        return
+    }
+    result, err := service.Service.ExampleService.Get(ctx, param.Id)
+    if err != nil {
+        logger.Log.Errorf(ctx, "GetExample failed.%v", err.Error())
+        ctx.Abort()
+        return
+    }
+    response.ToResponse(*result)
 }

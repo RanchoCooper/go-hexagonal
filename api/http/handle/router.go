@@ -19,7 +19,7 @@ func NewServerRoute() *gin.Engine {
         example.POST("", CreateExample)
         example.DELETE("/:id", DeleteExample)
         example.PUT("/:id", UpdateExample)
-        example.GET("", GetExample)
+        example.GET("/:id", GetExample)
     }
 
     return router

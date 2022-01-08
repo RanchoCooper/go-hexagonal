@@ -31,3 +31,15 @@ type UpdateExampleReq struct {
     Name  string `json:"name"`
     Alias string `json:"alias"`
 }
+
+type GetExampleReq struct {
+    Id int `uri:"id" validate:"required"`
+}
+
+type GetExampleResponse struct {
+    Id        int       `uri:"id"`
+    Name      string    `json:"name"`
+    Alias     string    `json:"alias"`
+    CreatedAt time.Time `json:"created_at"`
+    UpdatedAt time.Time `json:"updated_at"`
+}

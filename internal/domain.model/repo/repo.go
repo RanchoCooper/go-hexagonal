@@ -14,9 +14,9 @@ import (
 
 type IExampleRepo interface {
     Create(ctx context.Context, dto dto.CreateExampleReq) (*entity.Example, error)
-    Delete(ctx context.Context, ID int) error
+    Delete(ctx context.Context, Id int) error
     Save(ctx context.Context, entity *entity.Example) error
-    Get(ctx context.Context, ID int) (obj *entity.Example, e error)
+    Get(ctx context.Context, Id int) (entity *entity.Example, e error)
     FindByName(ctx context.Context, name string) (*entity.Example, error)
 }
 
