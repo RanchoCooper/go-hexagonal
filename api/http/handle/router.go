@@ -17,9 +17,9 @@ func NewServerRoute() *gin.Engine {
     example := router.Group("/example")
     {
         example.POST("", CreateExample)
-        // example.DELETE("", handle.DeleteExample)
-        // example.PUT("", handle.UpdateExample)
-        // example.GET("", handle.GetExample)
+        example.DELETE("/:id", DeleteExample)
+        example.PUT("/:id", UpdateExample)
+        example.GET("", GetExample)
     }
 
     return router
