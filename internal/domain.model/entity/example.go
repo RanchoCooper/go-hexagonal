@@ -11,15 +11,11 @@ import (
 
 type Example struct {
     gorm.Model
-    Name      string `json:"name"`
-    Alias     string `json:"alias"`
-    changeMap map[string]interface{}
+    Name      string                 `json:"name" structs:",underline"`
+    Alias     string                 `json:"alias" structs:",underline"`
+    ChangeMap map[string]interface{} `json:"-" structs:"-"`
 }
 
 func (e Example) TableName() string {
     return "example"
-}
-
-func (e *Example) GetChangeMap() map[string]interface{} {
-    return e.changeMap
 }
