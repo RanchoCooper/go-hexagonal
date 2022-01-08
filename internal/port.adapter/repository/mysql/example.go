@@ -28,8 +28,6 @@ var _ repo.IExampleRepo = &Example{}
 
 func (e *Example) Create(ctx context.Context, dto dto.CreateExampleReq) (*entity.Example, error) {
     record := &entity.Example{}
-    record.Name = dto.Name
-    record.Alias = dto.Alias
     _ = copier.Copy(record, dto)
     err := e.GetDB(ctx).Table(record.TableName()).Create(record).Error
     if err != nil {
@@ -50,6 +48,10 @@ func (e *Example) Delete(ctx context.Context, id int) error {
     return err
 }
 
+func (e *Example) Save(ctx context.Context, example *entity.Example) error {
+    return e.GetDB(ctx).Table(example.TableName()).Where("id = ? AND deleted_at IS NULL", example.Id).Updates(example.ChangeMap).Error
+}
+
 func (e *Example) Get(ctx context.Context, id int) (*entity.Example, error) {
     record := &entity.Example{}
     if id == 0 {
@@ -66,8 +68,4 @@ func (e *Example) FindByName(ctx context.Context, name string) (*entity.Example,
     }
     err := e.GetDB(ctx).Table(record.TableName()).Where("name = ?", name).Last(record).Error
     return record, err
-}
-
-func (e *Example) Save(ctx context.Context, example *entity.Example) error {
-    return e.GetDB(ctx).Table(example.TableName()).Where("id = ? AND deleted_at IS NULL", example.Id).Updates(example.ChangeMap).Error
 }

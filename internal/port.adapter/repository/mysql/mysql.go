@@ -26,6 +26,7 @@ import (
 
 type IMySQL interface {
     GetDB(ctx context.Context) *gorm.DB
+    SetDB(DB *gorm.DB)
     Close(ctx context.Context)
     MockClient() (*gorm.DB, sqlmock.Sqlmock)
 }
@@ -36,6 +37,10 @@ type client struct {
 
 func (c *client) GetDB(ctx context.Context) *gorm.DB {
     return c.db.WithContext(ctx)
+}
+
+func (c *client) SetDB(DB *gorm.DB) {
+    c.db = DB
 }
 
 func (c *client) Close(ctx context.Context) {

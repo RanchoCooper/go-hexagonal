@@ -12,7 +12,7 @@ import (
  */
 
 type Example struct {
-    Id        uint                   `gorm:"primarykey" structs:",omitempty,underline"`
+    Id        int                    `gorm:"primarykey" structs:",omitempty,underline"`
     Name      string                 `json:"name" structs:",omitempty,underline"`
     Alias     string                 `json:"alias" structs:",omitempty,underline"`
     CreatedAt time.Time              `json:"created_at" structs:",omitempty,underline"`
