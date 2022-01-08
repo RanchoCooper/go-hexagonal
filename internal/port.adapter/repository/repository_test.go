@@ -25,8 +25,8 @@ func TestNewRepository(t *testing.T) {
     }
     config.Init()
     Init(
-        WithMySQL(ctx),
-        WithRedis(ctx),
+        WithMySQL(),
+        WithRedis(),
     )
     // mysql
     mysql.NewExample(Clients.MySQL)
