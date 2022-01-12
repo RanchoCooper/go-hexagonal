@@ -4,7 +4,7 @@ import (
     "context"
     "errors"
 
-    "go-hexagonal/internal/domain.model/repo"
+    "go-hexagonal/internal/domain/repo"
 )
 
 /**

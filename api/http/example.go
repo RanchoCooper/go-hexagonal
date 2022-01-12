@@ -1,4 +1,4 @@
-package handle
+package http
 
 import (
     "github.com/gin-gonic/gin"
@@ -6,8 +6,9 @@ import (
 
     "go-hexagonal/api/http/dto"
     "go-hexagonal/api/http/errcode"
+    "go-hexagonal/api/http/handle"
     "go-hexagonal/api/http/validator"
-    "go-hexagonal/internal/domain.model/service"
+    "go-hexagonal/internal/domain/service"
     "go-hexagonal/util/logger"
 )
 
@@ -17,7 +18,7 @@ import (
  */
 
 func CreateExample(ctx *gin.Context) {
-    response := NewResponse(ctx)
+    response := handle.NewResponse(ctx)
     body := dto.CreateExampleReq{}
 
     valid, errs := validator.BindAndValid(ctx, &body, ctx.ShouldBindJSON)
@@ -37,7 +38,7 @@ func CreateExample(ctx *gin.Context) {
 }
 
 func DeleteExample(ctx *gin.Context) {
-    response := NewResponse(ctx)
+    response := handle.NewResponse(ctx)
     param := dto.DeleteExampleReq{}
 
     valid, errs := validator.BindAndValid(ctx, &param, ctx.ShouldBindUri)
@@ -58,7 +59,7 @@ func DeleteExample(ctx *gin.Context) {
 }
 
 func UpdateExample(ctx *gin.Context) {
-    response := NewResponse(ctx)
+    response := handle.NewResponse(ctx)
     body := dto.UpdateExampleReq{Id: cast.ToUint(ctx.Param("id"))}
 
     valid, errs := validator.BindAndValid(ctx, &body, ctx.ShouldBindJSON)
@@ -78,7 +79,7 @@ func UpdateExample(ctx *gin.Context) {
 }
 
 func GetExample(ctx *gin.Context) {
-    response := NewResponse(ctx)
+    response := handle.NewResponse(ctx)
     param := dto.GetExampleReq{}
 
     valid, errs := validator.BindAndValid(ctx, &param, ctx.ShouldBindUri)

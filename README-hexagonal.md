@@ -37,7 +37,7 @@ Before we begin, here are the PROS and CONS of using a complete architecture lik
 # Project Layout
 
 ## /api
-contains API based on HTTP/rpc/gRPC etc, which only depending on `/internal/port.adapter/service`
+contains API based on HTTP/rpc/gRPC etc, which only depending on `/internal/adapter/service`
 
 ## /cmd
 Main applications entry for current project.
@@ -68,21 +68,21 @@ Note that you are not limited to the top level internal directory. You can have 
 
 ### /internal/application
 
-### /internal/domain.model
+### /internal/domain
 The domain layer is the core of the project. It only focuses on the business and does not pay attention to the technical implementation details, so it does not rely on any other layers.
 
 Encapsulate the core business logic, and provide business entities and business logic calculations to the Application layer through the `Domain Service` and `Domain Entity` methods. 
 
 
-### /internal/port.adapter
+### /internal/adapter
 
-#### /internal/port.adapter/amqp
+#### /internal/adapter/amqp
 
-#### /internal/port.adapter/dependency
+#### /internal/adapter/dependency
 
-#### /internal/port.adapter/repository
+#### /internal/adapter/repository
 
-#### /internal/port.adapter/service
+#### /internal/adapter/service
 
 ## /util
 

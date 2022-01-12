@@ -9,7 +9,7 @@ import (
     "github.com/stretchr/testify/assert"
 
     "go-hexagonal/api/http/dto"
-    "go-hexagonal/internal/domain.model/entity"
+    "go-hexagonal/internal/domain/entity"
 )
 
 /**

@@ -1,4 +1,4 @@
-package handle
+package http
 
 import (
     "context"
@@ -6,8 +6,8 @@ import (
     "testing"
 
     "go-hexagonal/config"
-    "go-hexagonal/internal/domain.model/service"
-    "go-hexagonal/internal/port.adapter/repository"
+    "go-hexagonal/internal/adapter/repository"
+    "go-hexagonal/internal/domain/service"
 )
 
 /**

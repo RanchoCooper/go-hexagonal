@@ -4,7 +4,7 @@ import (
     "context"
 
     "go-hexagonal/api/http/dto"
-    "go-hexagonal/internal/domain.model/entity"
+    "go-hexagonal/internal/domain/entity"
 )
 
 /**

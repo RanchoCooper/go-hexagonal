@@ -4,8 +4,8 @@ import (
     "context"
 
     "go-hexagonal/config"
-    "go-hexagonal/internal/port.adapter/repository/mysql"
-    "go-hexagonal/internal/port.adapter/repository/redis"
+    "go-hexagonal/internal/adapter/repository/mysql"
+    "go-hexagonal/internal/adapter/repository/redis"
     "go-hexagonal/util/logger"
 )
 

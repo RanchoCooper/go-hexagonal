@@ -7,8 +7,8 @@ import (
     "github.com/jinzhu/copier"
 
     "go-hexagonal/api/http/dto"
-    "go-hexagonal/internal/domain.model/entity"
-    "go-hexagonal/internal/domain.model/repo"
+    "go-hexagonal/internal/domain/entity"
+    "go-hexagonal/internal/domain/repo"
 )
 
 /**

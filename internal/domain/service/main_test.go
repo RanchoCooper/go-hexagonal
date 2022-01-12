@@ -4,7 +4,7 @@ import (
     "context"
     "testing"
 
-    "go-hexagonal/internal/port.adapter/repository"
+    "go-hexagonal/internal/adapter/repository"
 )
 
 /**

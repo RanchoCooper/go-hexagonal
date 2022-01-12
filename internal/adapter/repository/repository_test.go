@@ -8,8 +8,8 @@ import (
     "github.com/stretchr/testify/assert"
 
     "go-hexagonal/config"
-    "go-hexagonal/internal/port.adapter/repository/mysql"
-    "go-hexagonal/internal/port.adapter/repository/redis"
+    "go-hexagonal/internal/adapter/repository/mysql"
+    "go-hexagonal/internal/adapter/repository/redis"
 )
 
 /**

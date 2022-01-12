@@ -9,8 +9,8 @@ import (
 
     "go-hexagonal/cmd/http_server"
     "go-hexagonal/config"
-    "go-hexagonal/internal/domain.model/service"
-    "go-hexagonal/internal/port.adapter/repository"
+    "go-hexagonal/internal/adapter/repository"
+    "go-hexagonal/internal/domain/service"
     "go-hexagonal/util/logger"
 )
 
