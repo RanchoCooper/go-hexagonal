@@ -28,7 +28,7 @@ func TestExample_Create(t *testing.T) {
         Name:  "rancho",
         Alias: "cooper",
     }
-    example, err := exampleRepo.Create(ctx, d)
+    example, err := exampleRepo.Create(ctx, nil, d)
     assert.NoError(t, err)
     assert.NotEmpty(t, example.Id)
     assert.Equal(t, 1, example.Id)
@@ -47,7 +47,7 @@ func TestExample_Delete(t *testing.T) {
     d := dto.DeleteExampleReq{
         Id: 1,
     }
-    err := exampleRepo.Delete(ctx, d.Id)
+    err := exampleRepo.Delete(ctx, nil, d.Id)
     assert.NoError(t, err)
 
     err = mock.ExpectationsWereMet()
@@ -66,7 +66,7 @@ func TestExample_Save(t *testing.T) {
         Name: "random",
     }
     d.ChangeMap = structs.Map(d)
-    err := exampleRepo.Save(ctx, d)
+    err := exampleRepo.Save(ctx, nil, d)
     assert.NoError(t, err)
 
     err = mock.ExpectationsWereMet()

@@ -31,7 +31,7 @@ func CreateExample(ctx *gin.Context) {
     example, err := service.Service.ExampleService.Create(ctx, body)
     if err != nil {
         logger.Log.Errorf(ctx, "CreateExample failed.%v", err.Error())
-        ctx.Abort()
+        ctx.AbortWithError(errcode.ServerError.Code, errcode.ServerError)
         return
     }
     response.ToResponse(example)
@@ -52,7 +52,7 @@ func DeleteExample(ctx *gin.Context) {
     err := service.Service.ExampleService.Delete(ctx, param)
     if err != nil {
         logger.Log.Errorf(ctx, "DeleteExample failed.%v", err.Error())
-        ctx.Abort()
+        ctx.AbortWithError(errcode.ServerError.Code, errcode.ServerError)
         return
     }
     response.ToResponse(gin.H{})
@@ -72,7 +72,7 @@ func UpdateExample(ctx *gin.Context) {
     err := service.Service.ExampleService.Update(ctx, body)
     if err != nil {
         logger.Log.Errorf(ctx, "UpdateExample failed.%v", err.Error())
-        ctx.Abort()
+        ctx.AbortWithError(errcode.ServerError.Code, errcode.ServerError)
         return
     }
     response.ToResponse(gin.H{})
@@ -92,7 +92,7 @@ func GetExample(ctx *gin.Context) {
     result, err := service.Service.ExampleService.Get(ctx, param.Id)
     if err != nil {
         logger.Log.Errorf(ctx, "GetExample failed.%v", err.Error())
-        ctx.Abort()
+        ctx.AbortWithError(errcode.ServerError.Code, errcode.ServerError)
         return
     }
     response.ToResponse(*result)

@@ -30,7 +30,7 @@ func NewExampleService(ctx context.Context) *ExampleService {
 
 func (e *ExampleService) Create(ctx context.Context, v dto.CreateExampleReq) (*dto.CreateExampleResp, error) {
     result := &dto.CreateExampleResp{}
-    model, err := e.Repository.Create(ctx, v)
+    model, err := e.Repository.Create(ctx, nil, v)
     if err != nil {
         return nil, err
     }
@@ -43,7 +43,7 @@ func (e *ExampleService) Create(ctx context.Context, v dto.CreateExampleReq) (*d
 }
 
 func (e *ExampleService) Delete(ctx context.Context, dto dto.DeleteExampleReq) error {
-    err := e.Repository.Delete(ctx, dto.Id)
+    err := e.Repository.Delete(ctx, nil, dto.Id)
     if err != nil {
         return err
     }
@@ -54,7 +54,7 @@ func (e *ExampleService) Update(ctx context.Context, dto dto.UpdateExampleReq) e
     entity := &entity.Example{}
     _ = copier.Copy(entity, dto)
     entity.ChangeMap = structs.Map(entity)
-    err := e.Repository.Save(ctx, entity)
+    err := e.Repository.Save(ctx, nil, entity)
     if err != nil {
         return err
     }

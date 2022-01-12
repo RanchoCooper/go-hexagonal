@@ -2,9 +2,10 @@ package mysql
 
 import (
     "context"
-    "errors"
 
     "github.com/jinzhu/copier"
+    "github.com/pkg/errors"
+    "gorm.io/gorm"
 
     "go-hexagonal/api/http/dto"
     "go-hexagonal/internal/domain/entity"
@@ -26,10 +27,27 @@ type Example struct {
 
 var _ repo.IExampleRepo = &Example{}
 
-func (e *Example) Create(ctx context.Context, dto dto.CreateExampleReq) (*entity.Example, error) {
+func (e *Example) Create(ctx context.Context, tx *gorm.DB, dto dto.CreateExampleReq) (result *entity.Example, err error) {
+    if tx == nil {
+        tx = e.GetDB(ctx).Begin()
+        defer func() {
+            if r := recover(); r != nil {
+                tx.Rollback()
+                return
+            }
+            if err != nil {
+                tx.Rollback()
+                return
+            }
+            err = errors.WithStack(tx.Commit().Error)
+        }()
+    }
     record := &entity.Example{}
-    _ = copier.Copy(record, dto)
-    err := e.GetDB(ctx).Table(record.TableName()).Create(record).Error
+    err = copier.Copy(record, dto)
+    if err != nil {
+        return nil, err
+    }
+    err = tx.Table(record.TableName()).Create(record).Error
     if err != nil {
         return nil, err
     }
@@ -37,19 +55,47 @@ func (e *Example) Create(ctx context.Context, dto dto.CreateExampleReq) (*entity
     return record, nil
 }
 
-func (e *Example) Delete(ctx context.Context, id int) error {
+func (e *Example) Delete(ctx context.Context, tx *gorm.DB, id int) (err error) {
+    if tx == nil {
+        tx = e.GetDB(ctx).Begin()
+        defer func() {
+            if r := recover(); r != nil {
+                tx.Rollback()
+                return
+            }
+            if err != nil {
+                tx.Rollback()
+                return
+            }
+            err = errors.WithStack(tx.Commit().Error)
+        }()
+    }
     if id == 0 {
         return errors.New("delete fail. need Id")
     }
     example := &entity.Example{}
-    err := e.GetDB(ctx).Table(example.TableName()).Delete(example, id).Error
+    err = tx.Table(example.TableName()).Delete(example, id).Error
     // hard delete with .Unscoped()
     // err := e.GetDB(ctx).Table(example.TableName()).Unscoped().Delete(example, Id).Error
     return err
 }
 
-func (e *Example) Save(ctx context.Context, example *entity.Example) error {
-    return e.GetDB(ctx).Table(example.TableName()).Where("id = ? AND deleted_at IS NULL", example.Id).Updates(example.ChangeMap).Error
+func (e *Example) Save(ctx context.Context, tx *gorm.DB, example *entity.Example) (err error) {
+    if tx == nil {
+        tx = e.GetDB(ctx).Begin()
+        defer func() {
+            if r := recover(); r != nil {
+                tx.Rollback()
+                return
+            }
+            if err != nil {
+                tx.Rollback()
+                return
+            }
+            err = errors.WithStack(tx.Commit().Error)
+        }()
+    }
+    return tx.Table(example.TableName()).Where("id = ? AND deleted_at IS NULL", example.Id).Updates(example.ChangeMap).Error
 }
 
 func (e *Example) Get(ctx context.Context, id int) (*entity.Example, error) {

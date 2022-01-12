@@ -18,7 +18,7 @@ type Example struct {
     CreatedAt time.Time              `json:"created_at" structs:",omitempty,underline"`
     UpdatedAt time.Time              `json:"updated_at" structs:",omitempty,underline"`
     DeletedAt gorm.DeletedAt         `json:"deleted_at" structs:",omitempty,underline"`
-    ChangeMap map[string]interface{} `json:"-" structs:"-"`
+    ChangeMap map[string]interface{} `gorm:"-" json:"-" structs:"-"`
 }
 
 func (e Example) TableName() string {
