@@ -11,7 +11,6 @@ import (
     "github.com/stretchr/testify/require"
 
     "go-hexagonal/api/http/dto"
-    "go-hexagonal/config"
 )
 
 /**
@@ -20,9 +19,6 @@ import (
  */
 
 func TestCreateExample(t *testing.T) {
-    if config.Config.App.Env == config.EnvGithub {
-        t.SkipNow()
-    }
     var w = httptest.NewRecorder()
     var response map[string]interface{}
     body := dto.CreateExampleReq{

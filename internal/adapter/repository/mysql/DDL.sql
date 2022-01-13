@@ -1,3 +1,7 @@
+CREATE DATABASE `hexagonal`;
+
+USE hexagonal;
+
 DROP TABLE IF EXISTS `example`;
 
 CREATE TABLE `example` (
