@@ -3,11 +3,10 @@ package mysql
 import (
     "context"
 
-    "github.com/jinzhu/copier"
+    "github.com/RanchoCooper/structs"
     "github.com/pkg/errors"
     "gorm.io/gorm"
 
-    "go-hexagonal/api/http/dto"
     "go-hexagonal/internal/domain/entity"
     "go-hexagonal/internal/domain/repo"
 )
@@ -27,7 +26,7 @@ type Example struct {
 
 var _ repo.IExampleRepo = &Example{}
 
-func (e *Example) Create(ctx context.Context, tx *gorm.DB, dto dto.CreateExampleReq) (result *entity.Example, err error) {
+func (e *Example) Create(ctx context.Context, tx *gorm.DB, example *entity.Example) (result *entity.Example, err error) {
     if tx == nil {
         tx = e.GetDB(ctx).Begin()
         defer func() {
@@ -42,17 +41,12 @@ func (e *Example) Create(ctx context.Context, tx *gorm.DB, dto dto.CreateExample
             err = errors.WithStack(tx.Commit().Error)
         }()
     }
-    record := &entity.Example{}
-    err = copier.Copy(record, dto)
-    if err != nil {
-        return nil, err
-    }
-    err = tx.Table(record.TableName()).Create(record).Error
+    err = tx.Table(example.TableName()).Create(example).Error
     if err != nil {
         return nil, err
     }
 
-    return record, nil
+    return example, nil
 }
 
 func (e *Example) Delete(ctx context.Context, tx *gorm.DB, id int) (err error) {
@@ -95,6 +89,7 @@ func (e *Example) Save(ctx context.Context, tx *gorm.DB, example *entity.Example
             err = errors.WithStack(tx.Commit().Error)
         }()
     }
+    example.ChangeMap = structs.Map(example)
     return tx.Table(example.TableName()).Where("id = ? AND deleted_at IS NULL", example.Id).Updates(example.ChangeMap).Error
 }
 

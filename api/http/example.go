@@ -2,12 +2,14 @@ package http
 
 import (
     "github.com/gin-gonic/gin"
+    "github.com/jinzhu/copier"
     "github.com/spf13/cast"
 
     "go-hexagonal/api/http/dto"
     "go-hexagonal/api/http/errcode"
     "go-hexagonal/api/http/handle"
     "go-hexagonal/api/http/validator"
+    "go-hexagonal/internal/domain/entity"
     "go-hexagonal/internal/domain/service"
     "go-hexagonal/util/logger"
 )
@@ -28,7 +30,9 @@ func CreateExample(ctx *gin.Context) {
         response.ToErrorResponse(errResp)
         return
     }
-    example, err := service.Service.ExampleService.Create(ctx, body)
+    example := &entity.Example{}
+    copier.Copy(example, body)
+    example, err := service.Service.ExampleService.Create(ctx, example)
     if err != nil {
         logger.Log.Errorf(ctx, "CreateExample failed.%v", err.Error())
         ctx.AbortWithError(errcode.ServerError.Code, errcode.ServerError)
@@ -49,7 +53,7 @@ func DeleteExample(ctx *gin.Context) {
         return
     }
 
-    err := service.Service.ExampleService.Delete(ctx, param)
+    err := service.Service.ExampleService.Delete(ctx, param.Id)
     if err != nil {
         logger.Log.Errorf(ctx, "DeleteExample failed.%v", err.Error())
         ctx.AbortWithError(errcode.ServerError.Code, errcode.ServerError)
@@ -69,7 +73,9 @@ func UpdateExample(ctx *gin.Context) {
         response.ToErrorResponse(errResp)
         return
     }
-    err := service.Service.ExampleService.Update(ctx, body)
+    example := &entity.Example{}
+    copier.Copy(example, body)
+    err := service.Service.ExampleService.Update(ctx, example)
     if err != nil {
         logger.Log.Errorf(ctx, "UpdateExample failed.%v", err.Error())
         ctx.AbortWithError(errcode.ServerError.Code, errcode.ServerError)

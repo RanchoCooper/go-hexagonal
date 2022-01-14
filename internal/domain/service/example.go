@@ -3,10 +3,6 @@ package service
 import (
     "context"
 
-    "github.com/RanchoCooper/structs"
-    "github.com/jinzhu/copier"
-
-    "go-hexagonal/api/http/dto"
     "go-hexagonal/internal/adapter/repository"
     "go-hexagonal/internal/domain/entity"
     "go-hexagonal/internal/domain/repo"
@@ -28,45 +24,34 @@ func NewExampleService(ctx context.Context) *ExampleService {
     return srv
 }
 
-func (e *ExampleService) Create(ctx context.Context, v dto.CreateExampleReq) (*dto.CreateExampleResp, error) {
-    result := &dto.CreateExampleResp{}
-    model, err := e.Repository.Create(ctx, nil, v)
+func (e *ExampleService) Create(ctx context.Context, example *entity.Example) (*entity.Example, error) {
+    example, err := e.Repository.Create(ctx, nil, example)
     if err != nil {
         return nil, err
     }
-    err = copier.Copy(result, model)
-    if err != nil {
-        return nil, err
-    }
-
-    return result, nil
+    return example, nil
 }
 
-func (e *ExampleService) Delete(ctx context.Context, dto dto.DeleteExampleReq) error {
-    err := e.Repository.Delete(ctx, nil, dto.Id)
+func (e *ExampleService) Delete(ctx context.Context, id int) error {
+    err := e.Repository.Delete(ctx, nil, id)
     if err != nil {
         return err
     }
     return nil
 }
 
-func (e *ExampleService) Update(ctx context.Context, dto dto.UpdateExampleReq) error {
-    entity := &entity.Example{}
-    _ = copier.Copy(entity, dto)
-    entity.ChangeMap = structs.Map(entity)
-    err := e.Repository.Save(ctx, nil, entity)
+func (e *ExampleService) Update(ctx context.Context, example *entity.Example) error {
+    err := e.Repository.Save(ctx, nil, example)
     if err != nil {
         return err
     }
     return nil
 }
 
-func (e *ExampleService) Get(ctx context.Context, id int) (*dto.GetExampleResponse, error) {
-    result := &dto.GetExampleResponse{}
+func (e *ExampleService) Get(ctx context.Context, id int) (*entity.Example, error) {
     example, err := e.Repository.Get(ctx, id)
     if err != nil {
         return nil, err
     }
-    _ = copier.Copy(result, example)
-    return result, nil
+    return example, nil
 }
