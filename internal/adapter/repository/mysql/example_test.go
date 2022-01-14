@@ -24,11 +24,11 @@ func TestExample_Create(t *testing.T) {
     mock.ExpectBegin()
     mock.ExpectExec("INSERT INTO `example`").WillReturnResult(sqlmock.NewResult(1, 1))
     mock.ExpectCommit()
-    d := dto.CreateExampleReq{
+    e := &entity.Example{
         Name:  "rancho",
         Alias: "cooper",
     }
-    example, err := exampleRepo.Create(ctx, nil, d)
+    example, err := exampleRepo.Create(ctx, nil, e)
     assert.NoError(t, err)
     assert.NotEmpty(t, example.Id)
     assert.Equal(t, 1, example.Id)
