@@ -33,8 +33,8 @@ jobs:
           mysql password: ${{ env.DB_PASSWORD }} # Required if "mysql user" exists. The password for the "mysql user"
           run: |
             sudo /etc/init.d/mysql start
-            mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};CREATE TABLE `example` ( `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT, `name` VARCHAR(32) NOT NULL DEFAULT '' COMMENT '名称', `alias` VARCHAR(32) NOT NULL DEFAULT '' COMMENT '别称', `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, `deleted_at` TIMESTAMP, PRIMARY KEY (`id`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Hexagonal示例表';' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
-      - run: go test -cover ./...
+            mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
+      - run: go test -v -cover ./...
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
