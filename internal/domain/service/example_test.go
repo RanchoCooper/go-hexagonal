@@ -5,7 +5,6 @@ import (
 
     "github.com/stretchr/testify/assert"
 
-    "go-hexagonal/config"
     "go-hexagonal/internal/domain/entity"
 )
 
@@ -15,9 +14,6 @@ import (
  */
 
 func TestExampleService_Create(t *testing.T) {
-    if config.Config.App.Env == config.EnvGithub {
-        t.SkipNow()
-    }
     srv := NewExampleService(ctx)
     assert.NotNil(t, srv)
     assert.NotNil(t, srv.Repository)

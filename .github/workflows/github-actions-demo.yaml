@@ -3,6 +3,10 @@ on: [push]
 jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
+    env:
+      DB_DATABASE: hexagonal
+      DB_USER: root
+      DB_PASSWORD: root
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -23,11 +27,14 @@ jobs:
           character set server: 'utf8' # Optional, default value is 'utf8mb4'. The '--character-set-server' option for mysqld
           collation server: 'utf8_general_ci' # Optional, default value is 'utf8mb4_general_ci'. The '--collation-server' option for mysqld
           mysql version: '8.0' # Optional, default value is "latest". The version of the MySQL
-          mysql database: 'hexagonal' # Optional, default value is "test". The specified database which will be create
-          mysql root password: 'root' # Required if "mysql user" is empty, default is empty. The root superuser password
-          mysql user: 'root' # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Of course you can use secrets, too
-          mysql password: 'root' # Required if "mysql user" exists. The password for the "mysql user"
-      - run: go test -cover ./...
+          mysql database: ${{ env.DB_DATABASE }} # Optional, default value is "test". The specified database which will be create
+          mysql root password: ${{ env.DB_PASSWORD }} # Required if "mysql user" is empty, default is empty. The root superuser password
+          mysql user: ${{ env.DB_USER }} # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Of course you can use secrets, too
+          mysql password: ${{ env.DB_PASSWORD }} # Required if "mysql user" exists. The password for the "mysql user"
+          run: |
+            sudo /etc/init.d/mysql start
+            mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
+      - run: go test -v -cover ./...
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}

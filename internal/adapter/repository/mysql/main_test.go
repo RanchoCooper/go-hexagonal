@@ -3,6 +3,8 @@ package mysql
 import (
     "context"
     "testing"
+
+    "go-hexagonal/internal/domain/entity"
 )
 
 /**
@@ -13,5 +15,7 @@ import (
 var ctx = context.Background()
 
 func TestMain(m *testing.M) {
+    db := NewExample(NewMySQLClient()).GetDB(ctx)
+    _ = db.AutoMigrate(&entity.Example{})
     m.Run()
 }
