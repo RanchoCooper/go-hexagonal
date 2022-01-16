@@ -41,7 +41,7 @@ func (e *ExampleService) Delete(ctx context.Context, id int) error {
 }
 
 func (e *ExampleService) Update(ctx context.Context, example *entity.Example) error {
-    err := e.Repository.Save(ctx, nil, example)
+    err := e.Repository.Update(ctx, nil, example)
     if err != nil {
         return err
     }

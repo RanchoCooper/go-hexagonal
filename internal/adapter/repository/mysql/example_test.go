@@ -54,7 +54,7 @@ func TestExample_Delete(t *testing.T) {
     assert.NoError(t, err)
 }
 
-func TestExample_Save(t *testing.T) {
+func TestExample_Update(t *testing.T) {
     exampleRepo := NewExample(NewMySQLClient())
     DB, mock := exampleRepo.MockClient()
     exampleRepo.SetDB(DB)
@@ -66,7 +66,7 @@ func TestExample_Save(t *testing.T) {
         Name: "random",
     }
     d.ChangeMap = structs.Map(d)
-    err := exampleRepo.Save(ctx, nil, d)
+    err := exampleRepo.Update(ctx, nil, d)
     assert.NoError(t, err)
 
     err = mock.ExpectationsWereMet()
