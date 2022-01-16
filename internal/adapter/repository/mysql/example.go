@@ -2,6 +2,7 @@ package mysql
 
 import (
     "context"
+    "time"
 
     "github.com/RanchoCooper/structs"
     "github.com/pkg/errors"
@@ -90,6 +91,7 @@ func (e *Example) Update(ctx context.Context, tx *gorm.DB, example *entity.Examp
         }()
     }
     example.ChangeMap = structs.Map(example)
+    example.ChangeMap["updated_at"] = time.Now()
     return tx.Table(example.TableName()).Where("id = ? AND deleted_at IS NULL", example.Id).Updates(example.ChangeMap).Error
 }
 

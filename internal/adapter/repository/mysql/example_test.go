@@ -5,7 +5,6 @@ import (
     "testing"
 
     "github.com/DATA-DOG/go-sqlmock"
-    "github.com/RanchoCooper/structs"
     "github.com/stretchr/testify/assert"
 
     "go-hexagonal/api/http/dto"
@@ -61,12 +60,11 @@ func TestExample_Update(t *testing.T) {
     mock.ExpectBegin()
     mock.ExpectExec("UPDATE `example`").WillReturnResult(sqlmock.NewResult(1, 1))
     mock.ExpectCommit()
-    d := &entity.Example{
+    e := &entity.Example{
         Id:   1,
         Name: "random",
     }
-    d.ChangeMap = structs.Map(d)
-    err := exampleRepo.Update(ctx, nil, d)
+    err := exampleRepo.Update(ctx, nil, e)
     assert.NoError(t, err)
 
     err = mock.ExpectationsWereMet()
