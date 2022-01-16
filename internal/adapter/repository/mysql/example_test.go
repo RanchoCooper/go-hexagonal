@@ -7,7 +7,7 @@ import (
     "github.com/DATA-DOG/go-sqlmock"
     "github.com/stretchr/testify/assert"
 
-    "go-hexagonal/api/http/dto"
+    "go-hexagonal/api/dto"
     "go-hexagonal/internal/domain/entity"
 )
 
