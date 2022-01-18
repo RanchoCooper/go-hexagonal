@@ -2,6 +2,7 @@ package mysql
 
 import (
     "context"
+    "time"
 
     "github.com/RanchoCooper/structs"
     "github.com/pkg/errors"
@@ -41,7 +42,7 @@ func (e *Example) Create(ctx context.Context, tx *gorm.DB, example *entity.Examp
             err = errors.WithStack(tx.Commit().Error)
         }()
     }
-    err = tx.Table(example.TableName()).Create(example).Error
+    err = tx.Create(example).Error
     if err != nil {
         return nil, err
     }
@@ -68,13 +69,13 @@ func (e *Example) Delete(ctx context.Context, tx *gorm.DB, id int) (err error) {
         return errors.New("delete fail. need Id")
     }
     example := &entity.Example{}
-    err = tx.Table(example.TableName()).Delete(example, id).Error
+    err = tx.Delete(example, id).Error
     // hard delete with .Unscoped()
     // err := e.GetDB(ctx).Table(example.TableName()).Unscoped().Delete(example, Id).Error
     return err
 }
 
-func (e *Example) Save(ctx context.Context, tx *gorm.DB, example *entity.Example) (err error) {
+func (e *Example) Update(ctx context.Context, tx *gorm.DB, example *entity.Example) (err error) {
     if tx == nil {
         tx = e.GetDB(ctx).Begin()
         defer func() {
@@ -90,6 +91,7 @@ func (e *Example) Save(ctx context.Context, tx *gorm.DB, example *entity.Example
         }()
     }
     example.ChangeMap = structs.Map(example)
+    example.ChangeMap["updated_at"] = time.Now()
     return tx.Table(example.TableName()).Where("id = ? AND deleted_at IS NULL", example.Id).Updates(example.ChangeMap).Error
 }
 
@@ -98,7 +100,7 @@ func (e *Example) Get(ctx context.Context, id int) (*entity.Example, error) {
     if id == 0 {
         return nil, errors.New("get fail. need Id")
     }
-    err := e.GetDB(ctx).Table(record.TableName()).Find(record, id).Error
+    err := e.GetDB(ctx).Find(record, id).Error
     return record, err
 }
 
@@ -109,4 +111,8 @@ func (e *Example) FindByName(ctx context.Context, name string) (*entity.Example,
     }
     err := e.GetDB(ctx).Table(record.TableName()).Where("name = ?", name).Last(record).Error
     return record, err
+}
+
+func (e *Example) BeforeCreate(tx *gorm.DB) (err error) {
+    return
 }

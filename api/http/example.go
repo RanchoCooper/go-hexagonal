@@ -5,7 +5,7 @@ import (
     "github.com/jinzhu/copier"
     "github.com/spf13/cast"
 
-    "go-hexagonal/api/http/dto"
+    "go-hexagonal/api/dto"
     "go-hexagonal/api/http/errcode"
     "go-hexagonal/api/http/handle"
     "go-hexagonal/api/http/validator"
