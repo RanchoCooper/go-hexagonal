@@ -10,8 +10,8 @@ import (
  */
 
 type CreateExampleReq struct {
-    Name  string `json:"name" validate:"required"`
-    Alias string `json:"alias" validate:"required"`
+    Name  string `json:"name" binding:"required" message:"name is a required field"`
+    Alias string `json:"alias" binding:"required" message:"alias is a required field"`
 }
 
 type CreateExampleResp struct {
@@ -23,7 +23,7 @@ type CreateExampleResp struct {
 }
 
 type DeleteExampleReq struct {
-    Id int `uri:"id" validate:"required"`
+    Id int `uri:"id" binding:"required"`
 }
 
 type UpdateExampleReq struct {
@@ -33,7 +33,7 @@ type UpdateExampleReq struct {
 }
 
 type GetExampleReq struct {
-    Id int `uri:"id" validate:"required"`
+    Id int `uri:"id" binding:"required"`
 }
 
 type GetExampleResponse struct {
