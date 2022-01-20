@@ -48,6 +48,11 @@ func BindAndValid(c *gin.Context, obj interface{}, binder func(interface{}) erro
         trans, _ := v.(ut.Translator)
         verrs, ok := err.(validator.ValidationErrors)
         if !ok {
+            errs = append(errs, &ValidError{
+                Key:     "unknown error",
+                Message: err.Error(),
+            })
+
             return false, errs
         }
 

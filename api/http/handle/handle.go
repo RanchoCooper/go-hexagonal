@@ -6,7 +6,7 @@ import (
     "github.com/gin-gonic/gin"
 
     "go-hexagonal/api/dto"
-    "go-hexagonal/api/http/errcode"
+    "go-hexagonal/api/errcode"
     "go-hexagonal/api/http/paginate"
 )
 

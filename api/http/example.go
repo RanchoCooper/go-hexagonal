@@ -6,7 +6,7 @@ import (
     "github.com/spf13/cast"
 
     "go-hexagonal/api/dto"
-    "go-hexagonal/api/http/errcode"
+    "go-hexagonal/api/errcode"
     "go-hexagonal/api/http/handle"
     "go-hexagonal/api/http/validator"
     "go-hexagonal/internal/domain/entity"
