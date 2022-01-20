@@ -6,7 +6,7 @@ import (
     "github.com/gin-gonic/gin"
 
     "go-hexagonal/api/dto"
-    "go-hexagonal/api/http/errcode"
+    "go-hexagonal/api/error_code"
     "go-hexagonal/api/http/paginate"
 )
 
@@ -36,7 +36,7 @@ func (r *Response) ToResponseList(list interface{}, totalRows int) {
     })
 }
 
-func (r *Response) ToErrorResponse(err *errcode.Error) {
+func (r *Response) ToErrorResponse(err *error_code.Error) {
     response := gin.H{
         "code": err.Code,
         "msg":  err.Msg,
