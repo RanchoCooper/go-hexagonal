@@ -67,8 +67,9 @@ func BindAndValid(c *gin.Context, obj interface{}, binder func(interface{}) erro
             fieldName := tmpKey[len(tmpKey)-1]
             t := reflect.TypeOf(obj)
             k := t.Kind()
-            if k == reflect.Ptr {
+            for k == reflect.Ptr {
                 t = t.Elem()
+                k = t.Kind()
             }
             field, exists := t.FieldByName(fieldName)
             var tag reflect.StructTag
