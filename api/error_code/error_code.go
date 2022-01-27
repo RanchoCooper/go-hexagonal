@@ -30,21 +30,18 @@ func NewError(code int, msg string) *Error {
     }
 }
 
-func (e *Error) Error() string {
-    return fmt.Sprintf("err_code: %d, err_msg: %s", e.Code, e.Msg)
+func (e Error) Error() string {
+    return fmt.Sprintf("err_code: %d, err_msg: %s, details: %v", e.Code, e.Msg, e.Details)
 }
 
-func (e *Error) Msgf(args []interface{}) string {
+func (e Error) Msgf(args []interface{}) string {
     return fmt.Sprintf(e.Msg, args...)
 }
 
 func (e *Error) WithDetails(details ...string) *Error {
     newError := *e
     newError.Details = []string{}
-
-    for _, d := range details {
-        newError.Details = append(newError.Details, d)
-    }
+    newError.Details = append(newError.Details, details...)
 
     return &newError
 }
