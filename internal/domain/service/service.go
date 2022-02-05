@@ -11,12 +11,12 @@ import (
  */
 
 var (
-    once           sync.Once
-    ExampleService *ExampleSvc
+    once       sync.Once
+    ExampleSvc *ExampleService
 )
 
 func Init(ctx context.Context) {
     once.Do(func() {
-        ExampleService = NewExampleService(ctx)
+        ExampleSvc = NewExampleService(ctx)
     })
 }
