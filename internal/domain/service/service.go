@@ -11,33 +11,12 @@ import (
  */
 
 var (
-    Service *DomainService
-    once    sync.Once
+    once           sync.Once
+    ExampleService *ExampleSvc
 )
-
-type DomainService struct {
-    *ExampleService
-}
-
-type DomainServiceOption func(srv *DomainService)
 
 func Init(ctx context.Context) {
     once.Do(func() {
-        Service = NewDomainService(WithExampleService(ctx))
+        ExampleService = NewExampleService(ctx)
     })
-}
-
-func NewDomainService(opts ...DomainServiceOption) *DomainService {
-    srv := &DomainService{}
-
-    for _, opt := range opts {
-        opt(srv)
-    }
-    return srv
-}
-
-func WithExampleService(ctx context.Context) DomainServiceOption {
-    return func(s *DomainService) {
-        s.ExampleService = NewExampleService(ctx)
-    }
 }

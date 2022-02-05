@@ -37,7 +37,7 @@ func CreateExample(ctx *gin.Context) {
         response.ToErrorResponse(error_code.CopyError)
         return
     }
-    example, err = service.Service.ExampleService.Create(ctx, example)
+    example, err = service.ExampleService.Create(ctx, example)
     if err != nil {
         logger.Log.Errorf(ctx, "CreateExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.ServerError)
@@ -58,7 +58,7 @@ func DeleteExample(ctx *gin.Context) {
         return
     }
 
-    err := service.Service.ExampleService.Delete(ctx, param.Id)
+    err := service.ExampleService.Delete(ctx, param.Id)
     if err != nil {
         logger.Log.Errorf(ctx, "DeleteExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.ServerError)
@@ -80,7 +80,7 @@ func UpdateExample(ctx *gin.Context) {
     }
     example := &entity.Example{}
     copier.Copy(example, body)
-    err := service.Service.ExampleService.Update(ctx, example)
+    err := service.ExampleService.Update(ctx, example)
     if err != nil {
         logger.Log.Errorf(ctx, "UpdateExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.ServerError)
@@ -100,7 +100,7 @@ func GetExample(ctx *gin.Context) {
         response.ToErrorResponse(errResp)
         return
     }
-    result, err := service.Service.ExampleService.Get(ctx, param.Id)
+    result, err := service.ExampleService.Get(ctx, param.Id)
     if err != nil {
         logger.Log.Errorf(ctx, "GetExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.ServerError)
