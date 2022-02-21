@@ -7,10 +7,11 @@ package error_code
 
 // basic error code
 var (
-    Success       = NewError(0, "success")
-    ServerError   = NewError(1000, "server internal error")
-    InvalidParams = NewError(10001, "invalid params")
-    NotFound      = NewError(10002, "record not found")
+    Success         = NewError(0, "success")
+    ServerError     = NewError(1000, "server internal error")
+    InvalidParams   = NewError(10001, "invalid params")
+    NotFound        = NewError(10002, "record not found")
+    TooManyRequests = NewError(10003, "too many requests")
 )
 
 // auth error code
@@ -24,10 +25,5 @@ var (
 // internal error code
 var (
     CopyError = NewError(30001, "copy obj error")
-    JSONError = NewError(30002, "copy obj error")
-)
-
-// other error code
-var (
-    TooManyRequests = NewError(50001, "too many requests")
+    JSONError = NewError(30002, "json marshal/unmarshal error")
 )

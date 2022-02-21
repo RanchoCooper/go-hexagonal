@@ -46,6 +46,14 @@ func (e *Error) WithDetails(details ...string) *Error {
     return &newError
 }
 
+func (e *Error) Is(tgt error) bool {
+    target, ok := tgt.(*Error)
+    if !ok {
+        return false
+    }
+    return target.Code == e.Code
+}
+
 func (e *Error) StatusCode() int {
     switch e.Code {
     case Success.Code:
