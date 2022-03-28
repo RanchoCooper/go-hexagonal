@@ -38,9 +38,8 @@ type httpServerConfig struct {
 }
 
 type logConfig struct {
-    LogSavePath string `yaml:"log_save_path"`
-    LogFileName string `yaml:"log_file_name"`
-    LogFileExt  string `yaml:"log_file_ext"`
+    SavePath string `yaml:"save_path"`
+    FileName string `yaml:"file_name"`
 }
 
 type mysqlConfig struct {

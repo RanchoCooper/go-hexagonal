@@ -66,7 +66,7 @@ func Init(opts ...Option) {
     for _, opt := range opts {
         opt(Clients)
     }
-    logger.Log.Info(context.Background(), "repository init successfully")
+    logger.Log.Info(context.TODO(), "repository init successfully")
 }
 
 func Close(ctx context.Context) {

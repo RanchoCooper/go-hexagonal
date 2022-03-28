@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-    ctx, cancel := context.WithCancel(context.Background())
+    ctx, cancel := context.WithCancel(context.TODO())
     initConfig()
     initRuntime(ctx)
     initServer(ctx, cancel)

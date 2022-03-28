@@ -9,6 +9,7 @@ import (
     "runtime"
     "time"
 
+    "github.com/gin-gonic/gin"
     "gopkg.in/natefinch/lumberjack.v2"
 
     "go-hexagonal/config"
@@ -20,6 +21,29 @@ import (
  * @date 2021/12/24
  */
 
+var Log *Logger
+var callerMap = map[uintptr]CallerInfo{}
+
+func init() {
+    config.Init()
+    fileName := util.GetCurrentPath() + "/../.." + config.Config.Log.SavePath + "/" + config.Config.Log.FileName
+    Log = NewLogger(&lumberjack.Logger{
+        Filename:  fileName,
+        MaxSize:   500,
+        MaxAge:    10,
+        LocalTime: true,
+    }, "", log.LstdFlags).WithCaller(1)
+}
+
+type Level int8
+
+type Fields map[string]interface{}
+
+type CallerInfo struct {
+    file string
+    line int
+}
+
 const (
     LevelDebug Level = iota
     LevelInfo
@@ -28,10 +52,6 @@ const (
     LevelFatal
     LevelPanic
 )
-
-var Log *Logger
-
-type Level int8
 
 func (l Level) String() string {
     switch l {
@@ -48,28 +68,14 @@ func (l Level) String() string {
     case LevelPanic:
         return "panic"
     }
-
     return ""
 }
-
-type Fields map[string]interface{}
 
 type Logger struct {
     newLogger *log.Logger
     ctx       context.Context
     fields    Fields
     callers   []string
-}
-
-func init() {
-    config.Init()
-    fileName := util.GetCurrentPath() + "/../.." + config.Config.Log.LogSavePath + "/" + config.Config.Log.LogFileName + config.Config.Log.LogFileExt
-    Log = NewLogger(&lumberjack.Logger{
-        Filename:  fileName,
-        MaxSize:   500,
-        MaxAge:    10,
-        LocalTime: true,
-    }, "", log.LstdFlags)
 }
 
 func NewLogger(w io.Writer, prefix string, flag int) *Logger {
@@ -90,24 +96,25 @@ func (l *Logger) WithFields(f Fields) *Logger {
     for k, v := range f {
         ll.fields[k] = v
     }
-
     return ll
 }
 
 func (l *Logger) WithContext(ctx context.Context) *Logger {
     ll := l.clone()
     ll.ctx = ctx
-
     return ll
 }
 
 func (l *Logger) WithCaller(skip int) *Logger {
     ll := l.clone()
-    pc, file, line, ok := runtime.Caller(skip)
-    if ok {
-        f := runtime.FuncForPC(pc)
-        ll.callers = []string{fmt.Sprintf("%s: %d %s", file, line, f.Name())}
+    pc, file, line, _ := runtime.Caller(skip)
+    caller, ok := callerMap[pc]
+    if !ok {
+        caller = CallerInfo{file: file, line: line}
+        callerMap[pc] = caller
     }
+    f := runtime.FuncForPC(pc)
+    ll.callers = []string{fmt.Sprintf("%s: %d %s", caller.file, caller.line, f.Name())}
 
     return ll
 }
@@ -128,19 +135,17 @@ func (l *Logger) WithCallersFrames() *Logger {
     }
     ll := l.clone()
     ll.callers = callers
-
     return ll
 }
 
 func (l *Logger) WithTrace() *Logger {
-    // ginCtx, ok := l.ctx.(*gin.Context)
-    // if ok {
-    //     return l.WithFields(Fields{
-    //         "trace_id": ginCtx.MustGet("X-Trace-Id"),
-    //         "span_id":  ginCtx.MustGet("X-Span-Id"),
-    //     })
-    // }
-
+    ginCtx, ok := l.ctx.(*gin.Context)
+    if ok {
+        return l.WithFields(Fields{
+            "trace_id": ginCtx.MustGet("X-Trace-ID"),
+            "span_id":  ginCtx.MustGet("X-Span-ID"),
+        })
+    }
     return l
 }
 

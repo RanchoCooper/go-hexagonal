@@ -12,7 +12,7 @@ import (
  * @date 2021/12/25
  */
 
-var ctx = context.Background()
+var ctx = context.TODO()
 
 func TestMain(m *testing.M) {
     repository.Init(

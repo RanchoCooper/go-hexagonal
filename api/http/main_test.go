@@ -16,7 +16,7 @@ import (
  * @date 2022/1/7
  */
 
-var ctx = context.Background()
+var ctx = context.TODO()
 
 func TestMain(m *testing.M) {
     if err := flag.Set("cf", "../../config/config.yaml"); err != nil {

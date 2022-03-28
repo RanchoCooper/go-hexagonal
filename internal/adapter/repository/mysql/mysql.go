@@ -73,6 +73,22 @@ func (c *client) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
     return db, mock
 }
 
+func finishTransaction(err error, tx *gorm.DB) error {
+    if err != nil {
+        if rollbackErr := tx.Rollback().Error; rollbackErr != nil {
+            return errors.Wrap(err, rollbackErr.Error())
+        }
+
+        return err
+    }
+
+    if commitErr := tx.Commit().Error; commitErr != nil {
+        return errors.Wrap(err, fmt.Sprintf("failed to commit tx, err: %v", commitErr.Error()))
+    }
+
+    return nil
+}
+
 func NewGormDB() (*gorm.DB, error) {
     dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=%s&parseTime=%t&loc=%s",
         config.Config.MySQL.User,
