@@ -6,7 +6,7 @@ import (
     "go-hexagonal/config"
     "go-hexagonal/internal/adapter/repository/mysql"
     "go-hexagonal/internal/adapter/repository/redis"
-    "go-hexagonal/util/logger"
+    "go-hexagonal/util/log"
 )
 
 var (
@@ -66,10 +66,10 @@ func Init(opts ...Option) {
     for _, opt := range opts {
         opt(Clients)
     }
-    logger.Log.Info(context.TODO(), "repository init successfully")
+    log.Logger.Info("repository init successfully")
 }
 
 func Close(ctx context.Context) {
     Clients.close(ctx)
-    logger.Log.Info(ctx, "repository is closed.")
+    log.Logger.Info("repository is closed.")
 }

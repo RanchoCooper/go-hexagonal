@@ -11,7 +11,7 @@ import (
     "go-hexagonal/api/http/validator"
     "go-hexagonal/internal/domain/entity"
     "go-hexagonal/internal/domain/service"
-    "go-hexagonal/util/logger"
+    "go-hexagonal/util/log"
 )
 
 /**
@@ -25,7 +25,7 @@ func CreateExample(ctx *gin.Context) {
 
     valid, errs := validator.BindAndValid(ctx, &body, ctx.ShouldBindJSON)
     if !valid {
-        logger.Log.Errorf(ctx, "CreateExample.BindAndValid errs: %v", errs)
+        log.Logger.Sugar().Error("CreateExample.BindAndValid errs: %v", errs)
         err := error_code.InvalidParams.WithDetails(errs.Errors()...)
         response.ToErrorResponse(err)
         return
@@ -33,13 +33,13 @@ func CreateExample(ctx *gin.Context) {
     example := &entity.Example{}
     err := copier.Copy(example, body)
     if err != nil {
-        logger.Log.Errorf(ctx, "CreateExample failed.%v", err.Error())
+        log.Logger.Sugar().Error("CreateExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.CopyError)
         return
     }
     example, err = service.ExampleSvc.Create(ctx, example)
     if err != nil {
-        logger.Log.Errorf(ctx, "CreateExample failed.%v", err.Error())
+        log.Logger.Sugar().Error("CreateExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.ServerError)
         return
     }
@@ -52,7 +52,7 @@ func DeleteExample(ctx *gin.Context) {
 
     valid, errs := validator.BindAndValid(ctx, &param, ctx.ShouldBindUri)
     if !valid {
-        logger.Log.Errorf(ctx, "DeleteExample.BindAndValid errs: %v", errs)
+        log.Logger.Sugar().Error("DeleteExample.BindAndValid errs: %v", errs)
         errResp := error_code.InvalidParams.WithDetails(errs.Errors()...)
         response.ToErrorResponse(errResp)
         return
@@ -60,7 +60,7 @@ func DeleteExample(ctx *gin.Context) {
 
     err := service.ExampleSvc.Delete(ctx, param.Id)
     if err != nil {
-        logger.Log.Errorf(ctx, "DeleteExample failed.%v", err.Error())
+        log.Logger.Sugar().Error("DeleteExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.ServerError)
         return
     }
@@ -73,7 +73,7 @@ func UpdateExample(ctx *gin.Context) {
 
     valid, errs := validator.BindAndValid(ctx, &body, ctx.ShouldBindJSON)
     if !valid {
-        logger.Log.Errorf(ctx, "UpdateExample.BindAndValid errs: %v", errs)
+        log.Logger.Sugar().Error("UpdateExample.BindAndValid errs: %v", errs)
         errResp := error_code.InvalidParams.WithDetails(errs.Errors()...)
         response.ToErrorResponse(errResp)
         return
@@ -82,7 +82,7 @@ func UpdateExample(ctx *gin.Context) {
     copier.Copy(example, body)
     err := service.ExampleSvc.Update(ctx, example)
     if err != nil {
-        logger.Log.Errorf(ctx, "UpdateExample failed.%v", err.Error())
+        log.Logger.Sugar().Error("UpdateExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.ServerError)
         return
     }
@@ -95,14 +95,14 @@ func GetExample(ctx *gin.Context) {
 
     valid, errs := validator.BindAndValid(ctx, &param, ctx.ShouldBindUri)
     if !valid {
-        logger.Log.Errorf(ctx, "GetExample.BindAndValid errs: %v", errs)
+        log.Logger.Sugar().Error("GetExample.BindAndValid errs: %v", errs)
         errResp := error_code.InvalidParams.WithDetails(errs.Errors()...)
         response.ToErrorResponse(errResp)
         return
     }
     result, err := service.ExampleSvc.Get(ctx, param.Id)
     if err != nil {
-        logger.Log.Errorf(ctx, "GetExample failed.%v", err.Error())
+        log.Logger.Sugar().Error("GetExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.ServerError)
         return
     }

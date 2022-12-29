@@ -2,14 +2,13 @@ package http_server
 
 import (
     "context"
-    "fmt"
     "net/http"
 
     "github.com/spf13/cast"
 
     http2 "go-hexagonal/api/http"
     "go-hexagonal/config"
-    "go-hexagonal/util/logger"
+    "go-hexagonal/util/log"
 )
 
 /**
@@ -28,7 +27,7 @@ func Start(ctx context.Context, errChan chan error, httpCloseCh chan struct{}) {
 
     // run server
     go func() {
-        logger.Log.Info(ctx, fmt.Sprintf("%s HTTP server is starting on %s", config.Config.App.Name, config.Config.HTTPServer.Addr))
+        log.Logger.Sugar().Info("%s HTTP server is starting on %s", config.Config.App.Name, config.Config.HTTPServer.Addr)
         errChan <- srv.ListenAndServe()
     }()
 
@@ -36,7 +35,7 @@ func Start(ctx context.Context, errChan chan error, httpCloseCh chan struct{}) {
     go func() {
         <-ctx.Done()
         if err := srv.Shutdown(ctx); err != nil {
-            logger.Log.Info(ctx, fmt.Sprintf("httpServer shutdown:%v", err))
+            log.Logger.Sugar().Infof("httpServer shutdown:%v", err)
         }
         httpCloseCh <- struct{}{}
     }()

@@ -6,10 +6,9 @@ import (
 
     "github.com/go-redis/redis/v8"
     "github.com/go-redis/redismock/v8"
-    "github.com/pkg/errors"
 
     "go-hexagonal/config"
-    "go-hexagonal/util/logger"
+    "go-hexagonal/util/log"
 )
 
 /**
@@ -35,9 +34,9 @@ func (c *client) GetClient() *redis.Client {
 func (c *client) Close(ctx context.Context) {
     err := c.client.Close()
     if err != nil {
-        logger.Log.Errorf(ctx, "close redis client fail. err: %v", errors.WithStack(err))
+        log.Logger.Sugar().Errorf("close redis client fail. err: %v", err.Error())
     }
-    logger.Log.Info(ctx, "redis client closed")
+    log.Logger.Info("redis client closed")
 }
 
 func (c *client) MockClient() redismock.ClusterClientMock {
