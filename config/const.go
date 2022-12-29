@@ -16,5 +16,9 @@ const (
 )
 
 func (e Env) IsProd() bool {
-	return string(e) == "prod"
+	return string(e) == EnvProd
+}
+
+func (e Env) IsGithub() bool {
+	return string(e) == EnvGithub
 }

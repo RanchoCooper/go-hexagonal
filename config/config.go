@@ -110,8 +110,10 @@ func Init() {
 	}
 
 	readYamlConfig(filepath.Join(configPath, configFilePath))
-	// read private sensitive configs
-	readYamlConfig(filepath.Join(configPath, privateConfigFilePath))
+	if !Config.Env.IsGithub() {
+		// read private sensitive configs
+		readYamlConfig(filepath.Join(configPath, privateConfigFilePath))
+	}
 
 	bf, _ := json.MarshalIndent(Config, "", "    ")
 	fmt.Printf("Config:\n%s\n", string(bf))
