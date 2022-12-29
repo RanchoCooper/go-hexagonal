@@ -2,13 +2,13 @@ package http
 
 import (
     "context"
-    "flag"
     "testing"
 
     "go-hexagonal/config"
     "go-hexagonal/internal/adapter/repository"
     "go-hexagonal/internal/domain/entity"
     "go-hexagonal/internal/domain/service"
+    "go-hexagonal/util/log"
 )
 
 /**
@@ -19,10 +19,8 @@ import (
 var ctx = context.TODO()
 
 func TestMain(m *testing.M) {
-    if err := flag.Set("cf", "../../config/config.yaml"); err != nil {
-        panic(err)
-    }
     config.Init()
+    log.Init()
     repository.Init(repository.WithMySQL(), repository.WithRedis())
     db := repository.Clients.MySQL.GetDB(ctx)
     _ = db.AutoMigrate(&entity.Example{})

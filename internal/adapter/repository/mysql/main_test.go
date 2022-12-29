@@ -4,7 +4,9 @@ import (
     "context"
     "testing"
 
+    "go-hexagonal/config"
     "go-hexagonal/internal/domain/entity"
+    "go-hexagonal/util/log"
 )
 
 /**
@@ -15,6 +17,9 @@ import (
 var ctx = context.TODO()
 
 func TestMain(m *testing.M) {
+    config.Init()
+    log.Init()
+
     db := NewExample(NewMySQLClient()).GetDB(ctx)
     _ = db.AutoMigrate(&entity.Example{})
     m.Run()

@@ -25,7 +25,7 @@ func CreateExample(ctx *gin.Context) {
 
     valid, errs := validator.BindAndValid(ctx, &body, ctx.ShouldBindJSON)
     if !valid {
-        log.Logger.Sugar().Errorf("CreateExample.BindAndValid errs: %v", errs)
+        log.SugaredLogger.Errorf("CreateExample.BindAndValid errs: %v", errs)
         err := error_code.InvalidParams.WithDetails(errs.Errors()...)
         response.ToErrorResponse(err)
         return
@@ -33,13 +33,13 @@ func CreateExample(ctx *gin.Context) {
     example := &entity.Example{}
     err := copier.Copy(example, body)
     if err != nil {
-        log.Logger.Sugar().Errorf("CreateExample failed.%v", err.Error())
+        log.SugaredLogger.Errorf("CreateExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.CopyError)
         return
     }
     example, err = service.ExampleSvc.Create(ctx, example)
     if err != nil {
-        log.Logger.Sugar().Errorf("CreateExample failed.%v", err.Error())
+        log.SugaredLogger.Errorf("CreateExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.ServerError)
         return
     }
@@ -52,7 +52,7 @@ func DeleteExample(ctx *gin.Context) {
 
     valid, errs := validator.BindAndValid(ctx, &param, ctx.ShouldBindUri)
     if !valid {
-        log.Logger.Sugar().Errorf("DeleteExample.BindAndValid errs: %v", errs)
+        log.SugaredLogger.Errorf("DeleteExample.BindAndValid errs: %v", errs)
         errResp := error_code.InvalidParams.WithDetails(errs.Errors()...)
         response.ToErrorResponse(errResp)
         return
@@ -60,7 +60,7 @@ func DeleteExample(ctx *gin.Context) {
 
     err := service.ExampleSvc.Delete(ctx, param.Id)
     if err != nil {
-        log.Logger.Sugar().Errorf("DeleteExample failed.%v", err.Error())
+        log.SugaredLogger.Errorf("DeleteExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.ServerError)
         return
     }
@@ -73,7 +73,7 @@ func UpdateExample(ctx *gin.Context) {
 
     valid, errs := validator.BindAndValid(ctx, &body, ctx.ShouldBindJSON)
     if !valid {
-        log.Logger.Sugar().Errorf("UpdateExample.BindAndValid errs: %v", errs)
+        log.SugaredLogger.Errorf("UpdateExample.BindAndValid errs: %v", errs)
         errResp := error_code.InvalidParams.WithDetails(errs.Errors()...)
         response.ToErrorResponse(errResp)
         return
@@ -82,7 +82,7 @@ func UpdateExample(ctx *gin.Context) {
     copier.Copy(example, body)
     err := service.ExampleSvc.Update(ctx, example)
     if err != nil {
-        log.Logger.Sugar().Errorf("UpdateExample failed.%v", err.Error())
+        log.SugaredLogger.Errorf("UpdateExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.ServerError)
         return
     }
@@ -95,14 +95,14 @@ func GetExample(ctx *gin.Context) {
 
     valid, errs := validator.BindAndValid(ctx, &param, ctx.ShouldBindUri)
     if !valid {
-        log.Logger.Sugar().Errorf("GetExample.BindAndValid errs: %v", errs)
+        log.SugaredLogger.Errorf("GetExample.BindAndValid errs: %v", errs)
         errResp := error_code.InvalidParams.WithDetails(errs.Errors()...)
         response.ToErrorResponse(errResp)
         return
     }
     result, err := service.ExampleSvc.Get(ctx, param.Id)
     if err != nil {
-        log.Logger.Sugar().Errorf("GetExample failed.%v", err.Error())
+        log.SugaredLogger.Errorf("GetExample failed.%v", err.Error())
         response.ToErrorResponse(error_code.ServerError)
         return
     }

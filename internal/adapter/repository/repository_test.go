@@ -2,7 +2,6 @@ package repository
 
 import (
     "context"
-    "flag"
     "testing"
 
     "github.com/stretchr/testify/assert"
@@ -10,6 +9,7 @@ import (
     "go-hexagonal/config"
     "go-hexagonal/internal/adapter/repository/mysql"
     "go-hexagonal/internal/adapter/repository/redis"
+    "go-hexagonal/util/log"
 )
 
 /**
@@ -20,10 +20,8 @@ import (
 var ctx = context.TODO()
 
 func TestNewRepository(t *testing.T) {
-    if err := flag.Set("cf", "../../../config/config.yaml"); err != nil {
-        panic(err)
-    }
     config.Init()
+    log.Init()
     Init(
         WithMySQL(),
         WithRedis(),

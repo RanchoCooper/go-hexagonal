@@ -7,7 +7,6 @@ import (
     "github.com/DATA-DOG/go-sqlmock"
     "github.com/pkg/errors"
     "github.com/spf13/cast"
-    "go.uber.org/zap"
     driver "gorm.io/driver/mysql"
     "gorm.io/gorm"
     "gorm.io/gorm/schema"
@@ -46,7 +45,7 @@ func (c *client) Close(ctx context.Context) {
     if sqlDB != nil {
         err := sqlDB.Close()
         if err != nil {
-            log.Logger.Sugar().Errorf("close mysql client fail. err: %v", err)
+            log.SugaredLogger.Errorf("close mysql client fail. err: %v", err)
         }
     }
     log.Logger.Info("mysql client closed")
@@ -99,7 +98,7 @@ func NewGormDB() (*gorm.DB, error) {
         config.Config.MySQL.TimeZone,
     )
 
-    logger := zapgorm2.New(zap.L())
+    logger := zapgorm2.New(log.Logger)
     logger.SetAsDefault()
     db, err := gorm.Open(
         driver.Open(dsn),

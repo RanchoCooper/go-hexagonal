@@ -51,8 +51,8 @@ func initServer(ctx context.Context, cancel context.CancelFunc) {
         log.Logger.Info("Start graceful shutdown")
     case err := <-errCh:
         cancel()
-        log.Logger.Sugar().Errorf("http err:%v", err)
+        log.SugaredLogger.Errorf("http err:%v", err)
     }
     <-httpCloseCh
-    log.Logger.Sugar().Infof("%s HTTP server exit!", config.Config.App.Name)
+    log.SugaredLogger.Infof("%s HTTP server exit!", config.Config.App.Name)
 }

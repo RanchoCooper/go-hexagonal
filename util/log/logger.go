@@ -20,7 +20,10 @@ import (
  * @date 2021/12/24
  */
 
-var Logger *zap.Logger
+var (
+    Logger        *zap.Logger
+    SugaredLogger *zap.SugaredLogger
+)
 
 func initCore() zapcore.Core {
     opts := make([]zapcore.WriteSyncer, 0)
@@ -102,6 +105,7 @@ func Init() {
         zap.AddCaller(),
         zap.AddStacktrace(zap.ErrorLevel),
     )
+    SugaredLogger = Logger.Sugar()
     defer Logger.Sync()
     // defer func(Logger *zap.Logger) {
     //     err := Logger.Sync()

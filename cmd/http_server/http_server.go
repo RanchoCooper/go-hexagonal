@@ -27,7 +27,7 @@ func Start(ctx context.Context, errChan chan error, httpCloseCh chan struct{}) {
 
     // run server
     go func() {
-        log.Logger.Sugar().Infof("%s HTTP server is starting on %s", config.Config.App.Name, config.Config.HTTPServer.Addr)
+        log.SugaredLogger.Infof("%s HTTP server is starting on %s", config.Config.App.Name, config.Config.HTTPServer.Addr)
         errChan <- srv.ListenAndServe()
     }()
 
@@ -35,7 +35,7 @@ func Start(ctx context.Context, errChan chan error, httpCloseCh chan struct{}) {
     go func() {
         <-ctx.Done()
         if err := srv.Shutdown(ctx); err != nil {
-            log.Logger.Sugar().Infof("httpServer shutdown:%v", err)
+            log.SugaredLogger.Infof("httpServer shutdown:%v", err)
         }
         httpCloseCh <- struct{}{}
     }()
