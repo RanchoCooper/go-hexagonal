@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -13,8 +14,8 @@ import (
 )
 
 const (
-	configFilePath        = "/config.yaml"
-	privateConfigFilePath = "/config.private.yaml"
+	configFilePath        = "config.yaml"
+	privateConfigFilePath = "config.private.yaml"
 )
 
 var Config = &config{}
@@ -93,11 +94,24 @@ func readYamlConfig(configPath string) {
 }
 
 func Init() {
-	configPath := util.GetCurrentPath()
+	flag.Parse()
 
-	readYamlConfig(configPath + configFilePath)
+	configPath := ""
+	configFileFlagSet := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == configFileFlagName {
+			configFileFlagSet = true
+		}
+	})
+	if configFileFlagSet {
+		configPath = configFileFromFlag
+	} else {
+		configPath = util.GetCurrentPath()
+	}
+
+	readYamlConfig(filepath.Join(configPath, configFilePath))
 	// read private sensitive configs
-	readYamlConfig(configPath + privateConfigFilePath)
+	readYamlConfig(filepath.Join(configPath, privateConfigFilePath))
 
 	bf, _ := json.MarshalIndent(Config, "", "    ")
 	fmt.Printf("Config:\n%s\n", string(bf))

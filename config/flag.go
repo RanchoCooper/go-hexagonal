@@ -10,9 +10,11 @@ import (
  */
 
 var (
-	configPathFromFlag string
+	configFileFlagName = "cf"
+	configFileFromFlag string
 )
 
 func init() {
-	flag.StringVar(&configPathFromFlag, "cf", "./config/config.yaml", "path of config file")
+	flag.StringVar(&configFileFromFlag, configFileFlagName, "/test/config.yaml", "config file")
+	// flag.Set(configFileFlagName, "/anywhere/config.yaml")
 }
