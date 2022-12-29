@@ -81,7 +81,7 @@ func finishTransaction(err error, tx *gorm.DB) error {
 	}
 
 	if commitErr := tx.Commit().Error; commitErr != nil {
-		return errors.Wrap(err, fmt.Sprintf("failed to commit tx, err: %v", commitErr.Error()))
+		return errors.Wrap(err, fmt.Sprintf("failed to commit tx, err: %s", commitErr.Error()))
 	}
 
 	return nil
