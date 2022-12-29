@@ -1,8 +1,8 @@
+env: "github"
 app:
   name: "go-hexagonal"
   version: "v0.1.0"
   debug: true
-  env: github
 http_server:
   addr: ":3000"
   pprof: false
@@ -11,9 +11,12 @@ http_server:
   read_timeout: "60s"
   write_timeout: "60s"
 log:
-  log_save_path: /tmp/logs
-  log_file_name: ""     # FIXME
-  log_file_ext: .log
+  save_path: "/tmp"
+  file_name: "go-hexagonal.log"
+  max_size: 512
+  max_age: 7
+  local_time: true
+  compress: false
 mysql:
   user: "root"
   password: "root"

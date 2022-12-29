@@ -3,20 +3,18 @@ package mysql
 import (
     "context"
     "fmt"
-    "log"
-    "os"
-    "time"
 
     "github.com/DATA-DOG/go-sqlmock"
     "github.com/pkg/errors"
     "github.com/spf13/cast"
+    "go.uber.org/zap"
     driver "gorm.io/driver/mysql"
     "gorm.io/gorm"
-    glogger "gorm.io/gorm/logger"
     "gorm.io/gorm/schema"
+    "moul.io/zapgorm2"
 
     "go-hexagonal/config"
-    "go-hexagonal/util/logger"
+    "go-hexagonal/util/log"
 )
 
 /**
@@ -48,10 +46,10 @@ func (c *client) Close(ctx context.Context) {
     if sqlDB != nil {
         err := sqlDB.Close()
         if err != nil {
-            logger.Log.Errorf(ctx, "close mysql client fail. err: %v", errors.WithStack(err))
+            log.Logger.Sugar().Errorf("close mysql client fail. err: %v", err)
         }
     }
-    logger.Log.Info(ctx, "mysql client closed")
+    log.Logger.Info("mysql client closed")
 }
 
 func (c *client) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
@@ -63,6 +61,7 @@ func (c *client) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
         Conn:       sqlDB,
         DriverName: "mysql",
     })
+
     // a SELECT VERSION() query will be run when gorm opens the database, so we need to expect that here
     columns := []string{"version"}
     mock.ExpectQuery("SELECT VERSION()").WithArgs().WillReturnRows(
@@ -71,6 +70,22 @@ func (c *client) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
     db, err := gorm.Open(dialector, &gorm.Config{})
 
     return db, mock
+}
+
+func finishTransaction(err error, tx *gorm.DB) error {
+    if err != nil {
+        if rollbackErr := tx.Rollback().Error; rollbackErr != nil {
+            return errors.Wrap(err, rollbackErr.Error())
+        }
+
+        return err
+    }
+
+    if commitErr := tx.Commit().Error; commitErr != nil {
+        return errors.Wrap(err, fmt.Sprintf("failed to commit tx, err: %v", commitErr.Error()))
+    }
+
+    return nil
 }
 
 func NewGormDB() (*gorm.DB, error) {
@@ -84,19 +99,15 @@ func NewGormDB() (*gorm.DB, error) {
         config.Config.MySQL.TimeZone,
     )
 
-    db, err := gorm.Open(driver.Open(dsn), &gorm.Config{
-        NamingStrategy: schema.NamingStrategy{
-            SingularTable: true,
+    logger := zapgorm2.New(zap.L())
+    logger.SetAsDefault()
+    db, err := gorm.Open(
+        driver.Open(dsn),
+        &gorm.Config{
+            NamingStrategy: schema.NamingStrategy{SingularTable: true},
+            Logger:         logger,
         },
-        Logger: glogger.New(
-            log.New(os.Stdout, "\r\n", log.LstdFlags),
-            glogger.Config{
-                SlowThreshold:             200 * time.Millisecond,
-                LogLevel:                  glogger.Info,
-                IgnoreRecordNotFoundError: false,
-                Colorful:                  true,
-            }),
-    })
+    )
     if err != nil {
         return nil, err
     }

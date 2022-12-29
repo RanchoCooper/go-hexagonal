@@ -17,7 +17,7 @@ import (
  * @date 2022/1/7
  */
 
-var ctx = context.Background()
+var ctx = context.TODO()
 
 func TestNewRepository(t *testing.T) {
     if err := flag.Set("cf", "../../../config/config.yaml"); err != nil {

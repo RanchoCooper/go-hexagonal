@@ -12,7 +12,7 @@ import (
  * @date 2022/1/8
  */
 
-var ctx = context.Background()
+var ctx = context.TODO()
 
 func TestMain(m *testing.M) {
     db := NewExample(NewMySQLClient()).GetDB(ctx)

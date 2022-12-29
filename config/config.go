@@ -3,8 +3,8 @@ package config
 import (
     "encoding/json"
     "fmt"
-    "io/ioutil"
     "log"
+    "os"
     "path/filepath"
 
     "gopkg.in/yaml.v3"
@@ -15,17 +15,23 @@ import (
 const (
     configFilePath        = "/config.yaml"
     privateConfigFilePath = "/config.private.yaml"
-    EnvLocal              = "local"
-    EnvGithub             = "github"
 )
 
 var Config = &config{}
+
+type config struct {
+    Env        Env               `yaml:"env"`
+    App        *appConfig        `yaml:"app"`
+    HTTPServer *httpServerConfig `yaml:"http_server"`
+    Log        *logConfig        `yaml:"log"`
+    MySQL      *mysqlConfig      `yaml:"mysql"`
+    Redis      *redisConfig      `yaml:"redis"`
+}
 
 type appConfig struct {
     Name    string `yaml:"name"`
     Version string `yaml:"version"`
     Debug   bool   `yaml:"debug"`
-    Env     string `yaml:"env"`
 }
 
 type httpServerConfig struct {
@@ -38,9 +44,12 @@ type httpServerConfig struct {
 }
 
 type logConfig struct {
-    LogSavePath string `yaml:"log_save_path"`
-    LogFileName string `yaml:"log_file_name"`
-    LogFileExt  string `yaml:"log_file_ext"`
+    SavePath  string `yaml:"save_path"`
+    FileName  string `yaml:"file_name"`
+    MaxSize   int    `yaml:"max_size"`
+    MaxAge    int    `yaml:"max_age"`
+    LocalTime bool   `yaml:"local_time"`
+    Compress  bool   `yaml:"compress"`
 }
 
 type mysqlConfig struct {
@@ -68,26 +77,18 @@ type redisConfig struct {
     MinIdleConns int
 }
 
-type config struct {
-    App        *appConfig        `yaml:"app"`
-    HTTPServer *httpServerConfig `yaml:"http_server"`
-    Log        *logConfig        `yaml:"log"`
-    MySQL      *mysqlConfig      `yaml:"mysql"`
-    Redis      *redisConfig      `yaml:"redis"`
-}
-
 func readYamlConfig(configPath string) {
     yamlFile, err := filepath.Abs(configPath)
     if err != nil {
         log.Fatalf("invalid config file path, err: %v", err)
     }
-    content, err := ioutil.ReadFile(yamlFile)
+    content, err := os.ReadFile(yamlFile)
     if err != nil {
-        log.Printf("read config file fail, err: %v", err)
+        log.Fatalf("read config file fail, err: %v", err)
     }
     err = yaml.Unmarshal(content, Config)
     if err != nil {
-        log.Printf("config file unmarshal fail, err: %v", err)
+        log.Fatalf("config file unmarshal fail, err: %v", err)
     }
 }
 

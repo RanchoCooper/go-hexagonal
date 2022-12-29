@@ -6,7 +6,7 @@ import (
     "go-hexagonal/internal/adapter/repository"
     "go-hexagonal/internal/domain/entity"
     "go-hexagonal/internal/domain/repo"
-    "go-hexagonal/util/logger"
+    "go-hexagonal/util/log"
 )
 
 /**
@@ -20,7 +20,7 @@ type ExampleService struct {
 
 func NewExampleService(ctx context.Context) *ExampleService {
     srv := &ExampleService{Repository: repository.Example}
-    logger.Log.Info(ctx, "example service init successfully")
+    log.Logger.Info("example service init successfully")
     return srv
 }
 

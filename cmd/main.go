@@ -2,7 +2,6 @@ package main
 
 import (
     "context"
-    "fmt"
     "os"
     "os/signal"
     "syscall"
@@ -11,18 +10,23 @@ import (
     "go-hexagonal/config"
     "go-hexagonal/internal/adapter/repository"
     "go-hexagonal/internal/domain/service"
-    "go-hexagonal/util/logger"
+    "go-hexagonal/util/log"
 )
 
 func main() {
-    ctx, cancel := context.WithCancel(context.Background())
+    ctx, cancel := context.WithCancel(context.TODO())
     initConfig()
+    initLogger()
     initRuntime(ctx)
     initServer(ctx, cancel)
 }
 
 func initConfig() {
     config.Init()
+}
+
+func initLogger() {
+    log.Init()
 }
 
 func initRuntime(ctx context.Context) {
@@ -44,11 +48,11 @@ func initServer(ctx context.Context, cancel context.CancelFunc) {
     select {
     case <-quit:
         cancel()
-        logger.Log.Info(ctx, "Start graceful shutdown")
+        log.Logger.Info("Start graceful shutdown")
     case err := <-errCh:
         cancel()
-        logger.Log.Error(ctx, fmt.Sprintf("http err:%v", err))
+        log.Logger.Sugar().Errorf("http err:%v", err)
     }
     <-httpCloseCh
-    logger.Log.Infof(ctx, "%s HTTP server exit!", config.Config.App.Name)
+    log.Logger.Sugar().Infof("%s HTTP server exit!", config.Config.App.Name)
 }
