@@ -9,18 +9,14 @@ import (
 	"go-hexagonal/util/log"
 )
 
-var (
-	Clients     = &client{}
-	Example     *mysql.Example
-	HealthCheck *redis.HealthCheck
-)
+var Clients = &clients{}
 
-type client struct {
-	MySQL mysql.IMySQL
-	Redis redis.IRedis
+type clients struct {
+	MySQL *mysql.MySQL
+	Redis *redis.Redis
 }
 
-func (c *client) close(ctx context.Context) {
+func (c *clients) close(ctx context.Context) {
 	if c.MySQL != nil {
 		c.MySQL.Close(ctx)
 	}
@@ -29,35 +25,30 @@ func (c *client) close(ctx context.Context) {
 	}
 }
 
-type Option func(*client)
+type Option func(*clients)
 
 func WithMySQL() Option {
-	return func(c *client) {
+	return func(c *clients) {
 		if c.MySQL == nil {
 			if config.Config.MySQL != nil {
-				c.MySQL = mysql.NewMySQLClient()
+				mysql.Client = mysql.NewMySQLClient()
+				c.MySQL = mysql.Client
 			} else {
-				panic("init repository with empty MySQL config")
+				panic("init repository fail, MySQL config is empty")
 			}
-		}
-		// inject repository
-		if Example == nil {
-			Example = mysql.NewExample(Clients.MySQL)
 		}
 	}
 }
 
 func WithRedis() Option {
-	return func(c *client) {
+	return func(c *clients) {
 		if c.Redis == nil {
 			if config.Config.Redis != nil {
-				c.Redis = redis.NewRedisClient()
+				redis.Client = redis.NewRedisClient()
+				c.Redis = redis.Client
 			} else {
-				panic("init repository with empty Redis config")
+				panic("init repository fail, Redis config is empty")
 			}
-		}
-		if HealthCheck == nil {
-			HealthCheck = redis.NewHealthCheck(Clients.Redis)
 		}
 	}
 }
@@ -71,5 +62,5 @@ func Init(opts ...Option) {
 
 func Close(ctx context.Context) {
 	Clients.close(ctx)
-	log.Logger.Info("repository is closed.")
+	log.Logger.Info("repository closed")
 }

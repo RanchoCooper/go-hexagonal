@@ -1,11 +1,11 @@
-package mysql
+package entity
 
 import (
 	"context"
 	"testing"
 
 	"go-hexagonal/config"
-	"go-hexagonal/internal/domain/entity"
+	"go-hexagonal/internal/adapter/repository/mysql"
 	"go-hexagonal/util/log"
 )
 
@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 	config.Init()
 	log.Init()
 
-	db := NewExample(NewMySQLClient()).GetDB(ctx)
-	_ = db.AutoMigrate(&entity.Example{})
+	mysql.Client = mysql.NewMySQLClient()
+	_ = mysql.Client.GetDB(ctx).AutoMigrate(&Example{})
 	m.Run()
 }

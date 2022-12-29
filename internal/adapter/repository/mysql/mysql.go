@@ -21,26 +21,24 @@ import (
  * @date 2021/12/21
  */
 
-type IMySQL interface {
-	GetDB(ctx context.Context) *gorm.DB
-	SetDB(DB *gorm.DB)
-	Close(ctx context.Context)
-	MockClient() (*gorm.DB, sqlmock.Sqlmock)
-}
+var (
+	Client *MySQL
+)
 
-type client struct {
+type MySQL struct {
 	db *gorm.DB
+	// example *entity.Example
 }
 
-func (c *client) GetDB(ctx context.Context) *gorm.DB {
+func (c *MySQL) GetDB(ctx context.Context) *gorm.DB {
 	return c.db.WithContext(ctx)
 }
 
-func (c *client) SetDB(DB *gorm.DB) {
+func (c *MySQL) SetDB(DB *gorm.DB) {
 	c.db = DB
 }
 
-func (c *client) Close(ctx context.Context) {
+func (c *MySQL) Close(ctx context.Context) {
 	sqlDB, _ := c.GetDB(ctx).DB()
 	if sqlDB != nil {
 		err := sqlDB.Close()
@@ -51,10 +49,10 @@ func (c *client) Close(ctx context.Context) {
 	log.Logger.Info("mysql client closed")
 }
 
-func (c *client) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
+func (c *MySQL) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
-		panic("mock MySQLClient fail, err: " + err.Error())
+		panic("mock MySQL fail, err: " + err.Error())
 	}
 	dialector := driver.New(driver.Config{
 		Conn:       sqlDB,
@@ -66,9 +64,9 @@ func (c *client) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
 	mock.ExpectQuery("SELECT VERSION()").WithArgs().WillReturnRows(
 		mock.NewRows(columns).FromCSVString("1"),
 	)
-	db, err := gorm.Open(dialector, &gorm.Config{})
+	c.db, err = gorm.Open(dialector, &gorm.Config{})
 
-	return db, mock
+	return c.db, mock
 }
 
 func finishTransaction(err error, tx *gorm.DB) error {
@@ -123,10 +121,10 @@ func NewGormDB() (*gorm.DB, error) {
 	return db, nil
 }
 
-func NewMySQLClient() IMySQL {
+func NewMySQLClient() *MySQL {
 	db, err := NewGormDB()
 	if err != nil {
 		panic(err)
 	}
-	return &client{db: db}
+	return &MySQL{db: db}
 }

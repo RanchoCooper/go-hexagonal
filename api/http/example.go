@@ -9,7 +9,7 @@ import (
 	"go-hexagonal/api/error_code"
 	"go-hexagonal/api/http/handle"
 	"go-hexagonal/api/http/validator"
-	"go-hexagonal/internal/domain/entity"
+	"go-hexagonal/internal/domain/model"
 	"go-hexagonal/internal/domain/service"
 	"go-hexagonal/util/log"
 )
@@ -30,7 +30,7 @@ func CreateExample(ctx *gin.Context) {
 		response.ToErrorResponse(err)
 		return
 	}
-	example := &entity.Example{}
+	example := &model.Example{}
 	err := copier.Copy(example, body)
 	if err != nil {
 		log.SugaredLogger.Errorf("CreateExample failed.%v", err.Error())
@@ -78,7 +78,7 @@ func UpdateExample(ctx *gin.Context) {
 		response.ToErrorResponse(errResp)
 		return
 	}
-	example := &entity.Example{}
+	example := &model.Example{}
 	copier.Copy(example, body)
 	err := service.ExampleSvc.Update(ctx, example)
 	if err != nil {
