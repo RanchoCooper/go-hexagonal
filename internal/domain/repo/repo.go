@@ -1,11 +1,11 @@
 package repo
 
 import (
-    "context"
+	"context"
 
-    "gorm.io/gorm"
+	"gorm.io/gorm"
 
-    "go-hexagonal/internal/domain/entity"
+	"go-hexagonal/internal/domain/entity"
 )
 
 /**
@@ -14,13 +14,13 @@ import (
  */
 
 type IExampleRepo interface {
-    Create(ctx context.Context, tx *gorm.DB, entity *entity.Example) (*entity.Example, error)
-    Delete(ctx context.Context, tx *gorm.DB, Id int) error
-    Update(ctx context.Context, tx *gorm.DB, entity *entity.Example) error
-    Get(ctx context.Context, Id int) (entity *entity.Example, e error)
-    FindByName(ctx context.Context, name string) (*entity.Example, error)
+	Create(ctx context.Context, tx *gorm.DB, entity *entity.Example) (*entity.Example, error)
+	Delete(ctx context.Context, tx *gorm.DB, Id int) error
+	Update(ctx context.Context, tx *gorm.DB, entity *entity.Example) error
+	Get(ctx context.Context, Id int) (entity *entity.Example, e error)
+	FindByName(ctx context.Context, name string) (*entity.Example, error)
 }
 
 type IHealthCheckRepository interface {
-    HealthCheck(ctx context.Context) error
+	HealthCheck(ctx context.Context) error
 }

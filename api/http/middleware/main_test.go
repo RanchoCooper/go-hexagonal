@@ -1,11 +1,11 @@
 package middleware
 
 import (
-    "os"
-    "testing"
+	"os"
+	"testing"
 
-    "go-hexagonal/config"
-    "go-hexagonal/util/log"
+	"go-hexagonal/config"
+	"go-hexagonal/util/log"
 )
 
 /**
@@ -14,9 +14,9 @@ import (
  */
 
 func TestMain(m *testing.M) {
-    config.Init()
-    log.Init()
+	config.Init()
+	log.Init()
 
-    exitCode := m.Run()
-    os.Exit(exitCode)
+	exitCode := m.Run()
+	os.Exit(exitCode)
 }

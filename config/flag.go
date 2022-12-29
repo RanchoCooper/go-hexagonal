@@ -1,7 +1,7 @@
 package config
 
 import (
-    "flag"
+	"flag"
 )
 
 /**
@@ -10,9 +10,9 @@ import (
  */
 
 var (
-    configPathFromFlag string
+	configPathFromFlag string
 )
 
 func init() {
-    flag.StringVar(&configPathFromFlag, "cf", "./config/config.yaml", "path of config file")
+	flag.StringVar(&configPathFromFlag, "cf", "./config/config.yaml", "path of config file")
 }

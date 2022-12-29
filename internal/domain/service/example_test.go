@@ -1,11 +1,11 @@
 package service
 
 import (
-    "testing"
+	"testing"
 
-    "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 
-    "go-hexagonal/internal/domain/entity"
+	"go-hexagonal/internal/domain/entity"
 )
 
 /**
@@ -14,13 +14,13 @@ import (
  */
 
 func TestExampleService_Create(t *testing.T) {
-    srv := NewExampleService(ctx)
-    assert.NotNil(t, srv)
-    assert.NotNil(t, srv.Repository)
-    resp, err := srv.Create(ctx, &entity.Example{
-        Name:  "RanchoCooper",
-        Alias: "Rancho",
-    })
-    assert.Nil(t, err)
-    assert.NotNil(t, resp)
+	srv := NewExampleService(ctx)
+	assert.NotNil(t, srv)
+	assert.NotNil(t, srv.Repository)
+	resp, err := srv.Create(ctx, &entity.Example{
+		Name:  "RanchoCooper",
+		Alias: "Rancho",
+	})
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
 }

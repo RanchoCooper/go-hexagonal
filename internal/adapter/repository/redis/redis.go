@@ -1,14 +1,14 @@
 package redis
 
 import (
-    "context"
-    "time"
+	"context"
+	"time"
 
-    "github.com/go-redis/redis/v8"
-    "github.com/go-redis/redismock/v8"
+	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redismock/v8"
 
-    "go-hexagonal/config"
-    "go-hexagonal/util/log"
+	"go-hexagonal/config"
+	"go-hexagonal/util/log"
 )
 
 /**
@@ -17,46 +17,46 @@ import (
  */
 
 type IRedis interface {
-    GetClient() *redis.Client
-    Close(ctx context.Context)
-    // MockClient use only for unit test help to do  unit test without redis server
-    MockClient() redismock.ClusterClientMock
+	GetClient() *redis.Client
+	Close(ctx context.Context)
+	// MockClient use only for unit test help to do  unit test without redis server
+	MockClient() redismock.ClusterClientMock
 }
 
 type client struct {
-    client *redis.Client
+	client *redis.Client
 }
 
 func (c *client) GetClient() *redis.Client {
-    return c.client
+	return c.client
 }
 
 func (c *client) Close(ctx context.Context) {
-    err := c.client.Close()
-    if err != nil {
-        log.SugaredLogger.Errorf("close redis client fail. err: %v", err.Error())
-    }
-    log.Logger.Info("redis client closed")
+	err := c.client.Close()
+	if err != nil {
+		log.SugaredLogger.Errorf("close redis client fail. err: %v", err.Error())
+	}
+	log.Logger.Info("redis client closed")
 }
 
 func (c *client) MockClient() redismock.ClusterClientMock {
-    // FIXME unverified
-    _, mock := redismock.NewClusterMock()
-    return mock
+	// FIXME unverified
+	_, mock := redismock.NewClusterMock()
+	return mock
 }
 
 func NewRedis() *redis.Client {
-    return redis.NewClient(&redis.Options{
-        Addr:         config.Config.Redis.Addr,
-        Username:     config.Config.Redis.UserName,
-        Password:     config.Config.Redis.Password,
-        DB:           config.Config.Redis.DB,
-        PoolSize:     config.Config.Redis.PoolSize,
-        MinIdleConns: config.Config.Redis.MinIdleConns,
-        IdleTimeout:  time.Duration(config.Config.Redis.IdleTimeout) * time.Second,
-    })
+	return redis.NewClient(&redis.Options{
+		Addr:         config.Config.Redis.Addr,
+		Username:     config.Config.Redis.UserName,
+		Password:     config.Config.Redis.Password,
+		DB:           config.Config.Redis.DB,
+		PoolSize:     config.Config.Redis.PoolSize,
+		MinIdleConns: config.Config.Redis.MinIdleConns,
+		IdleTimeout:  time.Duration(config.Config.Redis.IdleTimeout) * time.Second,
+	})
 }
 
 func NewRedisClient() IRedis {
-    return &client{client: NewRedis()}
+	return &client{client: NewRedis()}
 }

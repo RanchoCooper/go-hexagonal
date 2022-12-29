@@ -1,8 +1,8 @@
 package service
 
 import (
-    "context"
-    "sync"
+	"context"
+	"sync"
 )
 
 /**
@@ -11,12 +11,12 @@ import (
  */
 
 var (
-    once       sync.Once
-    ExampleSvc *ExampleService
+	once       sync.Once
+	ExampleSvc *ExampleService
 )
 
 func Init(ctx context.Context) {
-    once.Do(func() {
-        ExampleSvc = NewExampleService(ctx)
-    })
+	once.Do(func() {
+		ExampleSvc = NewExampleService(ctx)
+	})
 }

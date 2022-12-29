@@ -1,10 +1,10 @@
 package paginate
 
 import (
-    "github.com/gin-gonic/gin"
-    "github.com/spf13/cast"
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/cast"
 
-    "go-hexagonal/config"
+	"go-hexagonal/config"
 )
 
 /**
@@ -13,26 +13,26 @@ import (
  */
 
 func GetPage(c *gin.Context) int {
-    page := cast.ToInt(c.Query("page"))
-    if page <= 0 {
-        return 1
-    }
+	page := cast.ToInt(c.Query("page"))
+	if page <= 0 {
+		return 1
+	}
 
-    return page
+	return page
 }
 
 func GetPageSize(c *gin.Context) int {
-    pageSize := cast.ToInt(c.Query("page_size"))
-    if pageSize <= 0 {
-        return config.Config.HTTPServer.DefaultPageSize
-    }
-    if pageSize > config.Config.HTTPServer.MaxPageSize {
-        return config.Config.HTTPServer.MaxPageSize
-    }
+	pageSize := cast.ToInt(c.Query("page_size"))
+	if pageSize <= 0 {
+		return config.Config.HTTPServer.DefaultPageSize
+	}
+	if pageSize > config.Config.HTTPServer.MaxPageSize {
+		return config.Config.HTTPServer.MaxPageSize
+	}
 
-    return pageSize
+	return pageSize
 }
 
 func GetPageOffset(page, pageSize int) int {
-    return (page - 1) * pageSize
+	return (page - 1) * pageSize
 }
