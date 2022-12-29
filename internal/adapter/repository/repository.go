@@ -5,29 +5,24 @@ import (
 
 	"go-hexagonal/config"
 	"go-hexagonal/internal/adapter/repository/mysql"
+	"go-hexagonal/internal/adapter/repository/redis"
 	"go-hexagonal/util/log"
 )
 
-var (
-	Clients = &clients{
-		MySQL: mysql.Client,
-	}
-	// HealthCheck *redis.HealthCheck
-)
+var Clients = &clients{}
 
 type clients struct {
 	MySQL *mysql.MySQL
-	// repo.IExampleRepo
-	// Redis *redis.IRedis
+	Redis *redis.Redis
 }
 
 func (c *clients) close(ctx context.Context) {
 	if c.MySQL != nil {
 		c.MySQL.Close(ctx)
 	}
-	// if c.Redis != nil {
-	// 	c.Redis.Close(ctx)
-	// }
+	if c.Redis != nil {
+		c.Redis.Close(ctx)
+	}
 }
 
 type Option func(*clients)
@@ -37,6 +32,7 @@ func WithMySQL() Option {
 		if c.MySQL == nil {
 			if config.Config.MySQL != nil {
 				mysql.Client = mysql.NewMySQLClient()
+				c.MySQL = mysql.Client
 			} else {
 				panic("init repository fail, MySQL config is empty")
 			}
@@ -46,16 +42,14 @@ func WithMySQL() Option {
 
 func WithRedis() Option {
 	return func(c *clients) {
-		// 	if c.Redis == nil {
-		// 		if config.Config.Redis != nil {
-		// 			c.Redis = redis.NewRedisClient()
-		// 		} else {
-		// 			panic("init repository fail, Redis config is empty")
-		// 		}
-		// 	}
-		// 	if HealthCheck == nil {
-		// 		HealthCheck = redis.NewHealthCheck(Clients.Redis)
-		// 	}
+		if c.Redis == nil {
+			if config.Config.Redis != nil {
+				redis.Client = redis.NewRedisClient()
+				c.Redis = redis.Client
+			} else {
+				panic("init repository fail, Redis config is empty")
+			}
+		}
 	}
 }
 

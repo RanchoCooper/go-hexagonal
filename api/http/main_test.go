@@ -23,8 +23,8 @@ func TestMain(m *testing.M) {
 	log.Init()
 
 	repository.Init(repository.WithMySQL(), repository.WithRedis())
-	db := repository.Clients.MySQL.GetDB(ctx)
-	_ = db.AutoMigrate(&entity.Example{})
+	_ = repository.Clients.MySQL.GetDB(ctx).AutoMigrate(&entity.Example{})
+	// _ = mysql.Client.GetDB(ctx).AutoMigrate(&entity.Example{})
 
 	service.Init(ctx)
 

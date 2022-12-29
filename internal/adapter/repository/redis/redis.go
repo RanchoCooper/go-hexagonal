@@ -16,30 +16,27 @@ import (
  * @date 2021/12/21
  */
 
-type IRedis interface {
-	GetClient() *redis.Client
-	Close(ctx context.Context)
-	// MockClient use only for unit test help to do  unit test without redis server
-	MockClient() redismock.ClusterClientMock
+var (
+	Client *Redis
+)
+
+type Redis struct {
+	RedisDB *redis.Client
 }
 
-type client struct {
-	client *redis.Client
+func (r *Redis) GetClient() *redis.Client {
+	return r.RedisDB
 }
 
-func (c *client) GetClient() *redis.Client {
-	return c.client
-}
-
-func (c *client) Close(ctx context.Context) {
-	err := c.client.Close()
+func (r *Redis) Close(ctx context.Context) {
+	err := r.RedisDB.Close()
 	if err != nil {
 		log.SugaredLogger.Errorf("close redis client fail. err: %s", err.Error())
 	}
 	log.Logger.Info("redis client closed")
 }
 
-func (c *client) MockClient() redismock.ClusterClientMock {
+func (r *Redis) MockClient() redismock.ClusterClientMock {
 	// FIXME unverified
 	_, mock := redismock.NewClusterMock()
 	return mock
@@ -57,6 +54,6 @@ func NewRedis() *redis.Client {
 	})
 }
 
-func NewRedisClient() IRedis {
-	return &client{client: NewRedis()}
+func NewRedisClient() *Redis {
+	return &Redis{RedisDB: NewRedis()}
 }

@@ -21,6 +21,6 @@ type IExampleRepo interface {
 	FindByName(ctx context.Context, name string) (*model.Example, error)
 }
 
-type IHealthCheckRepository interface {
+type IExampleCacheRepo interface {
 	HealthCheck(ctx context.Context) error
 }
