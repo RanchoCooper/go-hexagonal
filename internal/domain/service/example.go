@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"go-hexagonal/internal/adapter/repository"
-	"go-hexagonal/internal/domain/entity"
+	"go-hexagonal/internal/adapter/repository/mysql/entity"
+	"go-hexagonal/internal/domain/model"
 	"go-hexagonal/internal/domain/repo"
 	"go-hexagonal/util/log"
 )
@@ -19,13 +19,13 @@ type ExampleService struct {
 }
 
 func NewExampleService(ctx context.Context) *ExampleService {
-	srv := &ExampleService{Repository: repository.Example}
+	srv := &ExampleService{Repository: entity.NewExample()}
 	log.Logger.Info("example service init successfully")
 	return srv
 }
 
-func (e *ExampleService) Create(ctx context.Context, example *entity.Example) (*entity.Example, error) {
-	example, err := e.Repository.Create(ctx, nil, example)
+func (e *ExampleService) Create(ctx context.Context, model *model.Example) (*model.Example, error) {
+	example, err := e.Repository.Create(ctx, nil, model)
 	if err != nil {
 		return nil, err
 	}
@@ -40,16 +40,16 @@ func (e *ExampleService) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (e *ExampleService) Update(ctx context.Context, example *entity.Example) error {
-	err := e.Repository.Update(ctx, nil, example)
+func (e *ExampleService) Update(ctx context.Context, model *model.Example) error {
+	err := e.Repository.Update(ctx, nil, model)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (e *ExampleService) Get(ctx context.Context, id int) (*entity.Example, error) {
-	example, err := e.Repository.Get(ctx, id)
+func (e *ExampleService) Get(ctx context.Context, id int) (*model.Example, error) {
+	example, err := e.Repository.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}

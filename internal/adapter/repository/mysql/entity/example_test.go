@@ -1,4 +1,4 @@
-package mysql
+package entity
 
 import (
 	"regexp"
@@ -8,7 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"go-hexagonal/api/dto"
-	"go-hexagonal/internal/domain/entity"
+	"go-hexagonal/internal/adapter/repository/mysql"
+	"go-hexagonal/internal/domain/model"
 )
 
 /**
@@ -17,13 +18,12 @@ import (
  */
 
 func TestExample_Create(t *testing.T) {
-	exampleRepo := NewExample(NewMySQLClient())
-	DB, mock := exampleRepo.MockClient()
-	exampleRepo.SetDB(DB)
+	exampleRepo := NewExample()
+	_, mock := mysql.Client.MockClient()
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO `example`").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
-	e := &entity.Example{
+	e := &model.Example{
 		Name:  "rancho",
 		Alias: "cooper",
 	}
@@ -37,9 +37,8 @@ func TestExample_Create(t *testing.T) {
 }
 
 func TestExample_Delete(t *testing.T) {
-	exampleRepo := NewExample(NewMySQLClient())
-	DB, mock := exampleRepo.MockClient()
-	exampleRepo.SetDB(DB)
+	exampleRepo := NewExample()
+	_, mock := mysql.Client.MockClient()
 	mock.ExpectBegin()
 	mock.ExpectExec("UPDATE `example`").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
@@ -54,13 +53,12 @@ func TestExample_Delete(t *testing.T) {
 }
 
 func TestExample_Update(t *testing.T) {
-	exampleRepo := NewExample(NewMySQLClient())
-	DB, mock := exampleRepo.MockClient()
-	exampleRepo.SetDB(DB)
+	exampleRepo := NewExample()
+	_, mock := mysql.Client.MockClient()
 	mock.ExpectBegin()
 	mock.ExpectExec("UPDATE `example`").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
-	e := &entity.Example{
+	e := &model.Example{
 		Id:   1,
 		Name: "random",
 	}
@@ -72,12 +70,10 @@ func TestExample_Update(t *testing.T) {
 }
 
 func TestExample_Get(t *testing.T) {
-	exampleRepo := NewExample(NewMySQLClient())
-	DB, mock := exampleRepo.MockClient()
-	exampleRepo.SetDB(DB)
-	// FIXME
+	exampleRepo := NewExample()
+	_, mock := mysql.Client.MockClient()
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `example` WHERE `example`.`id` = ? AND `example`.`deleted_at` IS NULL")).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "test1"))
-	example, err := exampleRepo.Get(ctx, 1)
+	example, err := exampleRepo.GetByID(ctx, 1)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, example.Id)
 
