@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
-	buitinLog "log"
+	builtinLog "log"
 	"os"
 	"time"
 
@@ -23,28 +23,16 @@ import (
  * @date 2021/12/21
  */
 
-func buildGormConfig() *gorm.Config {
-	logger := gormLogger.New(
-		buitinLog.New(os.Stdout, "\r\n", buitinLog.LstdFlags),
-		gormLogger.Config{
-			SlowThreshold:             time.Second,     // Slow SQL threshold
-			LogLevel:                  gormLogger.Info, // Log level
-			IgnoreRecordNotFoundError: false,           // Ignore ErrRecordNotFound error for logger
-			Colorful:                  true,            // Disable color
-		},
-	)
-	// logger := zapgorm2.New(log.Logger)
-	// logger.SetAsDefault()
-	// logger.LogMode(gormLogger.Info)
-
-	return &gorm.Config{
-		NamingStrategy: schema.NamingStrategy{SingularTable: true},
-		Logger:         logger,
-	}
-}
-
 type MySQL struct {
 	db *gorm.DB
+}
+
+func NewMySQLClient() *MySQL {
+	db, err := openGormDB()
+	if err != nil {
+		panic(err)
+	}
+	return &MySQL{db: db}
 }
 
 func (c *MySQL) GetDB(ctx context.Context) *gorm.DB {
@@ -128,10 +116,19 @@ func openGormDB() (*gorm.DB, error) {
 	return db, nil
 }
 
-func NewMySQLClient() *MySQL {
-	db, err := openGormDB()
-	if err != nil {
-		panic(err)
+func buildGormConfig() *gorm.Config {
+	logger := gormLogger.New(
+		builtinLog.New(os.Stdout, "\r\n", builtinLog.LstdFlags),
+		gormLogger.Config{
+			SlowThreshold:             time.Second,     // Slow SQL threshold
+			LogLevel:                  gormLogger.Info, // Log level
+			IgnoreRecordNotFoundError: false,           // Ignore ErrRecordNotFound error for logger
+			Colorful:                  true,            // Disable color
+		},
+	)
+
+	return &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{SingularTable: true},
+		Logger:         logger,
 	}
-	return &MySQL{db: db}
 }

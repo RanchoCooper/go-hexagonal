@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 	config.Init()
 	log.Init()
 
-	repository.Clients.MySQL = repository.NewMySQLClient()
+	repository.Init(repository.WithMySQL())
 	_ = repository.Clients.MySQL.GetDB(ctx).AutoMigrate(&Example{})
 	m.Run()
 }
