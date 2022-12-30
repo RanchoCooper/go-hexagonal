@@ -3,13 +3,16 @@ package repository
 import (
 	"context"
 	"fmt"
+	buitin_log "log"
+	"os"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/spf13/cast"
 	driver "gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	gormLogger "gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
-	"moul.io/zapgorm2"
 
 	"go-hexagonal/config"
 	"go-hexagonal/util/log"
@@ -20,13 +23,25 @@ import (
  * @date 2021/12/21
  */
 
-var (
-	logger     = zapgorm2.New(log.Logger)
-	gormConfig = &gorm.Config{
+func buildGormConfig() *gorm.Config {
+	logger := gormLogger.New(
+		buitin_log.New(os.Stdout, "\r\n", buitin_log.LstdFlags), // io writer
+		gormLogger.Config{
+			SlowThreshold:             time.Second,     // Slow SQL threshold
+			LogLevel:                  gormLogger.Info, // Log level
+			IgnoreRecordNotFoundError: false,           // Ignore ErrRecordNotFound error for logger
+			Colorful:                  true,            // Disable color
+		},
+	)
+	// logger := zapgorm2.New(log.Logger)
+	// logger.SetAsDefault()
+	// logger.LogMode(gormLogger.Info)
+
+	return &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{SingularTable: true},
 		Logger:         logger,
 	}
-)
+}
 
 type MySQL struct {
 	db *gorm.DB
@@ -62,7 +77,7 @@ func (c *MySQL) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
 		SkipInitializeWithVersion: true,
 	})
 
-	c.db, err = gorm.Open(dialector, gormConfig)
+	c.db, err = gorm.Open(dialector, buildGormConfig())
 
 	return c.db, mock
 }
@@ -96,7 +111,7 @@ func openGormDB() (*gorm.DB, error) {
 		})
 	)
 
-	db, err := gorm.Open(dialector, gormConfig)
+	db, err := gorm.Open(dialector, buildGormConfig())
 
 	if err != nil {
 		return nil, err
