@@ -96,7 +96,7 @@ func TestExample_Update(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestExample_Get(t *testing.T) {
+func TestExample_GetByID(t *testing.T) {
 	exampleRepo := NewExample()
 	_, mock := repository.Clients.MySQL.MockClient()
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `example` WHERE `example`.`id` = ? AND `example`.`deleted_at` IS NULL")).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "test1"))

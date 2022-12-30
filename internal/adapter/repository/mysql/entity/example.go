@@ -25,14 +25,14 @@ func NewExample() *Example {
 }
 
 type Example struct {
-	mysql.TransactionImpl                        // inheritance mysql transaction implement
+	mysql.TransactionImpl `structs:"-"` // inheritance mysql transaction implement
 	Id                    int                    `json:"id" gorm:"primarykey" structs:",omitempty,underline"`
 	Name                  string                 `json:"name" structs:",omitempty,underline"`
 	Alias                 string                 `json:"alias" structs:",omitempty,underline"`
 	CreatedAt             time.Time              `json:"created_at" structs:",omitempty,underline"`
 	UpdatedAt             time.Time              `json:"updated_at" structs:",omitempty,underline"`
 	DeletedAt             gorm.DeletedAt         `json:"deleted_at" structs:",omitempty,underline"`
-	ChangeMap             map[string]interface{} `json:"-" gorm:"-" structs:"-" `
+	ChangeMap             map[string]interface{} `json:"-" gorm:"-" structs:"-"`
 }
 
 func (e Example) TableName() string {
@@ -109,7 +109,7 @@ func (e *Example) Update(ctx context.Context, tr *repository.Transaction, model 
 	return db.Error
 }
 
-func (e *Example) GetByID(ctx context.Context, tr *repository.Transaction, id int) (model *model.Example, err error) {
+func (e *Example) GetByID(ctx context.Context, tr *repository.Transaction, id int) (domain *model.Example, err error) {
 	entity := &Example{}
 
 	// conn db
@@ -125,11 +125,12 @@ func (e *Example) GetByID(ctx context.Context, tr *repository.Transaction, id in
 		return nil, err
 	}
 
-	err = copier.Copy(model, entity)
+	domain = &model.Example{}
+	err = copier.Copy(domain, entity)
 	if err != nil {
 		return nil, errors.Wrap(err, "copier fail")
 	}
-	return model, nil
+	return domain, nil
 }
 
 func (e *Example) FindByName(ctx context.Context, tr *repository.Transaction, name string) (model *model.Example, err error) {
