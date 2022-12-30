@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
-	buitin_log "log"
+	buitinLog "log"
 	"os"
 	"time"
 
@@ -25,7 +25,7 @@ import (
 
 func buildGormConfig() *gorm.Config {
 	logger := gormLogger.New(
-		buitin_log.New(os.Stdout, "\r\n", buitin_log.LstdFlags), // io writer
+		buitinLog.New(os.Stdout, "\r\n", buitinLog.LstdFlags),
 		gormLogger.Config{
 			SlowThreshold:             time.Second,     // Slow SQL threshold
 			LogLevel:                  gormLogger.Info, // Log level
@@ -60,10 +60,10 @@ func (c *MySQL) Close(ctx context.Context) {
 	if sqlDB != nil {
 		err := sqlDB.Close()
 		if err != nil {
-			log.SugaredLogger.Errorf("close mysql client fail. err: %v", err)
+			log.SugaredLogger.Errorf("close MySQL fail. err: %v", err)
 		}
 	}
-	log.Logger.Info("mysql client closed")
+	log.Logger.Info("MySQL closed")
 }
 
 func (c *MySQL) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
@@ -71,13 +71,13 @@ func (c *MySQL) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
 	if err != nil {
 		panic("mock MySQL fail, err: " + err.Error())
 	}
-	dialector := driver.New(driver.Config{
+	dialect := driver.New(driver.Config{
 		Conn:                      sqlDB,
 		DriverName:                "mysql-mock",
 		SkipInitializeWithVersion: true,
 	})
 
-	c.db, err = gorm.Open(dialector, buildGormConfig())
+	c.db, err = gorm.Open(dialect, buildGormConfig())
 
 	return c.db, mock
 }
@@ -93,7 +93,7 @@ func openGormDB() (*gorm.DB, error) {
 			config.Config.MySQL.ParseTime,
 			config.Config.MySQL.TimeZone,
 		)
-		dialector = driver.New(driver.Config{
+		dialect = driver.New(driver.Config{
 			DSN:                       dsn,
 			DriverName:                "mysql",
 			DefaultStringSize:         255,
@@ -111,8 +111,7 @@ func openGormDB() (*gorm.DB, error) {
 		})
 	)
 
-	db, err := gorm.Open(dialector, buildGormConfig())
-
+	db, err := gorm.Open(dialect, buildGormConfig())
 	if err != nil {
 		return nil, err
 	}
