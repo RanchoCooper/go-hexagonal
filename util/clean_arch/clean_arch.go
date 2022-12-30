@@ -147,40 +147,40 @@ func (v *Validator) validateImport(imp *ast.ImportSpec, importerMeta LayerMetada
 
 		if importHierarchy > importerHierarchy {
 			err := fmt.Errorf(
-				"anti-clean [hit-0]: %s import %s (%s) to %s",
+				"anti-clean [hit-0]: %s import %s(%s) to %s",
 				path, importMeta.Layer, importPath,
 				importerMeta.Layer,
 			)
 			errors = append(errors, err)
 		}
 	}
-	if importMeta.Module == importerMeta.Module {
-		importHierarchy := layersHierarchy[importMeta.Layer]
-		importerHierarchy := layersHierarchy[importerMeta.Layer]
-		// log.SugaredLogger.Infof("import hierarchy: %d, importer hierarchy: %d", importHierarchy, importerHierarchy)
-
-		if importHierarchy > importerHierarchy {
-			err := fmt.Errorf(
-				"anti-clean [hit-1]: %s, import %s (%s) to %s",
-				path, importMeta.Layer, importPath,
-				importerMeta.Layer,
-			)
-			errors = append(errors, err)
-		}
-	} else if importMeta.Layer != "" {
-		if importMeta.Layer != LayerInterfaces || importerMeta.Layer != LayerInfrastructure {
-			err := fmt.Errorf(
-				"anti-clean [hit-2]: %s imported %s, between %s and %s",
-				path, importPath,
-				importMeta.Module, importerMeta.Module,
-			)
-			errors = append(errors, err)
-		} else {
-			panic("exists unhandled case")
-		}
-	} else {
-		panic("exists unhandled case")
-	}
+	// if importMeta.Module == importerMeta.Module {
+	// 	importHierarchy := layersHierarchy[importMeta.Layer]
+	// 	importerHierarchy := layersHierarchy[importerMeta.Layer]
+	// 	// log.SugaredLogger.Infof("import hierarchy: %d, importer hierarchy: %d", importHierarchy, importerHierarchy)
+	//
+	// 	if importHierarchy > importerHierarchy {
+	// 		err := fmt.Errorf(
+	// 			"anti-clean [hit-1]: %s, import %s (%s) to %s",
+	// 			path, importMeta.Layer, importPath,
+	// 			importerMeta.Layer,
+	// 		)
+	// 		errors = append(errors, err)
+	// 	}
+	// } else if importMeta.Layer != "" {
+	// 	if importMeta.Layer != LayerInterfaces || importerMeta.Layer != LayerInfrastructure {
+	// 		err := fmt.Errorf(
+	// 			"anti-clean [hit-2]: %s imported %s, between %s and %s",
+	// 			path, importPath,
+	// 			importMeta.Module, importerMeta.Module,
+	// 		)
+	// 		errors = append(errors, err)
+	// 	} else {
+	// 		panic("exists unhandled case")
+	// 	}
+	// } else {
+	// 	panic("exists unhandled case")
+	// }
 
 	if len(errors) == 0 {
 		log.SugaredLogger.Infof("%s imported: %s passed ✅ (%s import %s)", path, importPath, importMeta.Layer, importerMeta.Layer)

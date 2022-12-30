@@ -16,14 +16,13 @@ import (
 
 var layersAliases = map[string]Layer{
 	// Domain
-	"domain":                          LayerDomain,
-	"domain/aggregate":                LayerDomain,
-	"domain/event":                    LayerDomain,
-	"domain/model":                    LayerDomain,
-	"domain/repo":                     LayerDomain,
-	"domain/service":                  LayerDomain,
-	"domain/vo":                       LayerDomain,
-	"adapter/repository/mysql/entity": LayerInfrastructure,
+	"domain":           LayerDomain,
+	"domain/aggregate": LayerDomain,
+	"domain/event":     LayerDomain,
+	"domain/model":     LayerDomain,
+	"domain/repo":      LayerDomain,
+	"domain/service":   LayerDomain,
+	"domain/vo":        LayerDomain,
 
 	// Application
 	"application": LayerApplication,
@@ -38,12 +37,13 @@ var layersAliases = map[string]Layer{
 	"api/http":   LayerInterfaces,
 
 	// Infrastructure
-	"infrastructure":           LayerInfrastructure,
-	"adapters":                 LayerInfrastructure,
-	"adapter":                  LayerInfrastructure,
-	"adapter/repository":       LayerInfrastructure,
-	"adapter/repository/mysql": LayerInfrastructure,
-	"adapter/repository/redis": LayerInfrastructure,
+	"infrastructure":                  LayerInfrastructure,
+	"adapters":                        LayerInfrastructure,
+	"adapter":                         LayerInfrastructure,
+	"adapter/repository":              LayerInfrastructure,
+	"adapter/repository/mysql":        LayerInfrastructure,
+	"adapter/repository/redis":        LayerInfrastructure,
+	"adapter/repository/mysql/entity": LayerInfrastructure,
 }
 
 func TestValidator_Validate(t *testing.T) {
