@@ -10,7 +10,6 @@ import (
 
 	"go-hexagonal/api/dto"
 	"go-hexagonal/internal/adapter/repository"
-	"go-hexagonal/internal/adapter/repository/mysql"
 	"go-hexagonal/internal/domain/model"
 )
 
@@ -48,10 +47,13 @@ func TestExample_Create(t *testing.T) {
 			Name:  "rancho",
 			Alias: "cooper",
 		}
-		tr := mysql.NewTransaction(ctx, &sql.TxOptions{
-			Isolation: sql.LevelReadUncommitted,
-			ReadOnly:  false,
-		})
+		tr := repository.NewTransaction(ctx,
+			repository.MySQLStore,
+			&sql.TxOptions{
+				Isolation: sql.LevelReadUncommitted,
+				ReadOnly:  false,
+			},
+		)
 		example, err := exampleRepo.Create(ctx, tr, e)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, example.Id)

@@ -15,14 +15,16 @@ var Clients = &clients{}
 type Transaction struct {
 	Session *gorm.DB
 	TxOpt   *sql.TxOptions
-	// Tx      *sql.Tx
 }
 
-type ITransaction interface {
-	Begin(context.Context, *Transaction)
-	Commit(*Transaction) error
-	Rollback(*Transaction) error
-}
+type StoreType string
+
+const (
+	MySQLStore      StoreType = "MySQL"
+	RedisStore      StoreType = "Redis"
+	MongoStore      StoreType = "Mongo"
+	PostgreSQLStore StoreType = "PostgreSQL"
+)
 
 type clients struct {
 	MySQL *MySQL
@@ -30,6 +32,39 @@ type clients struct {
 }
 
 type Option func(*clients)
+
+func (tr *Transaction) Conn(ctx context.Context) *gorm.DB {
+	if tr == nil {
+		// init transaction with default session
+		return Clients.MySQL.GetDB(ctx)
+	}
+	if tr.Session == nil {
+		// begin new with TxOpt
+		tr.Session = Clients.MySQL.GetDB(ctx).Begin(tr.TxOpt)
+	}
+
+	return tr.Session
+}
+
+func NewTransaction(ctx context.Context, store StoreType, opt *sql.TxOptions) *Transaction {
+	tr := &Transaction{TxOpt: opt}
+
+	if store == MySQLStore {
+		session := Clients.MySQL.GetDB(ctx)
+		if opt != nil {
+			session = session.Begin(opt)
+		}
+		tr.Session = session
+	} else if store == RedisStore {
+		// TODO
+	} else if store == MongoStore {
+		// TODO
+	} else if store == PostgreSQLStore {
+		// TODO
+	}
+
+	return tr
+}
 
 func (c *clients) close(ctx context.Context) {
 	if c.MySQL != nil {
@@ -43,11 +78,10 @@ func (c *clients) close(ctx context.Context) {
 func WithMySQL() Option {
 	return func(c *clients) {
 		if c.MySQL == nil {
-			if config.Config.MySQL != nil {
-				c.MySQL = NewMySQLClient()
-			} else {
-				panic("init repository fail, MySQL config is empty")
+			if config.Config.MySQL == nil {
+				panic("repository init fail, MySQL config is empty")
 			}
+			c.MySQL = NewMySQLClient()
 		}
 	}
 }
@@ -55,11 +89,10 @@ func WithMySQL() Option {
 func WithRedis() Option {
 	return func(c *clients) {
 		if c.Redis == nil {
-			if config.Config.Redis != nil {
-				c.Redis = NewRedisClient()
-			} else {
-				panic("init repository fail, Redis config is empty")
+			if config.Config.Redis == nil {
+				panic("repository init fail, Redis config is empty")
 			}
+			c.Redis = NewRedisClient()
 		}
 	}
 }

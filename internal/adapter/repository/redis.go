@@ -24,6 +24,10 @@ type Redis struct {
 	db *redis.Client
 }
 
+func NewRedisClient() *Redis {
+	return &Redis{db: newRedisConn()}
+}
+
 func (r *Redis) GetClient() *redis.Client {
 	return r.db
 }
@@ -36,8 +40,7 @@ func (r *Redis) Close(ctx context.Context) {
 	log.Logger.Info("redis client closed")
 }
 
-func (r *Redis) MockClient() redismock.ClusterClientMock {
-	// FIXME unverified
+func (r *Redis) MockClient() redismock.ClientMock {
 	db, mock := redismock.NewClientMock()
 	r.db = db
 	return mock
@@ -53,8 +56,4 @@ func newRedisConn() *redis.Client {
 		MinIdleConns: config.Config.Redis.MinIdleConns,
 		IdleTimeout:  time.Duration(config.Config.Redis.IdleTimeout) * time.Second,
 	})
-}
-
-func NewRedisClient() *Redis {
-	return &Redis{db: newRedisConn()}
 }

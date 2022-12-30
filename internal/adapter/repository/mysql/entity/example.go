@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 
 	"go-hexagonal/internal/adapter/repository"
-	"go-hexagonal/internal/adapter/repository/mysql"
 	"go-hexagonal/internal/domain/model"
 	"go-hexagonal/internal/domain/repo"
 )
@@ -25,14 +24,13 @@ func NewExample() *Example {
 }
 
 type Example struct {
-	mysql.TransactionImpl `structs:"-"` // inheritance mysql transaction implement
-	Id                    int                    `json:"id" gorm:"primarykey" structs:",omitempty,underline"`
-	Name                  string                 `json:"name" structs:",omitempty,underline"`
-	Alias                 string                 `json:"alias" structs:",omitempty,underline"`
-	CreatedAt             time.Time              `json:"created_at" structs:",omitempty,underline"`
-	UpdatedAt             time.Time              `json:"updated_at" structs:",omitempty,underline"`
-	DeletedAt             gorm.DeletedAt         `json:"deleted_at" structs:",omitempty,underline"`
-	ChangeMap             map[string]interface{} `json:"-" gorm:"-" structs:"-"`
+	Id        int                    `json:"id" gorm:"primarykey" structs:",omitempty,underline"`
+	Name      string                 `json:"name" structs:",omitempty,underline"`
+	Alias     string                 `json:"alias" structs:",omitempty,underline"`
+	CreatedAt time.Time              `json:"created_at" structs:",omitempty,underline"`
+	UpdatedAt time.Time              `json:"updated_at" structs:",omitempty,underline"`
+	DeletedAt gorm.DeletedAt         `json:"deleted_at" structs:",omitempty,underline"`
+	ChangeMap map[string]interface{} `json:"-" gorm:"-" structs:"-"`
 }
 
 func (e Example) TableName() string {
@@ -52,13 +50,7 @@ func (e *Example) Create(ctx context.Context, tr *repository.Transaction, model 
 		return nil, errors.Wrap(err, "copier fail")
 	}
 
-	// conn db
-	db, err := e.ConnDB(ctx, tr)
-	if err != nil {
-		return nil, err
-	}
-
-	// handle sql
+	db := tr.Conn(ctx)
 	err = db.Create(entity).Error
 	if err != nil {
 		return nil, err
@@ -75,13 +67,7 @@ func (e *Example) Create(ctx context.Context, tr *repository.Transaction, model 
 func (e *Example) Delete(ctx context.Context, tr *repository.Transaction, id int) (err error) {
 	entity := &Example{}
 
-	// conn db
-	db, err := e.ConnDB(ctx, tr)
-	if err != nil {
-		return err
-	}
-
-	// handle sql
+	db := tr.Conn(ctx)
 	err = db.Delete(entity, id).Error
 	// hard delete
 	// err := tx.Unscoped().Delete(entity, Id).Error
@@ -97,14 +83,8 @@ func (e *Example) Update(ctx context.Context, tr *repository.Transaction, model 
 	entity.ChangeMap = structs.Map(entity)
 	entity.ChangeMap["updated_at"] = time.Now()
 
-	// conn db
-	db, err := e.ConnDB(ctx, tr)
-	if err != nil {
-		return err
-	}
-
-	// handle sql
-	db.Table(entity.TableName()).Where("id = ? AND deleted_at IS NULL", entity.Id).Updates(entity.ChangeMap)
+	db := tr.Conn(ctx)
+	db = db.Table(entity.TableName()).Where("id = ? AND deleted_at IS NULL", entity.Id).Updates(entity.ChangeMap)
 
 	return db.Error
 }
@@ -112,14 +92,8 @@ func (e *Example) Update(ctx context.Context, tr *repository.Transaction, model 
 func (e *Example) GetByID(ctx context.Context, tr *repository.Transaction, id int) (domain *model.Example, err error) {
 	entity := &Example{}
 
-	// conn db
-	db, err := e.ConnDB(ctx, tr)
-	if err != nil {
-		return nil, err
-	}
-
-	// handle sql
-	db.Table(entity.TableName()).Find(entity, id)
+	db := tr.Conn(ctx)
+	db = db.Table(entity.TableName()).Find(entity, id)
 
 	if db.Error != nil {
 		return nil, err
@@ -136,13 +110,7 @@ func (e *Example) GetByID(ctx context.Context, tr *repository.Transaction, id in
 func (e *Example) FindByName(ctx context.Context, tr *repository.Transaction, name string) (model *model.Example, err error) {
 	entity := &Example{}
 
-	// conn db
-	db, err := e.ConnDB(ctx, tr)
-	if err != nil {
-		return nil, err
-	}
-
-	// handle sql
+	db := tr.Conn(ctx)
 	db.Table(entity.TableName()).Where("name = ?", name).Last(entity)
 	if db.Error != nil {
 		return nil, err
