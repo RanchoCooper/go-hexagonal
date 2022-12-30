@@ -49,7 +49,7 @@ func (e *ExampleService) Update(ctx context.Context, model *model.Example) error
 }
 
 func (e *ExampleService) Get(ctx context.Context, id int) (*model.Example, error) {
-	example, err := e.Repository.GetByID(ctx, id)
+	example, err := e.Repository.GetByID(ctx, nil, id)
 	if err != nil {
 		return nil, err
 	}

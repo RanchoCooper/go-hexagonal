@@ -27,8 +27,8 @@ func TestExample_Create(t *testing.T) {
 		mock.ExpectExec("INSERT INTO `example`").WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 		e := &model.Example{
-			Name:  "rancho",
-			Alias: "cooper",
+			Name:  "RanchoCooper",
+			Alias: "Rancho",
 		}
 		example, err := exampleRepo.Create(ctx, nil, e)
 		assert.NoError(t, err)

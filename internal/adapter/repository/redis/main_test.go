@@ -20,6 +20,6 @@ func TestMain(m *testing.M) {
 	config.Init()
 	log.Init()
 
-	Client = repository.NewRedisClient()
+	repository.Clients.Redis = repository.NewRedisClient()
 	m.Run()
 }

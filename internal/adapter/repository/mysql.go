@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	driver "gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -68,23 +67,7 @@ func (c *MySQL) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
 	return c.db, mock
 }
 
-func finishTransaction(err error, tx *gorm.DB) error {
-	if err != nil {
-		if rollbackErr := tx.Rollback().Error; rollbackErr != nil {
-			return errors.Wrap(err, rollbackErr.Error())
-		}
-
-		return err
-	}
-
-	if commitErr := tx.Commit().Error; commitErr != nil {
-		return errors.Wrap(err, fmt.Sprintf("failed to commit tx, err: %s", commitErr.Error()))
-	}
-
-	return nil
-}
-
-func NewGormDB() (*gorm.DB, error) {
+func openGormDB() (*gorm.DB, error) {
 	var (
 		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=%s&parseTime=%t&loc=%s",
 			config.Config.MySQL.User,
@@ -132,7 +115,7 @@ func NewGormDB() (*gorm.DB, error) {
 }
 
 func NewMySQLClient() *MySQL {
-	db, err := NewGormDB()
+	db, err := openGormDB()
 	if err != nil {
 		panic(err)
 	}

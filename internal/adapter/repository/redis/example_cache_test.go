@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"go-hexagonal/internal/adapter/repository"
 )
 
 /**
@@ -13,8 +15,10 @@ import (
 
 func TestExampleCache_HealthCheck(t *testing.T) {
 	cache := NewExampleCache()
-	mock := Client.MockClient()
+	mock := repository.Clients.Redis.MockClient()
 	mock.ClearExpect()
+	mock.ExpectPing().SetVal("PONG")
+
 	err := cache.HealthCheck(ctx)
 	assert.Nil(t, err)
 

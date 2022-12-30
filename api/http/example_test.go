@@ -7,10 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"go-hexagonal/api/dto"
+	"go-hexagonal/internal/adapter/repository"
 )
 
 /**
@@ -19,6 +21,11 @@ import (
  */
 
 func TestCreateExample(t *testing.T) {
+	_, mock := repository.Clients.MySQL.MockClient()
+	mock.ExpectBegin()
+	mock.ExpectExec("INSERT INTO `example`").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
 	var w = httptest.NewRecorder()
 	var response map[string]interface{}
 	body := dto.CreateExampleReq{
@@ -38,4 +45,7 @@ func TestCreateExample(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "RanchoCooper", response["name"])
 	assert.Equal(t, "Rancho", response["alias"])
+
+	err = mock.ExpectationsWereMet()
+	assert.NoError(t, err)
 }

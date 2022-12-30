@@ -21,15 +21,15 @@ import (
 // )
 
 type Redis struct {
-	RedisDB *redis.Client
+	db *redis.Client
 }
 
 func (r *Redis) GetClient() *redis.Client {
-	return r.RedisDB
+	return r.db
 }
 
 func (r *Redis) Close(ctx context.Context) {
-	err := r.RedisDB.Close()
+	err := r.db.Close()
 	if err != nil {
 		log.SugaredLogger.Errorf("close redis client fail. err: %s", err.Error())
 	}
@@ -38,11 +38,12 @@ func (r *Redis) Close(ctx context.Context) {
 
 func (r *Redis) MockClient() redismock.ClusterClientMock {
 	// FIXME unverified
-	_, mock := redismock.NewClusterMock()
+	db, mock := redismock.NewClientMock()
+	r.db = db
 	return mock
 }
 
-func NewRedis() *redis.Client {
+func newRedisConn() *redis.Client {
 	return redis.NewClient(&redis.Options{
 		Addr:         config.Config.Redis.Addr,
 		Username:     config.Config.Redis.UserName,
@@ -55,5 +56,5 @@ func NewRedis() *redis.Client {
 }
 
 func NewRedisClient() *Redis {
-	return &Redis{RedisDB: NewRedis()}
+	return &Redis{db: newRedisConn()}
 }
