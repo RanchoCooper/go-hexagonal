@@ -83,154 +83,15 @@ func TestParseLayerMetadata(t *testing.T) {
 		{
 			Path: "/go-hexagonal/domain/file.go",
 			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
+				Module: "domain",
 				Layer:  LayerDomain,
 			},
 		},
 		{
-			Path: "/go-hexagonal/service/file.go",
+			Path: "/go-hexagonal/domain/service/file.go",
 			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
+				Module: "domain/service",
 				Layer:  LayerDomain,
-			},
-		},
-		{
-			Path: "/go-hexagonal/model/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerDomain,
-			},
-		},
-		{
-			Path: "/go-hexagonal/aggregate/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerDomain,
-			},
-		},
-		{
-			Path: "/go-hexagonal/repo/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerDomain,
-			},
-		},
-		{
-			Path: "/go-hexagonal/event/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerDomain,
-			},
-		},
-		{
-			Path: "/go-hexagonal/vo/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerDomain,
-			},
-		},
-
-		// application layer
-		{
-			Path: "/go-hexagonal/application/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerApplication,
-			},
-		},
-		{
-			Path: "/go-hexagonal/app/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerApplication,
-			},
-		},
-
-		// interface layer
-		{
-			Path: "/go-hexagonal/interfaces/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerInterfaces,
-			},
-		},
-		{
-			Path: "/go-hexagonal/interface/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerInterfaces,
-			},
-		},
-		{
-			Path: "/go-hexagonal/dto/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerInterfaces,
-			},
-		},
-		{
-			Path: "/go-hexagonal/dto/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerInterfaces,
-			},
-		},
-		{
-			Path: "/go-hexagonal/grpc/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerInterfaces,
-			},
-		},
-		{
-			Path: "/go-hexagonal/http/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerInterfaces,
-			},
-		},
-
-		// infrastructure layer
-		{
-			Path: "/go-hexagonal/infrastructure/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerInfrastructure,
-			},
-		},
-		{
-			Path: "/go-hexagonal/adapters/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerInfrastructure,
-			},
-		},
-		{
-			Path: "/go-hexagonal/adapter/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerInfrastructure,
-			},
-		},
-		{
-			Path: "/go-hexagonal/repository/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerInfrastructure,
-			},
-		},
-		{
-			Path: "/go-hexagonal/mysql/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerInfrastructure,
-			},
-		},
-		{
-			Path: "/go-hexagonal/entity/file.go",
-			ExpectedFileMetadata: LayerMetadata{
-				Module: "go-hexagonal",
-				Layer:  LayerInfrastructure,
 			},
 		},
 	}
