@@ -1,4 +1,4 @@
-package redis
+package repository
 
 import (
 	"context"
@@ -16,9 +16,9 @@ import (
  * @date 2021/12/21
  */
 
-var (
-	Client *Redis
-)
+// var (
+// 	Client *Redis
+// )
 
 type Redis struct {
 	RedisDB *redis.Client

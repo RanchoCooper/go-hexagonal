@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"go-hexagonal/config"
+	"go-hexagonal/internal/adapter/repository"
 	"go-hexagonal/util/log"
 )
 
@@ -19,6 +20,6 @@ func TestMain(m *testing.M) {
 	config.Init()
 	log.Init()
 
-	Client = NewRedisClient()
+	Client = repository.NewRedisClient()
 	m.Run()
 }

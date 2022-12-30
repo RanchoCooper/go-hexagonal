@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"go-hexagonal/api/dto"
-	"go-hexagonal/internal/adapter/repository/mysql"
+	"go-hexagonal/internal/adapter/repository"
 	"go-hexagonal/internal/domain/model"
 )
 
@@ -19,8 +19,11 @@ import (
 
 func TestExample_Create(t *testing.T) {
 	exampleRepo := NewExample()
-	_, mock := mysql.Client.MockClient()
+	_, mock := repository.Clients.MySQL.MockClient()
 	mock.ExpectBegin()
+	mock.ExpectQuery("SELECT VERSION()").WithArgs().WillReturnRows(
+		mock.NewRows([]string{"version"}).FromCSVString("1"),
+	)
 	mock.ExpectExec("INSERT INTO `example`").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 	e := &model.Example{
@@ -38,7 +41,7 @@ func TestExample_Create(t *testing.T) {
 
 func TestExample_Delete(t *testing.T) {
 	exampleRepo := NewExample()
-	_, mock := mysql.Client.MockClient()
+	_, mock := repository.Clients.MySQL.MockClient()
 	mock.ExpectBegin()
 	mock.ExpectExec("UPDATE `example`").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
@@ -54,7 +57,7 @@ func TestExample_Delete(t *testing.T) {
 
 func TestExample_Update(t *testing.T) {
 	exampleRepo := NewExample()
-	_, mock := mysql.Client.MockClient()
+	_, mock := repository.Clients.MySQL.MockClient()
 	mock.ExpectBegin()
 	mock.ExpectExec("UPDATE `example`").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
@@ -71,9 +74,9 @@ func TestExample_Update(t *testing.T) {
 
 func TestExample_Get(t *testing.T) {
 	exampleRepo := NewExample()
-	_, mock := mysql.Client.MockClient()
+	_, mock := repository.Clients.MySQL.MockClient()
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `example` WHERE `example`.`id` = ? AND `example`.`deleted_at` IS NULL")).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "test1"))
-	example, err := exampleRepo.GetByID(ctx, 1)
+	example, err := exampleRepo.GetByID(ctx, nil, 1)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, example.Id)
 

@@ -1,4 +1,4 @@
-package mysql
+package repository
 
 import (
 	"context"
@@ -21,13 +21,8 @@ import (
  * @date 2021/12/21
  */
 
-var (
-	Client *MySQL
-)
-
 type MySQL struct {
 	db *gorm.DB
-	// example *entity.Example
 }
 
 func (c *MySQL) GetDB(ctx context.Context) *gorm.DB {
@@ -60,9 +55,8 @@ func (c *MySQL) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
 	})
 
 	// a SELECT VERSION() query will be run when gorm opens the database, so we need to expect that here
-	columns := []string{"version"}
 	mock.ExpectQuery("SELECT VERSION()").WithArgs().WillReturnRows(
-		mock.NewRows(columns).FromCSVString("1"),
+		mock.NewRows([]string{"version"}).FromCSVString("1"),
 	)
 	c.db, err = gorm.Open(dialector, &gorm.Config{})
 

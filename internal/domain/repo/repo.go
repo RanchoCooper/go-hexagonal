@@ -3,8 +3,7 @@ package repo
 import (
 	"context"
 
-	"gorm.io/gorm"
-
+	"go-hexagonal/internal/adapter/repository"
 	"go-hexagonal/internal/domain/model"
 )
 
@@ -14,11 +13,11 @@ import (
  */
 
 type IExampleRepo interface {
-	Create(ctx context.Context, tx *gorm.DB, entity *model.Example) (*model.Example, error)
-	Delete(ctx context.Context, tx *gorm.DB, Id int) error
-	Update(ctx context.Context, tx *gorm.DB, entity *model.Example) error
-	GetByID(ctx context.Context, Id int) (*model.Example, error)
-	FindByName(ctx context.Context, name string) (*model.Example, error)
+	Create(ctx context.Context, tx *repository.Transaction, entity *model.Example) (*model.Example, error)
+	Delete(ctx context.Context, tx *repository.Transaction, Id int) error
+	Update(ctx context.Context, tx *repository.Transaction, entity *model.Example) error
+	GetByID(ctx context.Context, tx *repository.Transaction, Id int) (*model.Example, error)
+	FindByName(ctx context.Context, tx *repository.Transaction, name string) (*model.Example, error)
 }
 
 type IExampleCacheRepo interface {
