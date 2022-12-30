@@ -9,6 +9,7 @@ import (
 
 	"go-hexagonal/api/dto"
 	"go-hexagonal/internal/adapter/repository"
+	"go-hexagonal/internal/adapter/repository/mysql"
 	"go-hexagonal/internal/domain/model"
 )
 
@@ -19,24 +20,48 @@ import (
 
 func TestExample_Create(t *testing.T) {
 	exampleRepo := NewExample()
-	_, mock := repository.Clients.MySQL.MockClient()
-	mock.ExpectBegin()
-	mock.ExpectQuery("SELECT VERSION()").WithArgs().WillReturnRows(
-		mock.NewRows([]string{"version"}).FromCSVString("1"),
-	)
-	mock.ExpectExec("INSERT INTO `example`").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
-	e := &model.Example{
-		Name:  "rancho",
-		Alias: "cooper",
-	}
-	example, err := exampleRepo.Create(ctx, nil, e)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, example.Id)
-	assert.Equal(t, 1, example.Id)
+	t.Run("with nil tr", func(t *testing.T) {
+		_, mock := repository.Clients.MySQL.MockClient()
+		mock.ExpectBegin()
+		// mock.ExpectQuery("SELECT VERSION()").WithArgs().WillReturnRows(
+		// 	mock.NewRows([]string{"version"}).FromCSVString("1"),
+		// )
+		mock.ExpectExec("INSERT INTO `example`").WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+		e := &model.Example{
+			Name:  "rancho",
+			Alias: "cooper",
+		}
+		example, err := exampleRepo.Create(ctx, nil, e)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, example.Id)
+		assert.Equal(t, 1, example.Id)
 
-	err = mock.ExpectationsWereMet()
-	assert.NoError(t, err)
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("with tr", func(t *testing.T) {
+		_, mock := repository.Clients.MySQL.MockClient()
+		mock.ExpectBegin()
+		// mock.ExpectQuery("SELECT VERSION()").WithArgs().WillReturnRows(
+		// 	mock.NewRows([]string{"version"}).FromCSVString("1"),
+		// )
+		mock.ExpectExec("INSERT INTO `example`").WillReturnResult(sqlmock.NewResult(1, 1))
+		// mock.ExpectCommit()
+		e := &model.Example{
+			Name:  "rancho",
+			Alias: "cooper",
+		}
+		tr := mysql.NewTransaction(ctx, nil)
+		example, err := exampleRepo.Create(ctx, tr, e)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, example.Id)
+		assert.Equal(t, 1, example.Id)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
 
 func TestExample_Delete(t *testing.T) {

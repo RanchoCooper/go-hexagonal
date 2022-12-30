@@ -52,6 +52,11 @@ func (e *Example) Create(ctx context.Context, tr *repository.Transaction, model 
 		return nil, errors.Wrap(err, "copier fail")
 	}
 
+	// if tr == nil {
+	// 	defer func() {
+	// 		tr.Session.Commit()
+	// 	}()
+	// }
 	// conn db
 	db, err := e.ConnDB(ctx, tr)
 	if err != nil {

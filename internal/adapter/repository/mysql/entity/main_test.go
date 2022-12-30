@@ -14,7 +14,9 @@ import (
  * @date 2022/1/8
  */
 
-var ctx = context.TODO()
+var (
+	ctx = context.TODO()
+)
 
 func TestMain(m *testing.M) {
 	config.Init()

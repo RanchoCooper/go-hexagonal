@@ -29,8 +29,8 @@ func (c *MySQL) GetDB(ctx context.Context) *gorm.DB {
 	return c.db.WithContext(ctx)
 }
 
-func (c *MySQL) SetDB(DB *gorm.DB) {
-	c.db = DB
+func (c *MySQL) SetDB(db *gorm.DB) {
+	c.db = db
 }
 
 func (c *MySQL) Close(ctx context.Context) {
@@ -50,14 +50,11 @@ func (c *MySQL) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
 		panic("mock MySQL fail, err: " + err.Error())
 	}
 	dialector := driver.New(driver.Config{
-		Conn:       sqlDB,
-		DriverName: "mysql",
+		Conn:                      sqlDB,
+		DriverName:                "mysql-mock",
+		SkipInitializeWithVersion: true,
 	})
 
-	// a SELECT VERSION() query will be run when gorm opens the database, so we need to expect that here
-	mock.ExpectQuery("SELECT VERSION()").WithArgs().WillReturnRows(
-		mock.NewRows([]string{"version"}).FromCSVString("1"),
-	)
 	c.db, err = gorm.Open(dialector, &gorm.Config{})
 
 	return c.db, mock
@@ -80,25 +77,44 @@ func finishTransaction(err error, tx *gorm.DB) error {
 }
 
 func NewGormDB() (*gorm.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=%s&parseTime=%t&loc=%s",
-		config.Config.MySQL.User,
-		config.Config.MySQL.Password,
-		config.Config.MySQL.Host,
-		config.Config.MySQL.Database,
-		config.Config.MySQL.CharSet,
-		config.Config.MySQL.ParseTime,
-		config.Config.MySQL.TimeZone,
-	)
-
-	logger := zapgorm2.New(log.Logger)
-	logger.SetAsDefault()
-	db, err := gorm.Open(
-		driver.Open(dsn),
-		&gorm.Config{
+	var (
+		logger = zapgorm2.New(log.Logger)
+		dsn    = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=%s&parseTime=%t&loc=%s",
+			config.Config.MySQL.User,
+			config.Config.MySQL.Password,
+			config.Config.MySQL.Host,
+			config.Config.MySQL.Database,
+			config.Config.MySQL.CharSet,
+			config.Config.MySQL.ParseTime,
+			config.Config.MySQL.TimeZone,
+		)
+		driverConfig = driver.Config{
+			DSN:                       dsn,
+			DriverName:                "mysql",
+			DefaultStringSize:         255,
+			SkipInitializeWithVersion: true,
+			// ServerVersion:                 "",
+			// DSNConfig:                     nil,
+			// Conn:                          nil,
+			// DefaultDatetimePrecision:      nil,
+			// DisableWithReturning:          false,
+			// DisableDatetimePrecision:      false,
+			// DontSupportRenameIndex:        false,
+			// DontSupportRenameColumn:       false,
+			// DontSupportForShareClause:     false,
+			// DontSupportNullAsDefaultValue: false,
+		}
+		gormConfig = &gorm.Config{
 			NamingStrategy: schema.NamingStrategy{SingularTable: true},
 			Logger:         logger,
-		},
+		}
 	)
+
+	db, err := gorm.Open(
+		driver.New(driverConfig),
+		gormConfig,
+	)
+
 	if err != nil {
 		return nil, err
 	}

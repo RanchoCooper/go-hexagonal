@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 
+	"gorm.io/gorm"
+
 	"go-hexagonal/config"
 	"go-hexagonal/util/log"
 )
@@ -11,14 +13,15 @@ import (
 var Clients = &clients{}
 
 type Transaction struct {
-	Tx     *sql.Tx
-	TxOpts []*sql.TxOptions
+	// Tx      *sql.Tx
+	Session *gorm.DB
+	TxOpt   *sql.TxOptions
 }
 
 type ITransaction interface {
-	Begin(context.Context, *Transaction) (*Transaction, error)
+	Begin(context.Context, *Transaction)
 	Commit(*Transaction) error
-	RollBack(*Transaction) error
+	Rollback(*Transaction) error
 }
 
 type clients struct {
