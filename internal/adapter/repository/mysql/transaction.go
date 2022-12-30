@@ -32,10 +32,14 @@ func NewTransaction(ctx context.Context, opt *sql.TxOptions) *repository.Transac
 
 func (t TransactionImpl) ConnDB(ctx context.Context, tr *repository.Transaction) (db *gorm.DB, err error) {
 	if tr == nil {
-		tr = &repository.Transaction{}
+		// init transaction with default session
+		tr = &repository.Transaction{Session: repository.Clients.MySQL.GetDB(ctx)}
+	}
+	if tr.Session == nil {
+		// begin new with TxOpt
+		tr.Session = repository.Clients.MySQL.GetDB(ctx).Begin(tr.TxOpt)
 	}
 
-	tr.Session = repository.Clients.MySQL.GetDB(ctx).Begin(tr.TxOpt)
 	return tr.Session, err
 }
 

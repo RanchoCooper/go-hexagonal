@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"database/sql"
 	"regexp"
 	"testing"
 
@@ -20,12 +21,9 @@ import (
 
 func TestExample_Create(t *testing.T) {
 	exampleRepo := NewExample()
-	t.Run("with nil tr", func(t *testing.T) {
+	t.Run("run with nil transaction", func(t *testing.T) {
 		_, mock := repository.Clients.MySQL.MockClient()
 		mock.ExpectBegin()
-		// mock.ExpectQuery("SELECT VERSION()").WithArgs().WillReturnRows(
-		// 	mock.NewRows([]string{"version"}).FromCSVString("1"),
-		// )
 		mock.ExpectExec("INSERT INTO `example`").WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 		e := &model.Example{
@@ -41,23 +39,24 @@ func TestExample_Create(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("with tr", func(t *testing.T) {
+	t.Run("run with new transaction", func(t *testing.T) {
 		_, mock := repository.Clients.MySQL.MockClient()
 		mock.ExpectBegin()
-		// mock.ExpectQuery("SELECT VERSION()").WithArgs().WillReturnRows(
-		// 	mock.NewRows([]string{"version"}).FromCSVString("1"),
-		// )
 		mock.ExpectExec("INSERT INTO `example`").WillReturnResult(sqlmock.NewResult(1, 1))
-		// mock.ExpectCommit()
+		mock.ExpectCommit()
 		e := &model.Example{
 			Name:  "rancho",
 			Alias: "cooper",
 		}
-		tr := mysql.NewTransaction(ctx, nil)
+		tr := mysql.NewTransaction(ctx, &sql.TxOptions{
+			Isolation: sql.LevelReadUncommitted,
+			ReadOnly:  false,
+		})
 		example, err := exampleRepo.Create(ctx, tr, e)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, example.Id)
 		assert.Equal(t, 1, example.Id)
+		tr.Session.Commit()
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)

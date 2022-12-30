@@ -25,14 +25,14 @@ func NewExample() *Example {
 }
 
 type Example struct {
-	mysql.TransactionImpl `gorm:"-" copier:"-"` // inheritance mysql transaction implement
+	mysql.TransactionImpl                        // inheritance mysql transaction implement
 	Id                    int                    `json:"id" gorm:"primarykey" structs:",omitempty,underline"`
 	Name                  string                 `json:"name" structs:",omitempty,underline"`
 	Alias                 string                 `json:"alias" structs:",omitempty,underline"`
 	CreatedAt             time.Time              `json:"created_at" structs:",omitempty,underline"`
 	UpdatedAt             time.Time              `json:"updated_at" structs:",omitempty,underline"`
 	DeletedAt             gorm.DeletedAt         `json:"deleted_at" structs:",omitempty,underline"`
-	ChangeMap             map[string]interface{} `json:"-" gorm:"-" structs:"-" copier:"-"`
+	ChangeMap             map[string]interface{} `json:"-" gorm:"-" structs:"-" `
 }
 
 func (e Example) TableName() string {
@@ -52,11 +52,6 @@ func (e *Example) Create(ctx context.Context, tr *repository.Transaction, model 
 		return nil, errors.Wrap(err, "copier fail")
 	}
 
-	// if tr == nil {
-	// 	defer func() {
-	// 		tr.Session.Commit()
-	// 	}()
-	// }
 	// conn db
 	db, err := e.ConnDB(ctx, tr)
 	if err != nil {
@@ -69,7 +64,7 @@ func (e *Example) Create(ctx context.Context, tr *repository.Transaction, model 
 		return nil, err
 	}
 
-	// err = copier.Copy(model, entity)
+	err = copier.Copy(model, entity)
 	if err != nil {
 		return nil, errors.Wrap(err, "copier fail")
 	}

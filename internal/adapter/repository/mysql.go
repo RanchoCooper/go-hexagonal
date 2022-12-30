@@ -21,6 +21,14 @@ import (
  * @date 2021/12/21
  */
 
+var (
+	logger     = zapgorm2.New(log.Logger)
+	gormConfig = &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{SingularTable: true},
+		Logger:         logger,
+	}
+)
+
 type MySQL struct {
 	db *gorm.DB
 }
@@ -55,7 +63,7 @@ func (c *MySQL) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
 		SkipInitializeWithVersion: true,
 	})
 
-	c.db, err = gorm.Open(dialector, &gorm.Config{})
+	c.db, err = gorm.Open(dialector, gormConfig)
 
 	return c.db, mock
 }
@@ -78,8 +86,7 @@ func finishTransaction(err error, tx *gorm.DB) error {
 
 func NewGormDB() (*gorm.DB, error) {
 	var (
-		logger = zapgorm2.New(log.Logger)
-		dsn    = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=%s&parseTime=%t&loc=%s",
+		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=%s&parseTime=%t&loc=%s",
 			config.Config.MySQL.User,
 			config.Config.MySQL.Password,
 			config.Config.MySQL.Host,
@@ -88,7 +95,7 @@ func NewGormDB() (*gorm.DB, error) {
 			config.Config.MySQL.ParseTime,
 			config.Config.MySQL.TimeZone,
 		)
-		driverConfig = driver.Config{
+		dialector = driver.New(driver.Config{
 			DSN:                       dsn,
 			DriverName:                "mysql",
 			DefaultStringSize:         255,
@@ -103,17 +110,10 @@ func NewGormDB() (*gorm.DB, error) {
 			// DontSupportRenameColumn:       false,
 			// DontSupportForShareClause:     false,
 			// DontSupportNullAsDefaultValue: false,
-		}
-		gormConfig = &gorm.Config{
-			NamingStrategy: schema.NamingStrategy{SingularTable: true},
-			Logger:         logger,
-		}
+		})
 	)
 
-	db, err := gorm.Open(
-		driver.New(driverConfig),
-		gormConfig,
-	)
+	db, err := gorm.Open(dialector, gormConfig)
 
 	if err != nil {
 		return nil, err

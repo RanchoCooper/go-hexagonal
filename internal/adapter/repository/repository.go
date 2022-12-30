@@ -13,9 +13,9 @@ import (
 var Clients = &clients{}
 
 type Transaction struct {
-	// Tx      *sql.Tx
 	Session *gorm.DB
 	TxOpt   *sql.TxOptions
+	// Tx      *sql.Tx
 }
 
 type ITransaction interface {
