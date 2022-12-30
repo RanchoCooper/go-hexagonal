@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"go-hexagonal/internal/adapter/repository"
 	"go-hexagonal/internal/domain/repo"
 )
 
@@ -22,7 +23,7 @@ type ExampleCache struct {
 var _ repo.IExampleCacheRepo = &ExampleCache{}
 
 func (h ExampleCache) HealthCheck(ctx context.Context) error {
-	pong := Client.RedisDB.Ping(ctx).String()
+	pong := repository.Clients.Redis.GetClient().Ping(ctx).String()
 	if pong != "ping: PONG" {
 		return errors.New("ping redis got invalid response: " + pong)
 	}

@@ -2,19 +2,34 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+
+	"gorm.io/gorm"
 
 	"go-hexagonal/config"
-	"go-hexagonal/internal/adapter/repository/mysql"
-	"go-hexagonal/internal/adapter/repository/redis"
 	"go-hexagonal/util/log"
 )
 
 var Clients = &clients{}
 
-type clients struct {
-	MySQL *mysql.MySQL
-	Redis *redis.Redis
+type Transaction struct {
+	Session *gorm.DB
+	TxOpt   *sql.TxOptions
+	// Tx      *sql.Tx
 }
+
+type ITransaction interface {
+	Begin(context.Context, *Transaction)
+	Commit(*Transaction) error
+	Rollback(*Transaction) error
+}
+
+type clients struct {
+	MySQL *MySQL
+	Redis *Redis
+}
+
+type Option func(*clients)
 
 func (c *clients) close(ctx context.Context) {
 	if c.MySQL != nil {
@@ -25,14 +40,11 @@ func (c *clients) close(ctx context.Context) {
 	}
 }
 
-type Option func(*clients)
-
 func WithMySQL() Option {
 	return func(c *clients) {
 		if c.MySQL == nil {
 			if config.Config.MySQL != nil {
-				mysql.Client = mysql.NewMySQLClient()
-				c.MySQL = mysql.Client
+				c.MySQL = NewMySQLClient()
 			} else {
 				panic("init repository fail, MySQL config is empty")
 			}
@@ -44,8 +56,7 @@ func WithRedis() Option {
 	return func(c *clients) {
 		if c.Redis == nil {
 			if config.Config.Redis != nil {
-				redis.Client = redis.NewRedisClient()
-				c.Redis = redis.Client
+				c.Redis = NewRedisClient()
 			} else {
 				panic("init repository fail, Redis config is empty")
 			}

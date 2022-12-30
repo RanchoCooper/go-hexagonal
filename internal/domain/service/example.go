@@ -6,7 +6,6 @@ import (
 	"go-hexagonal/internal/adapter/repository/mysql/entity"
 	"go-hexagonal/internal/domain/model"
 	"go-hexagonal/internal/domain/repo"
-	"go-hexagonal/util/log"
 )
 
 /**
@@ -20,7 +19,6 @@ type ExampleService struct {
 
 func NewExampleService(ctx context.Context) *ExampleService {
 	srv := &ExampleService{Repository: entity.NewExample()}
-	log.Logger.Info("example service init successfully")
 	return srv
 }
 
@@ -49,7 +47,7 @@ func (e *ExampleService) Update(ctx context.Context, model *model.Example) error
 }
 
 func (e *ExampleService) Get(ctx context.Context, id int) (*model.Example, error) {
-	example, err := e.Repository.GetByID(ctx, id)
+	example, err := e.Repository.GetByID(ctx, nil, id)
 	if err != nil {
 		return nil, err
 	}
