@@ -15,10 +15,10 @@ jobs:
             - image: cimg/redis:7.0
             - image: cimg/mysql:8.0
               environment:
-                  MYSQL_USER: root
+                  MYSQL_DATABASE: go-hexagonal
+                  MYSQL_USER: user
                   MYSQL_PASSWORD: root
                   MYSQL_ROOT_PASSWORD: root
-                  MYSQL_DATABASE: go-hexagonal
 #              auth:
 #                  username: mydockerhub-user
 #                  password: $DOCKERHUB_PASSWORD
@@ -28,14 +28,15 @@ jobs:
             - checkout
             - run:
                 name: Wait MySQL Start
-                command: |
-                    for i in `seq 1 10`;
-                    do
-                      nc -z 127.0.0.1 3306 && echo Success && exit 0
-                      echo -n .
-                      sleep 1
-                    done
-                    echo Failed waiting for MySQL && exit 1
+                command: dockerize -wait tcp://localhost:3306 -timeout 1m
+#                command: |
+#                    for i in `seq 1 10`;
+#                    do
+#                      nc -z 127.0.0.1 3306 && echo Success && exit 0
+#                      echo -n .
+#                      sleep 1
+#                    done
+#                    echo Failed waiting for MySQL && exit 1
             - run:
                name: Init MySQL
                command: |
@@ -47,7 +48,7 @@ jobs:
                       - go-mod-v4-{{ checksum "go.sum" }}
             - run:
                   name: Install Dependencies
-                  command: go mod download
+                  command: go get ./...
             - save_cache:
                   key: go-mod-v4-{{ checksum "go.sum" }}
                   paths:
@@ -55,8 +56,6 @@ jobs:
             - run:
                   name: Run UnitTest
                   command: go test -v $(go list ./... | circleci tests split --split-by=timings)
-            - store_test_results:
-                  path: /tmp/test-reports
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
