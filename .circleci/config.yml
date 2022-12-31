@@ -33,8 +33,8 @@ jobs:
             - run:
                   name: Prepare Dir
                   command: |
-                    mkdir -p /home/circleci/go
                     mkdir -p /tmp/artifacts
+                    mkdir -p /home/circleci/go
                     mkdir -p /home/circleci/repo/test-results
             - restore_cache:
                   name: Restore Go Mod Cache
