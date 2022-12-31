@@ -79,7 +79,5 @@ workflows:
         # Inside the workflow, you define the jobs you want to run.
         jobs:
             - build
-    Send-Slack-Notification:
-        jobs:
             - notify:
-                context: slack-bot-oauth-token
+                  context: slack-bot-oauth-token
