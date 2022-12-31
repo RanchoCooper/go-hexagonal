@@ -15,13 +15,10 @@ jobs:
             - image: cimg/redis:7.0
             - image: cimg/mysql:8.0
               environment:
-                  MYSQL_DATABASE: go-hexagonal
+                  MYSQL_DATABASE: hexagonal
                   MYSQL_USER: user
                   MYSQL_PASSWORD: root
                   MYSQL_ROOT_PASSWORD: root
-#              auth:
-#                  username: mydockerhub-user
-#                  password: $DOCKERHUB_PASSWORD
         # Add steps to the job
         # See: https://circleci.com/docs/2.0/configuration-reference/#steps
         steps:
@@ -29,20 +26,6 @@ jobs:
             - run:
                 name: Wait MySQL Start
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
-#                command: |
-#                    for i in `seq 1 10`;
-#                    do
-#                      nc -z 127.0.0.1 3306 && echo Success && exit 0
-#                      echo -n .
-#                      sleep 1
-#                    done
-#                    echo Failed waiting for MySQL && exit 1
-#            - run:
-#               name: Init MySQL
-#               command: |
-#                 sudo apt-get install default-mysql-client --fix-missing
-#                 mysql -h 127.0.0.1 -u user -ppassw0rd test_db < sql-data/dummy.sql
-#                 mysql -h 127.0.0.1 -u user -ppassw0rd --execute="SELECT * FROM test_db.Persons"
             - restore_cache:
                   keys:
                       - go-mod-v4-{{ checksum "go.sum" }}
