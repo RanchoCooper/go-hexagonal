@@ -37,12 +37,12 @@ jobs:
 #                      sleep 1
 #                    done
 #                    echo Failed waiting for MySQL && exit 1
-            - run:
-               name: Init MySQL
-               command: |
-                 sudo apt-get install default-mysql-client
-                 mysql -h 127.0.0.1 -u user -ppassw0rd test_db < sql-data/dummy.sql
-                 mysql -h 127.0.0.1 -u user -ppassw0rd --execute="SELECT * FROM test_db.Persons"
+#            - run:
+#               name: Init MySQL
+#               command: |
+#                 sudo apt-get install default-mysql-client --fix-missing
+#                 mysql -h 127.0.0.1 -u user -ppassw0rd test_db < sql-data/dummy.sql
+#                 mysql -h 127.0.0.1 -u user -ppassw0rd --execute="SELECT * FROM test_db.Persons"
             - restore_cache:
                   keys:
                       - go-mod-v4-{{ checksum "go.sum" }}
