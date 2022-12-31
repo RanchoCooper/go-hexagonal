@@ -35,10 +35,9 @@ jobs:
                   command: |
                     mkdir -p /home/circleci/go
                     mkdir -p /tmp/artifacts
-                    mkdir -p /home/circleci/repo
+                    mkdir -p /home/circleci/repo/test-results
             - restore_cache:
-                  name: Resore Go Mod Cache
-                  path: "/home/circleci/go/pkg/mod"
+                  name: Restore Go Mod Cache
                   paths:
                       - "/home/circleci/go/pkg/mod"
                   keys:
