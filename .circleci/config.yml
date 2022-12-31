@@ -6,15 +6,42 @@ version: 2.1
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
     build:
+        parallelism: 4
         working_directory: ~/repo
         # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
         # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
         docker:
-            - image: cimg/go:1.19.0
+            - image: cimg/go:1.19
+            - image: cimg/redis:7.0
+            - image: cimg/mysql:8.0
+              environment:
+                  MYSQL_USER: root
+                  MYSQL_PASSWORD: root
+                  MYSQL_ROOT_PASSWORD: root
+                  MYSQL_DATABASE: go-hexagonal
+#              auth:
+#                  username: mydockerhub-user
+#                  password: $DOCKERHUB_PASSWORD
         # Add steps to the job
         # See: https://circleci.com/docs/2.0/configuration-reference/#steps
         steps:
             - checkout
+            - run:
+                name: Wait MySQL Start
+                command: |
+                    for i in `seq 1 10`;
+                    do
+                      nc -z 127.0.0.1 3306 && echo Success && exit 0
+                      echo -n .
+                      sleep 1
+                    done
+                    echo Failed waiting for MySQL && exit 1
+            - run:
+               name: Init MySQL
+               command: |
+                 sudo apt-get install default-mysql-client
+                 mysql -h 127.0.0.1 -u user -ppassw0rd test_db < sql-data/dummy.sql
+                 mysql -h 127.0.0.1 -u user -ppassw0rd --execute="SELECT * FROM test_db.Persons"
             - restore_cache:
                   keys:
                       - go-mod-v4-{{ checksum "go.sum" }}
@@ -26,17 +53,16 @@ jobs:
                   paths:
                       - "/go/pkg/mod"
             - run:
-                  name: Run tests
-                  command: |
-                      mkdir -p /tmp/test-reports
-                      gotestsum --junitfile /tmp/test-reports/unit-tests.xml
+                  name: Run UnitTest
+                  command: go test -v $(go list ./... | circleci tests split --split-by=timings)
             - store_test_results:
                   path: /tmp/test-reports
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-    sample: # This is the name of the workflow, feel free to change it to better match your workflow.
+    version: 2
+    Build: # This is the name of the workflow, feel free to change it to better match your workflow.
         # Inside the workflow, you define the jobs you want to run.
         jobs:
             - build
