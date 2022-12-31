@@ -33,6 +33,7 @@ https://git.k8s.io/community/contributors/devel/sig-release/release.md#issuepr-k
 - **Config Changes**
 - **Infra Resource Needs**
 
+<!-- Remove this comment section if encounter production enviroment
 ## Check List
 - [ ] Infra Resource Ready
     - [ ] Dev
@@ -61,3 +62,4 @@ https://git.k8s.io/community/contributors/devel/sig-release/release.md#issuepr-k
 ```code
 code section
 ```
+-->
