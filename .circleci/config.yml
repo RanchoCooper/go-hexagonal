@@ -2,7 +2,7 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 orbs:
-    slack: circleci/slack@4.9.3
+    slack: circleci/slack@4.12.0
 
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
@@ -16,6 +16,7 @@ jobs:
             - image: cimg/go:1.19
             - image: cimg/redis:7.0
             - image: cimg/mysql:8.0
+            - image: cimg/base:stable
               environment:
                   MYSQL_DATABASE: hexagonal
                   MYSQL_USER: user
@@ -32,7 +33,7 @@ jobs:
                   keys:
                       - go-mod-v4-{{ checksum "go.sum" }}
             - run:
-                  name: Install Dependencies
+                  name: Go Mod Tidy
                   command: go mod tidy -v
             - save_cache:
                   key: go-mod-v4-{{ checksum "go.sum" }}
@@ -41,35 +42,16 @@ jobs:
             - run:
                   name: Run UnitTest
                   command: go test -v $(go list ./... | circleci tests split --split-by=timings)
-    notify:
-        docker:
-            - image: 'cimg/base:stable'
-        steps:
             - slack/notify:
                   event: pass
-                  template: success_tagged_deploy_1
+                  channel: circle-ci
                   mentions: '@Rancho'
+                  template: success_tagged_deploy_1
             - slack/notify:
-                event: fail
-                template: basic_fail_1
-                mentions: '@Rancho'
-            - slack/notify:
-                  custom: |
-                      {
-                        "blocks": [
-                          {
-                            "type": "section",
-                            "fields": [
-                              {
-                                "type": "plain_text",
-                                "text": "*This is a text notification*",
-                                "emoji": true
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                  event: always
+                  event: fail
+                  channel: circle-ci
+                  mentions: '@Rancho'
+                  template: basic_fail_1
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
@@ -78,6 +60,5 @@ workflows:
     Build: # This is the name of the workflow, feel free to change it to better match your workflow.
         # Inside the workflow, you define the jobs you want to run.
         jobs:
-            - build
-            - notify:
-                  context: slack-bot-oauth-token
+            - build:
+                context: slack-bot-oauth-token
