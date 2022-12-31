@@ -8,6 +8,14 @@ orbs:
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
+    notify:
+        docker:
+            - image: cimg/base:stable
+        steps:
+          - run:
+                name: Success
+                command: |
+                    exit 0
     build:
         parallelism: 4
         working_directory: ~/repo
@@ -17,7 +25,6 @@ jobs:
             - image: cimg/go:1.19
             - image: cimg/redis:7.0
             - image: cimg/mysql:8.0
-            - image: cimg/base:stable
               environment:
                   MYSQL_DATABASE: hexagonal
                   MYSQL_USER: user
@@ -46,9 +53,9 @@ jobs:
             - run:
                   name: Run Test
                   command: |
-                    go test -v -coverprofile=c.out $(go list ./... | circleci tests split --split-by=timings)
-                    go tool cover -html=c.out -o coverage.html
-                    mv coverage.html /tmp/artifacts
+                      go test -v -coverprofile=c.out $(go list ./... | circleci tests split --split-by=timings)
+                      go tool cover -html=c.out -o coverage.html
+                      mv coverage.html /tmp/artifacts
             - store_artifacts:
                   name: Store Test Artifacts
                   path: /tmp/artifacts
@@ -67,7 +74,6 @@ workflows:
         # Inside the workflow, you define the jobs you want to run.
         jobs:
             - build:
-                context: slack-bot-oauth-token
                 pre-steps:
                     - checkout
                     - run:
@@ -77,12 +83,16 @@ workflows:
                               mkdir -p /home/circleci/go
                               mkdir -p /home/circleci/repo/test-results
                               apt-get install mysql-client
-                post-steps:
-                    - slack/notify:
-                          event: pass
-                          mentions: '@Rancho'
-                          template: basic_success_1
-                    - slack/notify:
-                          event: fail
-                          mentions: '@Rancho'
-                          template: basic_fail_1
+            - notify:
+                  requires:
+                      - build
+                  context: slack-bot-oauth-token
+                  post-steps:
+                      - slack/notify:
+                            event: pass
+                            mentions: '@Rancho'
+                            template: basic_success_1
+                      - slack/notify:
+                            event: fail
+                            mentions: '@Rancho'
+                            template: basic_fail_1
