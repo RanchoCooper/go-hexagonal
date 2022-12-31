@@ -26,30 +26,20 @@ jobs:
         # Add steps to the job
         # See: https://circleci.com/docs/2.0/configuration-reference/#steps
         steps:
-            - checkout
-            - run:
-                name: Wait MySQL Start
-                command: dockerize -wait tcp://localhost:3306 -timeout 1m
-            - run:
-                  name: Prepare Dir
-                  command: |
-                    mkdir -p /tmp/artifacts
-                    mkdir -p /home/circleci/go
-                    mkdir -p /home/circleci/repo/test-results
             - restore_cache:
                   name: Restore Go Mod Cache
                   paths:
                       - "/home/circleci/go/pkg/mod"
                   keys:
                       - go-mod-v4-{{ checksum "go.sum" }}
-            - run:
-                  name: Go Mod Tidy
-                  command: go mod tidy -v
             - save_cache:
                   name: Save Go Mod Cache
                   key: go-mod-v4-{{ checksum "go.sum" }}
                   paths:
                       - "/home/circleci/go/pkg/mod"
+            - run:
+                  name: Wait MySQL Start
+                  command: dockerize -wait tcp://localhost:3306 -timeout 1m
             - run:
                   name: Run Test
                   command: |
@@ -65,14 +55,6 @@ jobs:
             - store_test_results:
                   name: Store Test Results
                   path: test-results
-            - slack/notify:
-                  event: pass
-                  mentions: '@Rancho'
-                  template: basic_success_1
-            - slack/notify:
-                  event: fail
-                  mentions: '@Rancho'
-                  template: basic_fail_1
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
@@ -83,3 +65,23 @@ workflows:
         jobs:
             - build:
                 context: slack-bot-oauth-token
+                pre-steps:
+                    - checkout
+                    - run:
+                          name: Prepare Dir
+                          command: |
+                              mkdir -p /tmp/artifacts
+                              mkdir -p /home/circleci/go
+                              mkdir -p /home/circleci/repo/test-results
+                    - run:
+                          name: Go Mod Tidy
+                          command: go mod tidy -v
+                post-steps:
+                    - slack/notify:
+                          event: pass
+                          mentions: '@Rancho'
+                          template: basic_success_1
+                    - slack/notify:
+                          event: fail
+                          mentions: '@Rancho'
+                          template: basic_fail_1
