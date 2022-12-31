@@ -71,11 +71,12 @@ workflows:
                 pre-steps:
                     - checkout
                     - run:
-                          name: Prepare Dir
+                          name: Prepare
                           command: |
                               mkdir -p /tmp/artifacts
                               mkdir -p /home/circleci/go
                               mkdir -p /home/circleci/repo/test-results
+                              apt-get install mysql-client
                 post-steps:
                     - slack/notify:
                           event: pass
