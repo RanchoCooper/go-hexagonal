@@ -33,11 +33,14 @@ jobs:
             - run:
                   name: Prepare Dir
                   command: |
+                    mkdir -p /home/circleci/go
                     mkdir -p /tmp/artifacts
                     mkdir -p /home/circleci/repo
             - restore_cache:
                   name: Resore Go Mod Cache
                   path: "/home/circleci/go/pkg/mod"
+                  paths:
+                      - "/home/circleci/go/pkg/mod"
                   keys:
                       - go-mod-v4-{{ checksum "go.sum" }}
             - run:
