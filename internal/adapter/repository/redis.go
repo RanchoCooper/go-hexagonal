@@ -33,8 +33,7 @@ func (r *Redis) GetClient() *redis.Client {
 }
 
 func (r *Redis) Close(ctx context.Context) {
-	err := r.db.Close()
-	if err != nil {
+	if err := r.db.Close(); err != nil {
 		log.SugaredLogger.Errorf("close redis client fail. err: %s", err.Error())
 	}
 	log.Logger.Info("redis client closed")

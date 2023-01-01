@@ -30,6 +30,7 @@ func Trigger(types ...int) gin.HandlerFunc {
 		// check if any business errors
 		if ctx.Errors != nil {
 			log.SugaredLogger.Errorf("NotifyTrigger fail due to business error, err: %s", ctx.Errors.String())
+
 			return
 		}
 

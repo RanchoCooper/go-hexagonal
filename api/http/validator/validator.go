@@ -29,7 +29,7 @@ func (v *ValidError) Error() string {
 }
 
 func (v *ValidErrors) Errors() []string {
-	var errs []string
+	errs := make([]string, 0)
 	for _, err := range *v {
 		errs = append(errs, err.Error())
 	}

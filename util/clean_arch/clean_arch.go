@@ -40,6 +40,7 @@ var layersHierarchy = map[Layer]int{
 // NewValidator creates new Validator.
 func NewValidator(alias map[string]Layer) *Validator {
 	filesMetadata := make(map[string]LayerMetadata, 0)
+
 	return &Validator{
 		filesMetadata: filesMetadata,
 		alias:         alias,
@@ -79,7 +80,7 @@ func (v *Validator) Validate(root string, ignoreTests bool, ignoredPackages []st
 		}
 
 		if strings.Contains(path, "/vendor/") {
-			// todo - better check and flag
+			// TODO - better check and flag
 			return nil
 		}
 
@@ -99,8 +100,9 @@ func (v *Validator) Validate(root string, ignoreTests bool, ignoredPackages []st
 		count++
 
 		if importerMeta.Layer == "" || importerMeta.Module == "" {
-			// todo - error from meta parser?
+			// TODO - error from meta parser?
 			log.SugaredLogger.Warnf("cannot parse metadata for file %s, meta: %+v", path, importerMeta)
+
 			return nil
 		}
 
@@ -199,6 +201,7 @@ func (v *Validator) fileMetadata(path string) LayerMetadata {
 	}
 
 	v.filesMetadata[path] = ParseLayerMetadata(path, v.alias)
+
 	return v.filesMetadata[path]
 }
 
@@ -214,6 +217,9 @@ func ParseLayerMetadata(path string, alias map[string]Layer) LayerMetadata {
 
 	for alia, layer := range alias {
 		if strings.Contains(path, alia) {
+			if metadata.Module != "" && len(layer) < len(metadata.Module) {
+				continue
+			}
 			metadata.Layer = layer
 			metadata.Module = alia
 		}

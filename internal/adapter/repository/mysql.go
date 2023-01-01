@@ -44,13 +44,13 @@ func (c *MySQL) SetDB(db *gorm.DB) {
 }
 
 func (c *MySQL) Close(ctx context.Context) {
-	sqlDB, _ := c.GetDB(ctx).DB()
-	if sqlDB != nil {
+	if sqlDB, _ := c.GetDB(ctx).DB(); sqlDB != nil {
 		err := sqlDB.Close()
 		if err != nil {
 			log.SugaredLogger.Errorf("close MySQL fail. err: %v", err)
 		}
 	}
+
 	log.Logger.Info("MySQL closed")
 }
 
@@ -59,11 +59,14 @@ func (c *MySQL) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
 	if err != nil {
 		panic("mock MySQL fail, err: " + err.Error())
 	}
-	dialect := driver.New(driver.Config{
-		Conn:                      sqlDB,
-		DriverName:                "mysql-mock",
-		SkipInitializeWithVersion: true,
-	})
+
+	dialect := driver.New(
+		driver.Config{
+			Conn:                      sqlDB,
+			DriverName:                "mysql-mock",
+			SkipInitializeWithVersion: true,
+		},
+	)
 
 	c.db, err = gorm.Open(dialect, buildGormConfig())
 
