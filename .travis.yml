@@ -1,0 +1,63 @@
+language: go
+
+go:
+    - "1.18"
+    - "1.19"
+    - master
+
+services:
+    - mysql
+    - redis-server
+
+sudo: required
+
+os:
+    - linux
+    - osx
+
+env:
+    - CI=true
+    - TRAVIS=true
+    - DB="mysql"
+
+# flow of CI lifecycle
+#
+# before_install
+# install
+# before_script
+# script
+# after_success / after_failure
+# before_deploy
+# deploy
+# after_deploy
+# after_script
+
+before_install:
+    - mysql -e "CREATE DATABASE hexagonal"
+
+install:
+    - echo "Go Mod Tidy"
+    - go mod tidy -v
+
+before_script:
+    - echo "Go Vet"
+    - go vet ./...
+    - echo "Go Env"
+    - echo "GOPATH:" $GOPATH
+    - echo "GOROOT:" $GOROOT
+
+script:
+    # post script will still execute if pre script failed, replace with `pre-script && post-script` if you need
+    - echo "Go Test"
+    - go test ./... -v
+
+deploy: true
+
+notifications:
+    slack:
+        rooms:
+            - SLACK_CHANNEL
+        if: "branch = master"
+        on_pull_requests: true
+        on_success: always
+        on_failure: always
