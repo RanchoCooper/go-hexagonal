@@ -214,6 +214,9 @@ func ParseLayerMetadata(path string, alias map[string]Layer) LayerMetadata {
 
 	for alia, layer := range alias {
 		if strings.Contains(path, alia) {
+			if metadata.Module != "" && len(layer) < len(metadata.Module) {
+				continue
+			}
 			metadata.Layer = layer
 			metadata.Module = alia
 		}

@@ -1,26 +1,25 @@
 language: go
-
 go:
-    - "1.18"
     - "1.19"
-    - master
-
-services:
-    - mysql
-    - redis-server
-
-sudo: required
 
 os:
     - linux
-    - osx
+
+dist: xenial
 
 env:
-    - CI=true
-    - TRAVIS=true
-    - DB="mysql"
+    global:
+        - GO111MODULE=on
 
-# flow of CI lifecycle
+services:
+    - mysql
+    - redis
+
+cache:
+    directories:
+        - $GOPATH/pkg/mod
+
+# work flow of entire CI lifecycle
 #
 # before_install
 # install
@@ -33,31 +32,33 @@ env:
 # after_script
 
 before_install:
+    # prepare MySQL
+    - echo "Prepare MySQL"
     - mysql -e "CREATE DATABASE hexagonal"
+    - sudo mysql -e "USE mysql; UPDATE user SET authentication_string=PASSWORD('root') WHERE User='root'; UPDATE user SET plugin='mysql_native_password';FLUSH PRIVILEGES;"
+    - sudo mysql_upgrade -u root -proot
+    - sudo service mysql restart
+    # Check Go Env
+    - echo "Check Go Env"
+    - echo "GOPATH:" $GOPATH
+    - echo "GOROOT:" $GOROOT
 
 install:
     - echo "Go Mod Tidy"
     - go mod tidy -v
 
 before_script:
-    - echo "Go Vet"
-    - go vet ./...
-    - echo "Go Env"
-    - echo "GOPATH:" $GOPATH
-    - echo "GOROOT:" $GOROOT
+    - echo ""
 
 script:
     # post script will still execute if pre script failed, replace with `pre-script && post-script` if you need
     - echo "Go Test"
     - go test ./... -v
 
-deploy: true
-
 notifications:
     slack:
         rooms:
-            - SLACK_CHANNEL
-        if: "branch = master"
+            - rchack:S2eFIIU2Nc8vpU8QOqzvvVlD#travis-ci
         on_pull_requests: true
         on_success: always
         on_failure: always
