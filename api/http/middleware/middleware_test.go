@@ -35,5 +35,4 @@ func TestTrigger(t *testing.T) {
 		engine.HandleContext(ctx)
 		assert.Nil(t, ctx.Errors)
 	})
-
 }

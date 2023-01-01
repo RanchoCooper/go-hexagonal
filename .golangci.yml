@@ -1,0 +1,24 @@
+linters:
+    fast: true
+    enable-all: true
+    disable:
+        - wrapcheck
+        - testpackage
+        - tagliatelle
+        - nosnakecase
+        - nlreturn
+        - funlen
+        - gofumpt
+        - gochecknoglobals
+        - gocognit
+        - godox
+        - gomnd
+        - lll
+        - wsl
+        - forbidigo
+        - godot
+        - nestif
+        - gci
+        - dogsled
+        - gochecknoinits
+        - scopelint

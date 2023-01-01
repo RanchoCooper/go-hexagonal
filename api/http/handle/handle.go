@@ -41,8 +41,7 @@ func (r *Response) ToErrorResponse(err *error_code.Error) {
 		"code": err.Code,
 		"msg":  err.Msg,
 	}
-	details := err.Details
-	if len(details) > 0 {
+	if details := err.Details; len(details) > 0 {
 		response["details"] = details
 	}
 
