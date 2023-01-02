@@ -58,7 +58,7 @@ script:
 notifications:
     slack:
         rooms:
-            - rchack:S2eFIIU2Nc8vpU8QOqzvvVlD#travis-ci
+            - ranchocooper:jvc0GfKUQ1znwfsz2JfAEx2R#travis-ci
         on_pull_requests: true
         on_success: always
         on_failure: always
