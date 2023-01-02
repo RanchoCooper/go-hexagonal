@@ -7,39 +7,26 @@ https://git.k8s.io/community/contributors/devel/sig-release/release.md#issuepr-k
 5. If the PR is unfinished, see how to mark it: https://git.k8s.io/community/contributors/guide/pull-requests.md#marking-unfinished-pull-requests
 -->
 
-<!-- NOTE. Ensure your dev-branch has one of the following prefix
-- feature/*
-- fix/*
-- refactor/*
-- docs/*
-- chore/*
+<!--- Changes Description -->
+## Changes Description
+<!---
+- Bugfix:
+- Feature:
+- Refactor:
+- Docs:
+- Chore:
+- Config:
 -->
 
-## Overview
-<!-- What this PR does / why we need it
--->
-- support ...
-- improve ..
-- add ...
-- fix ...
 
-## Changes Area
-- **UT Only**
-- **Docs Only**
-- **Logic Only**
-- **New Feature**
-- **API Changes**
-- **Schema Changes**
-- **Config Changes**
-- **Infra Resource Needs**
-
-<!-- Remove this comment section if encounter production enviroment
+<!-- Check List For Release Memo
 ## Check List
+- [ ] Tests Passed
+- [ ] Self Reviewed
 - [ ] Infra Resource Ready
     - [ ] Dev
     - [ ] QA
     - [ ] Prod
-- [ ] Automated Tests Passed
 - [ ] Schema Changes Applied
     - [ ] Dev
     - [ ] QA
@@ -48,14 +35,19 @@ https://git.k8s.io/community/contributors/devel/sig-release/release.md#issuepr-k
     - [ ] Dev
     - [ ] QA
     - [ ] Prod
+-->
 
 
+<!-- Refers List
 ## Refers
 - [PRD](link)
 - [API Doc](link)
 - [Tech Doc](link)
 - [PR or Issues](#1)
+-->
 
+
+<!-- Write Notes For Reviewers
 ## Special Notes For Reviewers
 - explain your design
 - explain your data/work flow
