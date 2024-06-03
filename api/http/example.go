@@ -14,11 +14,6 @@ import (
 	"go-hexagonal/util/log"
 )
 
-/**
- * @author Rancho
- * @date 2022/1/5
- */
-
 func CreateExample(ctx *gin.Context) {
 	response := handle.NewResponse(ctx)
 	body := dto.CreateExampleReq{}

@@ -4,11 +4,6 @@ import (
 	"time"
 )
 
-/**
- * @author Rancho
- * @date 2022/1/6
- */
-
 type CreateExampleReq struct {
 	Name  string `json:"name" binding:"required" message:"name is a required field"`
 	Alias string `json:"alias" binding:"required" message:"alias is a required field"`

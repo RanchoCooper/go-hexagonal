@@ -8,11 +8,6 @@ import (
 	"go-hexagonal/util/log"
 )
 
-/**
- * @author Rancho
- * @date 2022/12/29
- */
-
 func TestMain(m *testing.M) {
 	config.Init()
 	log.Init()

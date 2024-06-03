@@ -5,11 +5,6 @@ import (
 	"net/http"
 )
 
-/**
- * @author Rancho
- * @date 2022/1/5
- */
-
 type Error struct {
 	Code    int      `json:"code"`
 	Msg     string   `json:"msg"`

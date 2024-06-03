@@ -1,10 +1,5 @@
 package config
 
-/**
- * @author Rancho
- * @date 2022/12/29
- */
-
 type Env string
 
 const (

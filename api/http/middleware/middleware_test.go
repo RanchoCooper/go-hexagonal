@@ -9,11 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-/**
- * @author Rancho
- * @date 2022/12/29
- */
-
 func TestTrigger(t *testing.T) {
 	// it's an example unit test for middleware
 

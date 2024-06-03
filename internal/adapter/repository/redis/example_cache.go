@@ -8,11 +8,6 @@ import (
 	"go-hexagonal/internal/domain/repo"
 )
 
-/**
- * @author Rancho
- * @date 2022/1/7
- */
-
 func NewExampleCache() *ExampleCache {
 	return &ExampleCache{}
 }

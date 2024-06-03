@@ -9,11 +9,6 @@ import (
 	"go-hexagonal/util/log"
 )
 
-/**
- * @author Rancho
- * @date 2022/12/30
- */
-
 var layersAliases = map[string]Layer{
 	// Domain
 	"domain":           LayerDomain,

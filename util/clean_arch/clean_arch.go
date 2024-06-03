@@ -13,11 +13,6 @@ import (
 	"go-hexagonal/util/log"
 )
 
-/**
- * @author Rancho
- * @date 2022/12/30
- */
-
 type Layer string
 
 const (

@@ -5,11 +5,6 @@ import (
 	"sync"
 )
 
-/**
- * @author Rancho
- * @date 2021/12/10
- */
-
 var (
 	once       sync.Once
 	ExampleSvc *ExampleService

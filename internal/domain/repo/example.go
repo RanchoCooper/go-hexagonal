@@ -7,11 +7,6 @@ import (
 	"go-hexagonal/internal/domain/model"
 )
 
-/**
- * @author Rancho
- * @date 2022/12/30
- */
-
 type IExampleRepo interface {
 	Create(ctx context.Context, tr *repository.Transaction, entity *model.Example) (*model.Example, error)
 	Delete(ctx context.Context, tr *repository.Transaction, Id int) error

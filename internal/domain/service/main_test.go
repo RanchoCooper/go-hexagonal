@@ -9,11 +9,6 @@ import (
 	"go-hexagonal/util/log"
 )
 
-/**
- * @author Rancho
- * @date 2021/12/25
- */
-
 var ctx = context.TODO()
 
 func TestMain(m *testing.M) {

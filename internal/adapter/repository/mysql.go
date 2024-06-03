@@ -18,11 +18,6 @@ import (
 	"go-hexagonal/util/log"
 )
 
-/**
- * @author Rancho
- * @date 2021/12/21
- */
-
 type MySQL struct {
 	db *gorm.DB
 }

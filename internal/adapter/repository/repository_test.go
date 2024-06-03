@@ -11,11 +11,6 @@ import (
 	"go-hexagonal/util/log"
 )
 
-/**
- * @author Rancho
- * @date 2022/1/7
- */
-
 var ctx = context.TODO()
 
 func TestNewRepository(t *testing.T) {

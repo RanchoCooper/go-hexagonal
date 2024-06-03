@@ -4,11 +4,6 @@ import (
 	"time"
 )
 
-/**
- * @author Rancho
- * @date 2021/12/24
- */
-
 type Example struct {
 	Id        int       `json:"id" structs:",omitempty,underline"`
 	Name      string    `json:"name" structs:",omitempty,underline"`

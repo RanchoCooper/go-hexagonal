@@ -13,11 +13,6 @@ import (
 	"go-hexagonal/internal/domain/model"
 )
 
-/**
- * @author Rancho
- * @date 2022/1/8
- */
-
 func TestExample_Create(t *testing.T) {
 	exampleRepo := NewExample()
 	t.Run("run with nil transaction", func(t *testing.T) {

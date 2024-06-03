@@ -8,11 +8,6 @@ import (
 	"go-hexagonal/internal/adapter/repository"
 )
 
-/**
- * @author Rancho
- * @date 2022/12/29
- */
-
 func TestExampleCache_HealthCheck(t *testing.T) {
 	cache := NewExampleCache()
 	mock := repository.Clients.Redis.MockClient()

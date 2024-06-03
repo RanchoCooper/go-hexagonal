@@ -15,11 +15,6 @@ import (
 	"go-hexagonal/internal/adapter/repository"
 )
 
-/**
- * @author Rancho
- * @date 2022/1/7
- */
-
 func TestCreateExample(t *testing.T) {
 	_, mock := repository.Clients.MySQL.MockClient()
 	mock.ExpectBegin()

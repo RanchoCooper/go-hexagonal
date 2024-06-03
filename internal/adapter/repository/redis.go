@@ -11,11 +11,6 @@ import (
 	"go-hexagonal/util/log"
 )
 
-/**
- * @author Rancho
- * @date 2021/12/21
- */
-
 // var (
 // 	Client *Redis
 // )

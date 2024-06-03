@@ -14,11 +14,6 @@ import (
 	"go-hexagonal/internal/domain/repo"
 )
 
-/**
- * @author Rancho
- * @date 2021/12/24
- */
-
 func NewExample() *Example {
 	return &Example{}
 }

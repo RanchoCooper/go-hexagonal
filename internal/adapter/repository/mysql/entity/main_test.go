@@ -9,11 +9,6 @@ import (
 	"go-hexagonal/util/log"
 )
 
-/**
- * @author Rancho
- * @date 2022/1/8
- */
-
 var (
 	ctx = context.TODO()
 )

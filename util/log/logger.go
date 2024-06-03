@@ -15,11 +15,6 @@ import (
 	"go-hexagonal/util"
 )
 
-/**
- * @author Rancho
- * @date 2021/12/24
- */
-
 var (
 	Logger        *zap.Logger
 	SugaredLogger *zap.SugaredLogger

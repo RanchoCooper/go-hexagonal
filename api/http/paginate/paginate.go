@@ -7,11 +7,6 @@ import (
 	"go-hexagonal/config"
 )
 
-/**
- * @author Rancho
- * @date 2022/1/6
- */
-
 func GetPage(c *gin.Context) int {
 	page := cast.ToInt(c.Query("page"))
 	if page <= 0 {

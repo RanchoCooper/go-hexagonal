@@ -4,11 +4,6 @@ import (
 	"flag"
 )
 
-/**
- * @author Rancho
- * @date 2021/12/25
- */
-
 var (
 	configFileFlagName = "cf"
 	configFileFromFlag string

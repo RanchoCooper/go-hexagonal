@@ -25,8 +25,8 @@ type config struct {
 	App        *appConfig        `yaml:"app"`
 	HTTPServer *httpServerConfig `yaml:"http_server"`
 	Log        *logConfig        `yaml:"log"`
-	MySQL      *mysqlConfig      `yaml:"mysql"`
-	Redis      *redisConfig      `yaml:"redis"`
+	MySQL      *MySQLConfig      `yaml:"mysql"`
+	Redis      *RedisConfig      `yaml:"redis"`
 }
 
 type appConfig struct {
@@ -53,7 +53,7 @@ type logConfig struct {
 	Compress  bool   `yaml:"compress"`
 }
 
-type mysqlConfig struct {
+type MySQLConfig struct {
 	User         string `yaml:"user"`
 	Password     string `yaml:"password"`
 	Host         string `yaml:"host"`
@@ -68,14 +68,24 @@ type mysqlConfig struct {
 	TimeZone     string `yaml:"time_zone"`
 }
 
-type redisConfig struct {
-	Addr         string
-	UserName     string
-	Password     string
-	DB           int
-	PoolSize     int
-	IdleTimeout  int
-	MinIdleConns int
+type PostgresDBConf struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	DbName   string `yaml:"bbName"`
+	SSLMode  string `yaml:"ssl_mode"`
+	TimeZone string `yaml:"time_zone"`
+}
+
+type RedisConfig struct {
+	Host         string `yaml:"host"`
+	Port         int    `yaml:"port"`
+	Password     string `yaml:"password"`
+	DB           int    `yaml:"db"`
+	PoolSize     int    `yaml:"poolSize"`
+	IdleTimeout  int    `yaml:"idleTimeout"`
+	MinIdleConns int    `yaml:"minIdleConns"`
 }
 
 func readYamlConfig(configPath string) {
