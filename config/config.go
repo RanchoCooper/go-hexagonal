@@ -80,12 +80,12 @@ type PostgresDBConf struct {
 
 type RedisConfig struct {
 	Host         string `yaml:"host"`
-	Port         int    `yaml:"port"`
+	UserName     string `yaml:"user_name"`
 	Password     string `yaml:"password"`
 	DB           int    `yaml:"db"`
-	PoolSize     int    `yaml:"poolSize"`
-	IdleTimeout  int    `yaml:"idleTimeout"`
-	MinIdleConns int    `yaml:"minIdleConns"`
+	PoolSize     int    `yaml:"pool_size"`
+	IdleTimeout  int    `yaml:"idle_timeout"`
+	MinIdleConns int    `yaml:"min_idle_conns"`
 }
 
 func readYamlConfig(configPath string) {
