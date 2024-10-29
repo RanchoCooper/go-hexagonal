@@ -42,7 +42,7 @@ func (r *Redis) MockClient() redismock.ClientMock {
 
 func newRedisConn() *redis.Client {
 	return redis.NewClient(&redis.Options{
-		Addr:         config.Config.Redis.Addr,
+		Addr:         config.Config.Redis.Host,
 		Username:     config.Config.Redis.UserName,
 		Password:     config.Config.Redis.Password,
 		DB:           config.Config.Redis.DB,

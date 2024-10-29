@@ -31,8 +31,7 @@ mysql:
   parse_time: true
   time_zone: "Asia%2fShanghai"
 redis:
-  host: localhost
-  port: 6379
+  host: localhost:6379
   username: ""
   password: ""
   db: 0
