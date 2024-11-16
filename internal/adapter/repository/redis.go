@@ -42,12 +42,11 @@ func (r *Redis) MockClient() redismock.ClientMock {
 
 func newRedisConn() *redis.Client {
 	return redis.NewClient(&redis.Options{
-		Addr:         config.Config.Redis.Addr,
-		Username:     config.Config.Redis.UserName,
-		Password:     config.Config.Redis.Password,
-		DB:           config.Config.Redis.DB,
-		PoolSize:     config.Config.Redis.PoolSize,
-		MinIdleConns: config.Config.Redis.MinIdleConns,
-		IdleTimeout:  time.Duration(config.Config.Redis.IdleTimeout) * time.Second,
+		Addr:         config.GlobalConfig.Redis.Host,
+		Password:     config.GlobalConfig.Redis.Password,
+		DB:           config.GlobalConfig.Redis.DB,
+		PoolSize:     config.GlobalConfig.Redis.PoolSize,
+		MinIdleConns: config.GlobalConfig.Redis.MinIdleConns,
+		IdleTimeout:  time.Duration(config.GlobalConfig.Redis.IdleTimeout) * time.Second,
 	})
 }

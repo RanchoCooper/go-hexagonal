@@ -10,6 +10,6 @@ var (
 )
 
 func init() {
-	flag.StringVar(&configFileFromFlag, configFileFlagName, "/test/config.yaml", "config file")
-	// flag.Set(configFileFlagName, "/anywhere/config.yaml")
+	flag.StringVar(&configFileFromFlag, configFileFlagName, "/test/Config.yaml", "Config file")
+	// flag.Set(configFileFlagName, "/anywhere/Config.yaml")
 }

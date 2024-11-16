@@ -25,11 +25,11 @@ func initCore() zapcore.Core {
 	opts = append(opts, zapcore.AddSync(os.Stdout))
 	// opts = append(opts,
 	//     zapcore.AddSync(&lumberjack.Logger{
-	//         Filename:  filepath.Join(util.GetProjectRootPath(), config.Config.Log.SavePath, config.Config.Log.FileName),
-	//         MaxSize:   config.Config.Log.MaxSize,
-	//         MaxAge:    config.Config.Log.MaxAge,
-	//         LocalTime: config.Config.Log.LocalTime,
-	//         Compress:  config.Config.Log.Compress,
+	//         Filename:  filepath.Join(util.GetProjectRootPath(), config.GlobalConfig.Log.SavePath, config.GlobalConfig.Log.FileName),
+	//         MaxSize:   config.GlobalConfig.Log.MaxSize,
+	//         MaxAge:    config.GlobalConfig.Log.MaxAge,
+	//         LocalTime: config.GlobalConfig.Log.LocalTime,
+	//         Compress:  config.GlobalConfig.Log.Compress,
 	//     }))
 	syncWriter := zapcore.NewMultiWriteSyncer(opts...)
 
@@ -61,7 +61,7 @@ func initCore() zapcore.Core {
 	encoderConf.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
 	var level zap.AtomicLevel
-	if config.Config.Env.IsProd() {
+	if config.GlobalConfig.Env.IsProd() {
 		level = zap.NewAtomicLevelAt(zap.InfoLevel)
 	} else {
 		level = zap.NewAtomicLevelAt(zap.DebugLevel)
@@ -72,12 +72,12 @@ func initCore() zapcore.Core {
 
 func lumberjackZapHook(e zapcore.Entry) error {
 	lum := &lumberjack.Logger{
-		Filename:   filepath.Join(util.GetProjectRootPath(), config.Config.Log.SavePath, config.Config.Log.FileName),
-		MaxSize:    config.Config.Log.MaxSize,
-		MaxAge:     config.Config.Log.MaxAge,
+		Filename:   filepath.Join(util.GetProjectRootPath(), config.GlobalConfig.Log.SavePath, config.GlobalConfig.Log.FileName),
+		MaxSize:    config.GlobalConfig.Log.MaxSize,
+		MaxAge:     config.GlobalConfig.Log.MaxAge,
 		MaxBackups: 1,
-		LocalTime:  config.Config.Log.LocalTime,
-		Compress:   config.Config.Log.Compress,
+		LocalTime:  config.GlobalConfig.Log.LocalTime,
+		Compress:   config.GlobalConfig.Log.Compress,
 	}
 
 	format := "[%-32s]\t %s\t [%s]\t %s\n"

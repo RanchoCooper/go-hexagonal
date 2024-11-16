@@ -1,41 +1,33 @@
 package config
 
 import (
-	"encoding/json"
 	"flag"
-	"fmt"
-	"log"
-	"os"
-	"path/filepath"
 
-	"gopkg.in/yaml.v3"
-
-	"go-hexagonal/util"
+	"github.com/spf13/viper"
 )
 
-const (
-	configFilePath        = "config.yaml"
-	privateConfigFilePath = "config.private.yaml"
-)
+type Env string
 
-var Config = &config{}
+var GlobalConfig *Config
 
-type config struct {
-	Env        Env               `yaml:"env"`
-	App        *appConfig        `yaml:"app"`
-	HTTPServer *httpServerConfig `yaml:"http_server"`
-	Log        *logConfig        `yaml:"log"`
-	MySQL      *MySQLConfig      `yaml:"mysql"`
-	Redis      *RedisConfig      `yaml:"redis"`
+type Config struct {
+	Env          Env               `yaml:"env"`
+	App          *AppConfig        `yaml:"app"`
+	HTTPServer   *HttpServerConfig `yaml:"http_server"`
+	Log          *LogConfig        `yaml:"log"`
+	MySQL        *MySQLConfig      `yaml:"mysql"`
+	Redis        *RedisConfig      `yaml:"redis"`
+	Postgre      *PostgreSQLConfig `yaml:"postgres"`
+	MigrationDir string            `yaml:"migration_dir"`
 }
 
-type appConfig struct {
+type AppConfig struct {
 	Name    string `yaml:"name"`
-	Version string `yaml:"version"`
 	Debug   bool   `yaml:"debug"`
+	Version string `yaml:"version"`
 }
 
-type httpServerConfig struct {
+type HttpServerConfig struct {
 	Addr            string `yaml:"addr"`
 	Pprof           bool   `yaml:"pprof"`
 	DefaultPageSize int    `yaml:"default_page_size"`
@@ -44,7 +36,7 @@ type httpServerConfig struct {
 	WriteTimeout    string `yaml:"write_timeout"`
 }
 
-type logConfig struct {
+type LogConfig struct {
 	SavePath  string `yaml:"save_path"`
 	FileName  string `yaml:"file_name"`
 	MaxSize   int    `yaml:"max_size"`
@@ -68,12 +60,12 @@ type MySQLConfig struct {
 	TimeZone     string `yaml:"time_zone"`
 }
 
-type PostgresDBConf struct {
+type PostgreSQLConfig struct {
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
-	DbName   string `yaml:"bbName"`
+	DbName   string `yaml:"dbName"`
 	SSLMode  string `yaml:"ssl_mode"`
 	TimeZone string `yaml:"time_zone"`
 }
@@ -88,43 +80,33 @@ type RedisConfig struct {
 	MinIdleConns int    `yaml:"minIdleConns"`
 }
 
-func readYamlConfig(configPath string) {
-	yamlFile, err := filepath.Abs(configPath)
-	if err != nil {
-		log.Fatalf("invalid config file path, err: %v", err)
+func Load(configPath string, configFile string) (*Config, error) {
+	var conf *Config
+	vip := viper.New()
+	vip.AddConfigPath(configPath)
+	vip.SetConfigName(configFile)
+
+	vip.SetConfigType("yaml")
+	if err := vip.ReadInConfig(); err != nil {
+		return nil, err
 	}
-	content, err := os.ReadFile(yamlFile)
+
+	err := vip.Unmarshal(&conf)
 	if err != nil {
-		log.Fatalf("read config file fail, err: %v", err)
+		return nil, err
 	}
-	err = yaml.Unmarshal(content, Config)
-	if err != nil {
-		log.Fatalf("config file unmarshal fail, err: %v", err)
-	}
+
+	return conf, nil
 }
 
-func Init() {
+func Init(path, file string) {
+	configPath := flag.String("config-path", path, "path to configuration path")
+	configFile := flag.String("config-file", file, "name of configuration file (without extension)")
 	flag.Parse()
 
-	configPath := ""
-	configFileFlagSet := false
-	flag.Visit(func(f *flag.Flag) {
-		if f.Name == configFileFlagName {
-			configFileFlagSet = true
-		}
-	})
-	if configFileFlagSet {
-		configPath = configFileFromFlag
-	} else {
-		configPath = util.GetCurrentPath()
+	conf, err := Load(*configPath, *configFile)
+	if err != nil {
+		panic("Load config fail : " + err.Error())
 	}
-
-	readYamlConfig(filepath.Join(configPath, configFilePath))
-	if !Config.Env.IsGithub() {
-		// read private sensitive configs
-		readYamlConfig(filepath.Join(configPath, privateConfigFilePath))
-	}
-
-	bf, _ := json.MarshalIndent(Config, "", "    ")
-	fmt.Printf("Config:\n%s\n", string(bf))
+	GlobalConfig = conf
 }

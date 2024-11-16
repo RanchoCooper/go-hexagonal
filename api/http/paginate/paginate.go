@@ -19,10 +19,10 @@ func GetPage(c *gin.Context) int {
 func GetPageSize(c *gin.Context) int {
 	pageSize := cast.ToInt(c.Query("page_size"))
 	if pageSize <= 0 {
-		return config.Config.HTTPServer.DefaultPageSize
+		return config.GlobalConfig.HTTPServer.DefaultPageSize
 	}
-	if pageSize > config.Config.HTTPServer.MaxPageSize {
-		return config.Config.HTTPServer.MaxPageSize
+	if pageSize > config.GlobalConfig.HTTPServer.MaxPageSize {
+		return config.GlobalConfig.HTTPServer.MaxPageSize
 	}
 
 	return pageSize

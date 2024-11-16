@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,8 +14,12 @@ import (
 	"go-hexagonal/util/log"
 )
 
+const ServiceName = "go-hexagonal"
+
 func main() {
-	ctx, cancel := context.WithCancel(context.TODO())
+	fmt.Println("run " + ServiceName)
+
+	ctx, cancel := context.WithCancel(context.Background())
 	initConfig()
 	initLogger()
 	initRuntime(ctx)
@@ -22,7 +27,7 @@ func main() {
 }
 
 func initConfig() {
-	config.Init()
+	config.Init("./config", "config")
 }
 
 func initLogger() {
@@ -54,5 +59,5 @@ func initServer(ctx context.Context, cancel context.CancelFunc) {
 		log.SugaredLogger.Errorf("http err:%v", err)
 	}
 	<-httpCloseCh
-	log.SugaredLogger.Infof("%s HTTP server exit!", config.Config.App.Name)
+	log.SugaredLogger.Infof("%s HTTP server exit!", config.GlobalConfig.App.Name)
 }

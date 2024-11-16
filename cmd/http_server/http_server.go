@@ -14,15 +14,15 @@ import (
 func Start(ctx context.Context, errChan chan error, httpCloseCh chan struct{}) {
 	// init server
 	srv := &http.Server{
-		Addr:         config.Config.HTTPServer.Addr,
+		Addr:         config.GlobalConfig.HTTPServer.Addr,
 		Handler:      http2.NewServerRoute(),
-		ReadTimeout:  cast.ToDuration(config.Config.HTTPServer.ReadTimeout),
-		WriteTimeout: cast.ToDuration(config.Config.HTTPServer.WriteTimeout),
+		ReadTimeout:  cast.ToDuration(config.GlobalConfig.HTTPServer.ReadTimeout),
+		WriteTimeout: cast.ToDuration(config.GlobalConfig.HTTPServer.WriteTimeout),
 	}
 
 	// run server
 	go func() {
-		log.SugaredLogger.Infof("%s HTTP server is starting on %s", config.Config.App.Name, config.Config.HTTPServer.Addr)
+		log.SugaredLogger.Infof("%s HTTP server is starting on %s", config.GlobalConfig.App.Name, config.GlobalConfig.HTTPServer.Addr)
 		errChan <- srv.ListenAndServe()
 	}()
 

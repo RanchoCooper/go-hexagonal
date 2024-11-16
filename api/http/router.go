@@ -7,7 +7,7 @@ import (
 )
 
 func NewServerRoute() *gin.Engine {
-	if config.Config.App.Debug {
+	if config.GlobalConfig.App.Debug {
 		gin.SetMode(gin.DebugMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)

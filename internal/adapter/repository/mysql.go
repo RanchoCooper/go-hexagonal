@@ -70,14 +70,14 @@ func (c *MySQL) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
 
 func openGormDB() (*gorm.DB, error) {
 	var (
-		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=%s&parseTime=%t&loc=%s",
-			config.Config.MySQL.User,
-			config.Config.MySQL.Password,
-			config.Config.MySQL.Host,
-			config.Config.MySQL.Database,
-			config.Config.MySQL.CharSet,
-			config.Config.MySQL.ParseTime,
-			config.Config.MySQL.TimeZone,
+		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=%s&parseTime=%s&loc=%s",
+			config.GlobalConfig.MySQL.User,
+			config.GlobalConfig.MySQL.Password,
+			config.GlobalConfig.MySQL.Host,
+			config.GlobalConfig.MySQL.Database,
+			config.GlobalConfig.MySQL.CharSet,
+			config.GlobalConfig.MySQL.ParseTime,
+			config.GlobalConfig.MySQL.TimeZone,
 		)
 		dialect = driver.New(driver.Config{
 			DSN:                       dsn,
@@ -106,10 +106,10 @@ func openGormDB() (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	sqlDB.SetMaxIdleConns(config.Config.MySQL.MaxIdleConns)
-	sqlDB.SetMaxOpenConns(config.Config.MySQL.MaxOpenConns)
-	sqlDB.SetConnMaxLifetime(cast.ToDuration(config.Config.MySQL.MaxLifeTime))
-	sqlDB.SetConnMaxIdleTime(cast.ToDuration(config.Config.MySQL.MaxIdleTime))
+	sqlDB.SetMaxIdleConns(config.GlobalConfig.MySQL.MaxIdleConns)
+	sqlDB.SetMaxOpenConns(config.GlobalConfig.MySQL.MaxOpenConns)
+	sqlDB.SetConnMaxLifetime(cast.ToDuration(config.GlobalConfig.MySQL.MaxLifeTime))
+	sqlDB.SetConnMaxIdleTime(cast.ToDuration(config.GlobalConfig.MySQL.MaxIdleTime))
 
 	return db, nil
 }

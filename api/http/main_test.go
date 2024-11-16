@@ -14,7 +14,7 @@ import (
 var ctx = context.TODO()
 
 func TestMain(m *testing.M) {
-	config.Init()
+	config.Init("../../config", "config")
 	log.Init()
 
 	repository.Init(repository.WithMySQL(), repository.WithRedis())

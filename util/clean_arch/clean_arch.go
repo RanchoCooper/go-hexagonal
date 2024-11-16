@@ -130,7 +130,7 @@ func (v *Validator) validateImport(imp *ast.ImportSpec, importerMeta LayerMetada
 	importPath = strings.TrimPrefix(importPath, `"`)
 	importMeta := v.fileMetadata(importPath)
 
-	if !strings.Contains(importPath, config.Config.App.Name) {
+	if !strings.Contains(importPath, config.GlobalConfig.App.Name) {
 		log.SugaredLogger.Debugf("[%s] filtered due to third part dependency", importPath)
 		return nil
 	}

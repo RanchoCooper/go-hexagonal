@@ -78,7 +78,7 @@ func (c *clients) close(ctx context.Context) {
 func WithMySQL() Option {
 	return func(c *clients) {
 		if c.MySQL == nil {
-			if config.Config.MySQL == nil {
+			if config.GlobalConfig.MySQL == nil {
 				panic("repository init fail, MySQL config is empty")
 			}
 			c.MySQL = NewMySQLClient()
@@ -89,7 +89,7 @@ func WithMySQL() Option {
 func WithRedis() Option {
 	return func(c *clients) {
 		if c.Redis == nil {
-			if config.Config.Redis == nil {
+			if config.GlobalConfig.Redis == nil {
 				panic("repository init fail, Redis config is empty")
 			}
 			c.Redis = NewRedisClient()

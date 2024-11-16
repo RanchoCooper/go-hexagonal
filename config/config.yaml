@@ -1,4 +1,4 @@
-env: "github"
+env: "local"
 app:
   name: "go-hexagonal"
   version: "v0.1.0"
@@ -19,19 +19,19 @@ log:
   compress: false
 mysql:
   user: "root"
-  password: "root"
+  password: "mysqlroot"
   host: "localhost"
   port: 3306
-  database: "hexagonal"      # FIXME
+  database: "hexagonal"
+  char_set: "utf8mb4"
+  parse_time: true
+  time_zone: "Asia%2fShanghai"
   max_idle_conns: 50
   max_open_conns: 100
   max_life_time: "36000s"
   max_idle_time: "3600s"
-  char_set: "utf8mb4"
-  parse_time: true
-  time_zone: "Asia%2fShanghai"
 redis:
-  host: localhost
+  host: "localhost"
   port: 6379
   username: ""
   password: ""
@@ -39,4 +39,13 @@ redis:
   pool_size: 300
   idle_timeout: 30
   min_idle_conns: 100
+postgres:
+    host: "localhost"
+    port: 5432
+    username: "postgres"
+    password: "123456"
+    db_name: "postgres"
+    ssl_mode: "disable"
+    time_zone: "UTC"
+migration_dir: "tests/postgre/migrations"
 

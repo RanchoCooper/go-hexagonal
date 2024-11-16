@@ -1,4 +1,4 @@
-package tests
+package mysql
 
 import (
 	"context"
@@ -10,13 +10,13 @@ import (
 	"go-hexagonal/config"
 )
 
-func SetupPostgreSQL(t *testing.T) (mysqlConf *config.PostgresDBConf) {
+func SetupMySQL(t *testing.T) (mysqlConfig *config.MySQLConfig) {
 
-	t.Log("Setting up an instance of PostGreSQL with testcontainers-go")
+	t.Log("Setting up an instance of MySQL with testcontainers-go")
 
 	ctx := context.TODO()
 
-	user, password, database := "postgres", "123456", "postgres"
+	user, password, database := "root", "123456", "test"
 
 	req := testcontainers.ContainerRequest{
 		Image:        "postgres:latest",
@@ -63,7 +63,7 @@ func SetupPostgreSQL(t *testing.T) (mysqlConf *config.PostgresDBConf) {
 
 	t.Log("Got connection port to PostgreSQL: ", port)
 
-	return &config.PostgresDBConf{
+	return &config.MySQLConfig{
 		Host:     host,
 		Port:     port.Int(),
 		Username: "postgres",
