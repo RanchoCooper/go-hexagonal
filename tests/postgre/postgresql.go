@@ -8,7 +8,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"go-hexagonal/config"
-	"go-hexagonal/internal/infra/postgre"
+	"go-hexagonal/internal/adapter/repository/postgre"
 	"go-hexagonal/tests/postgre/migrations/migrate"
 )
 

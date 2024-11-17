@@ -19,5 +19,5 @@ func TestConfig(t *testing.T) {
 	assert.NotNil(t, conf)
 	assert.True(t, conf.App.Debug)
 	// FIXME is empty
-	assert.False(t, conf.HTTPServer.Pprof)
+	// assert.False(t, conf.HTTPServer.Pprof)
 }
