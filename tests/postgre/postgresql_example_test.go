@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5"
+
 	"go-hexagonal/config"
 )
 
@@ -25,16 +26,12 @@ func TestMockUserDataToPostgreSQL(t *testing.T) {
 	}
 
 	postgresDBConf := SetupPostgreSQL(t)
-
-	conf := config.GlobalConfig{
-		PostgreSQLConfig: postgresDBConf,
-		MigrationDir:     "./migrations",
-	}
+	config.GlobalConfig.MigrationDir = "./migrations"
 
 	for _, testcase := range testCases {
 		t.Log("testing ", testcase.Name)
 
-		MockPgSQLData(t, &conf, testcase.pgsqlData)
+		MockPgSQLData(t, config.GlobalConfig, testcase.pgsqlData)
 
 		connStr := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
 			postgresDBConf.Username, postgresDBConf.Password, postgresDBConf.Host, postgresDBConf.Port, postgresDBConf.DbName)

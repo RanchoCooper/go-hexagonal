@@ -7,6 +7,7 @@ import (
 
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+
 	"go-hexagonal/config"
 	"go-hexagonal/internal/adapter/repository/postgre"
 	"go-hexagonal/tests/postgre/migrations/migrate"
@@ -76,7 +77,7 @@ func SetupPostgreSQL(t *testing.T) (postgreSQLConfig *config.PostgreSQLConfig) {
 	}
 }
 
-func MockPgSQLData(t *testing.T, conf *config.GlobalConfig, sqls []string) {
+func MockPgSQLData(t *testing.T, conf *config.Config, sqls []string) {
 
 	err := migrate.GolangMigrateDrop(conf)
 	if err != nil {

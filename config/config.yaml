@@ -47,5 +47,5 @@ postgres:
     db_name: "postgres"
     ssl_mode: "disable"
     time_zone: "UTC"
-migration_dir: "tests/postgre/migrations"
+migration_dir: "./tests/postgre/migrations"
 

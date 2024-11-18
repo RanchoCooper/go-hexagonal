@@ -10,7 +10,7 @@ import (
 	"go-hexagonal/config"
 )
 
-func GolangMigrateUp(conf *config.GlobalConfig) error {
+func GolangMigrateUp(conf *config.Config) error {
 
 	if conf.Postgre == nil {
 		return nil
@@ -40,7 +40,7 @@ func GolangMigrateUp(conf *config.GlobalConfig) error {
 	return nil
 }
 
-func GolangMigrateDrop(conf *config.GlobalConfig) error {
+func GolangMigrateDrop(conf *config.Config) error {
 
 	m, err := migrate.New(
 		"file://"+conf.MigrationDir,

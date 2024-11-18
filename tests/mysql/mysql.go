@@ -16,7 +16,7 @@ func SetupMySQL(t *testing.T) (mysqlConfig *config.MySQLConfig) {
 
 	ctx := context.TODO()
 
-	user, password, database := "root", "123456", "test"
+	user, password, dbName := "root", "123456", "test"
 
 	req := testcontainers.ContainerRequest{
 		Image:        "postgres:latest",
@@ -24,7 +24,7 @@ func SetupMySQL(t *testing.T) (mysqlConfig *config.MySQLConfig) {
 		Env: map[string]string{
 			"MySQL_User":     user,
 			"MySQL_Password": password,
-			"MySQL_Database": database,
+			"MySQL_Database": dbName,
 		},
 		WaitingFor: wait.ForAll(
 			wait.ForListeningPort("5432/tcp"),
@@ -64,12 +64,13 @@ func SetupMySQL(t *testing.T) (mysqlConfig *config.MySQLConfig) {
 	t.Log("Got connection port to PostgreSQL: ", port)
 
 	return &config.MySQLConfig{
-		Host:     host,
-		Port:     port.Int(),
-		Username: "postgres",
-		Password: "123456",
-		DbName:   "postgres",
-		SSLMode:  "disable",
-		TimeZone: "UTC",
+		User:      user,
+		Password:  password,
+		Host:      host,
+		Port:      port.Int(),
+		Database:  dbName,
+		CharSet:   "utf8mb4",
+		ParseTime: false,
+		TimeZone:  "UTC",
 	}
 }

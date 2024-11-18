@@ -7,10 +7,12 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/lib/pq"
+
 	"go-hexagonal/config"
 )
 
-func GolangMigrateUp(conf *config.GlobalConfig) error {
+func GolangMigrateUp(conf *config.Config) error {
 
 	if conf.MigrationDir == "" {
 		return nil
@@ -19,7 +21,7 @@ func GolangMigrateUp(conf *config.GlobalConfig) error {
 	m, err := migrate.New(
 		"file://"+conf.MigrationDir,
 		fmt.Sprintf(
-			"postgresql://%s:%s@%s:%d/%s?sslmode=%s",
+			"postgres://%s:%s@%s:%d/%s?sslmode=%s",
 			conf.Postgre.Username,
 			conf.Postgre.Password,
 			conf.Postgre.Host,
@@ -40,13 +42,13 @@ func GolangMigrateUp(conf *config.GlobalConfig) error {
 	return nil
 }
 
-func GolangMigrateDrop(conf *config.GlobalConfig) error {
+func GolangMigrateDrop(conf *config.Config) error {
 
 	m, err := migrate.New(
 		"file://"+conf.MigrationDir,
 		fmt.Sprintf(
-			"postgresql://%s:%s@%s:%d/%s?sslmode=%s",
-			conf.Postgre.DbName,
+			"postgres://%s:%s@%s:%d/%s?sslmode=%s",
+			conf.Postgre.Username,
 			conf.Postgre.Password,
 			conf.Postgre.Host,
 			conf.Postgre.Port,
