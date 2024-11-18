@@ -1,7 +1,9 @@
 package config
 
 import (
+	"encoding/json"
 	"flag"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,10 +16,11 @@ func TestConfig(t *testing.T) {
 	flag.Parse()
 
 	conf, err := Load(*configPath, *configFile)
-	// fmt.Printf("%+v\n", conf)
 	assert.NoError(t, err)
 	assert.NotNil(t, conf)
 	assert.True(t, conf.App.Debug)
-	// FIXME is empty
-	// assert.False(t, conf.HTTPServer.Pprof)
+	assert.False(t, conf.HTTPServer.Pprof)
+	bytes, err := json.MarshalIndent(conf, "", "  ")
+	assert.NoError(t, err)
+	fmt.Println(string(bytes))
 }

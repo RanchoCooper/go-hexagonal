@@ -47,7 +47,7 @@ func GolangMigrateDrop(conf *config.Config) error {
 	m, err := migrate.New(
 		"file://"+conf.MigrationDir,
 		fmt.Sprintf(
-			"postgres://%s:%s@%s:%d/%s?sslmode=%s",
+			"postgresql://%s:%s@%s:%d/%s?sslmode=%s",
 			conf.Postgre.Username,
 			conf.Postgre.Password,
 			conf.Postgre.Host,
