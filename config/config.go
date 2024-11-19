@@ -8,6 +8,10 @@ import (
 
 type Env string
 
+func (e Env) IsProd() bool {
+	return e == "prod"
+}
+
 var GlobalConfig *Config
 
 type Config struct {

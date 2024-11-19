@@ -32,17 +32,18 @@ var layersAliases = map[string]Layer{
 	"api/http":   LayerInterfaces,
 
 	// Infrastructure
-	"infrastructure":                  LayerInfrastructure,
-	"adapters":                        LayerInfrastructure,
-	"adapter":                         LayerInfrastructure,
-	"adapter/repository":              LayerInfrastructure,
-	"adapter/repository/mysql":        LayerInfrastructure,
-	"adapter/repository/redis":        LayerInfrastructure,
-	"adapter/repository/mysql/entity": LayerInfrastructure,
+	"infrastructure":                     LayerInfrastructure,
+	"adapters":                           LayerInfrastructure,
+	"adapter":                            LayerInfrastructure,
+	"adapter/repository":                 LayerInfrastructure,
+	"adapter/repository/mysql":           LayerInfrastructure,
+	"adapter/repository/redis":           LayerInfrastructure,
+	"adapter/repository/mysql/entity":    LayerInfrastructure,
+	"adapter/repository/postgres/entity": LayerInfrastructure,
 }
 
 func TestValidator_Validate(t *testing.T) {
-	config.Init()
+	config.Init("../../config", "config")
 	log.Init()
 
 	aliases := make(map[string]Layer)
