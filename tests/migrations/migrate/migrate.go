@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/mysql"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
@@ -12,8 +13,7 @@ import (
 	"go-hexagonal/config"
 )
 
-func GolangMigrateUp(conf *config.Config) error {
-
+func PostgreMigrateUp(conf *config.Config) error {
 	if conf.MigrationDir == "" {
 		return nil
 	}
@@ -42,8 +42,7 @@ func GolangMigrateUp(conf *config.Config) error {
 	return nil
 }
 
-func GolangMigrateDrop(conf *config.Config) error {
-
+func PostgreMigrateDrop(conf *config.Config) error {
 	m, err := migrate.New(
 		"file://"+conf.MigrationDir,
 		fmt.Sprintf(
@@ -54,6 +53,58 @@ func GolangMigrateDrop(conf *config.Config) error {
 			conf.Postgre.Port,
 			conf.Postgre.DbName,
 			conf.Postgre.SSLMode,
+		),
+	)
+	if err != nil {
+		return err
+	}
+	defer m.Close()
+
+	if err := m.Drop(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return err
+	}
+
+	return nil
+}
+
+func MySQLMigrateUp(conf *config.Config) error {
+	if conf.MigrationDir == "" {
+		return nil
+	}
+
+	m, err := migrate.New(
+		"file://"+conf.MigrationDir,
+		fmt.Sprintf(
+			"mysql://%s:%s@tcp(%s:%d)/%s",
+			conf.MySQL.User,
+			conf.MySQL.Password,
+			conf.MySQL.Host,
+			conf.MySQL.Port,
+			conf.MySQL.Database,
+		),
+	)
+	if err != nil {
+		return err
+	}
+	defer m.Close()
+
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return err
+	}
+
+	return nil
+}
+
+func MySQLMigrateDrop(conf *config.Config) error {
+	m, err := migrate.New(
+		"file://"+conf.MigrationDir,
+		fmt.Sprintf(
+			"mysql://%s:%s@tcp(%s:%d)/%s",
+			conf.MySQL.User,
+			conf.MySQL.Password,
+			conf.MySQL.Host,
+			conf.MySQL.Port,
+			conf.MySQL.Database,
 		),
 	)
 	if err != nil {

@@ -70,7 +70,7 @@ func (c *MySQL) MockClient() (*gorm.DB, sqlmock.Sqlmock) {
 
 func openGormDB() (*gorm.DB, error) {
 	var (
-		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=%s&parseTime=%s&loc=%s",
+		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=%s&parseTime=%t&loc=%s",
 			config.GlobalConfig.MySQL.User,
 			config.GlobalConfig.MySQL.Password,
 			config.GlobalConfig.MySQL.Host,

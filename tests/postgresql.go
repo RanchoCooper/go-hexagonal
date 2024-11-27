@@ -1,20 +1,20 @@
-package postgre
+package tests
 
 import (
 	"context"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 
 	"go-hexagonal/config"
 	"go-hexagonal/internal/adapter/repository/postgre"
-	"go-hexagonal/tests/postgre/migrations/migrate"
+	"go-hexagonal/tests/migrations/migrate"
 )
 
 func SetupPostgreSQL(t *testing.T) (postgreSQLConfig *config.PostgreSQLConfig) {
-
 	t.Log("Setting up an instance of PostgreSQL with testcontainers-go")
 	ctx := context.TODO()
 
@@ -77,16 +77,15 @@ func SetupPostgreSQL(t *testing.T) (postgreSQLConfig *config.PostgreSQLConfig) {
 	}
 }
 
-func MockPgSQLData(t *testing.T, conf *config.Config, sqls []string) {
-
-	err := migrate.GolangMigrateDrop(conf)
+func MockPgSQLData(t *testing.T, conf *config.Config, sqls []string) *pgxpool.Pool {
+	err := migrate.PostgreMigrateDrop(conf)
 	if err != nil {
-		t.Fatalf("GolangMigrateDrop fail %+v\n", err)
+		t.Fatalf("PostgreMigrateDrop fail %+v\n", err)
 	}
 
-	err = migrate.GolangMigrateUp(conf)
+	err = migrate.PostgreMigrateUp(conf)
 	if err != nil {
-		t.Fatalf("GolangMigrateUp fail %+v\n", err)
+		t.Fatalf("PostgreMigrateUp fail %+v\n", err)
 	}
 
 	pgPool, err := postgre.NewConnPool(conf.Postgre)
@@ -105,4 +104,6 @@ func MockPgSQLData(t *testing.T, conf *config.Config, sqls []string) {
 			t.Fatalf("Unable to insert data %+v\n", err)
 		}
 	}
+
+	return pgPool
 }

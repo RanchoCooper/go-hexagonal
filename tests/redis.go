@@ -1,15 +1,15 @@
-package redis
+package tests
 
 import (
 	"strconv"
 	"testing"
 
 	"github.com/alicebob/miniredis/v2"
+
 	"go-hexagonal/config"
 )
 
 func SetupRedis(t *testing.T) (redisConf *config.RedisConfig, s *miniredis.Miniredis) {
-
 	s = miniredis.RunT(t)
 
 	redisPort, err := strconv.Atoi(s.Port())
@@ -24,7 +24,6 @@ func SetupRedis(t *testing.T) (redisConf *config.RedisConfig, s *miniredis.Minir
 }
 
 func MockRedisData(t *testing.T, miniRedis *miniredis.Miniredis, data map[string]string) {
-
 	miniRedis.FlushAll()
 
 	for k, v := range data {

@@ -1,17 +1,15 @@
-package postgre
+package tests
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 
 	"go-hexagonal/config"
 )
 
-func TestMockUserDataToPostgreSQL(t *testing.T) {
+func TestMockPostgreSQLData(t *testing.T) {
 	ctx := context.Background()
 
 	var testCases = []struct {
@@ -33,18 +31,10 @@ func TestMockUserDataToPostgreSQL(t *testing.T) {
 	for _, testcase := range testCases {
 		t.Log("testing ", testcase.Name)
 
-		MockPgSQLData(t, config.GlobalConfig, testcase.pgsqlData)
-
-		connStr := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
-			postgresDBConf.Username, postgresDBConf.Password, postgresDBConf.Host, postgresDBConf.Port, postgresDBConf.DbName)
-		conn, err := pgx.Connect(ctx, connStr)
-		if err != nil {
-			t.Errorf("connect to PostgreSQL fail: %v", err)
-		}
-		defer conn.Close(context.TODO())
+		pg := MockPgSQLData(t, config.GlobalConfig, testcase.pgsqlData)
 
 		var name, email string
-		err = conn.QueryRow(ctx, "SELECT name, email FROM users WHERE id = $1", 1).Scan(&name, &email)
+		err := pg.QueryRow(ctx, "SELECT name, email FROM users WHERE id = $1", 1).Scan(&name, &email)
 		if err != nil {
 			t.Errorf("query data fail: %v", err)
 		}

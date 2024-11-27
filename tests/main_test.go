@@ -1,4 +1,4 @@
-package postgre
+package tests
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	config.Init("../../config", "config")
+	config.Init("../config", "config")
 
 	m.Run()
 }

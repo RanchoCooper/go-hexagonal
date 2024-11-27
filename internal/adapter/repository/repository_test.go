@@ -6,26 +6,17 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"go-hexagonal/config"
-	"go-hexagonal/util/log"
 )
 
 var ctx = context.TODO()
 
 func TestNewRepository(t *testing.T) {
-	config.Init()
-	log.Init()
-
 	Init(WithMySQL(), WithRedis())
 
 	Close(ctx)
 }
 
 func TestTransaction_Conn(t *testing.T) {
-	config.Init()
-	log.Init()
-
 	Init(WithMySQL(), WithRedis())
 
 	t.Run("nil caller", func(t *testing.T) {
