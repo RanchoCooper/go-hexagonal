@@ -9,7 +9,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	config.Init()
+	config.Init("../../../config", "config")
 	log.Init()
 
 	exitCode := m.Run()
