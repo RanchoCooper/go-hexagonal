@@ -1,6 +1,6 @@
-CREATE DATABASE `hexagonal`;
+CREATE DATABASE `go-hexagonal`;
 
-USE hexagonal;
+USE `go-hexagonal`;
 
 DROP TABLE IF EXISTS `example`;
 

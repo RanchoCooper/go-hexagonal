@@ -64,6 +64,20 @@ or just type
 make init && make precommit.rehook
 ```
 
+# Environment Prepare
+
+prepare mysql via docker
+```bash
+docker run --name mysql-local \                                                                                                                                     ✔  00:17:00 
+  -e MYSQL_ROOT_PASSWORD=mysqlroot \
+  -e MYSQL_DATABASE=go-hexagonal \
+  -e MYSQL_USER=user \
+  -e MYSQL_PASSWORD=mysqlroot \
+  -p 3306:3306 \
+  -d mysql:latest
+
+```
+
 # Reference
 - **Architecture**
     - [Freedom DDD Framework](https://github.com/8treenet/freedom)
