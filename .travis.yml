@@ -34,8 +34,8 @@ cache:
 before_install:
     # prepare MySQL
     - echo "Prepare MySQL"
-    - mysql -e "CREATE DATABASE hexagonal"
-    - sudo mysql -e "USE mysql; UPDATE user SET authentication_string=PASSWORD('root') WHERE User='root'; UPDATE user SET plugin='mysql_native_password';FLUSH PRIVILEGES;"
+    - mysql -e "CREATE DATABASE go-hexagonal"
+    - sudo mysql -e "USE mysql; UPDATE user SET authentication_string=PASSWORD('mysqlroot') WHERE User='root'; UPDATE user SET plugin='mysql_native_password';FLUSH PRIVILEGES;"
     - sudo mysql_upgrade -u root -proot
     - sudo service mysql restart
     # Check Go Env
