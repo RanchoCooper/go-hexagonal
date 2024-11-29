@@ -13,8 +13,7 @@
         - Mock UT with [go-sqlmock](https://github.com/DATA-DOG/go-sqlmock) and [Redis Mock](https://github.com/go-redis/redismock)
         - Clean Arch Detect/Check Tool
     - **Chore**
-        - [x] [Travis CI](https://travis-ci.com)
-        - [x] [Circle CI](https://travis-ci.com) (abandon)
+        - [x] [Github Actions](https://docs.github.com/en/actions)
         - [x] [Golangci-lint](https://github.com/golangci/golangci-lint)
         - [x] [Commit Lint](https://github.com/conventional-changelog/commitlint)
         - [x] [Pre-commit Hook](https://pre-commit.com/)
