@@ -22,3 +22,5 @@ linters:
         - dogsled
         - gochecknoinits
         - scopelint
+        - tagalign
+        - depguard
