@@ -1,41 +1,31 @@
-name: GitHub Actions Demo
-on: [push]
+name: CI/CD with Docker for Golang
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
 jobs:
-  Explore-GitHub-Actions:
-    runs-on: ubuntu-latest
-    env:
-      DB_DATABASE: hexagonal
-      DB_USER: root
-      DB_PASSWORD: root
-    steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Check out repository code
-        uses: actions/checkout@v2
-      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - name: Setup Redis
-        uses: supercharge/redis-github-action@1.4.0
-        with:
-          redis-version: 6
-      - name: Setup MySQL
-        uses: mirromutth/mysql-action@v1.1
-        with:
-          host port: 3306 # Optional, default value is 3306. The port of host
-          container port: 3306 # Optional, default value is 3306. The port of container
-          character set server: 'utf8' # Optional, default value is 'utf8mb4'. The '--character-set-server' option for mysqld
-          collation server: 'utf8_general_ci' # Optional, default value is 'utf8mb4_general_ci'. The '--collation-server' option for mysqld
-          mysql version: '8.0' # Optional, default value is "latest". The version of the MySQL
-          mysql database: ${{ env.DB_DATABASE }} # Optional, default value is "test". The specified database which will be create
-          mysql root password: ${{ env.DB_PASSWORD }} # Required if "mysql user" is empty, default is empty. The root superuser password
-          mysql user: ${{ env.DB_USER }} # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Of course you can use secrets, too
-          mysql password: ${{ env.DB_PASSWORD }} # Required if "mysql user" exists. The password for the "mysql user"
-          run: |
-            sudo /etc/init.d/mysql start
-            mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
-      - run: go test -v -cover ./...
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+    build-and-test:
+        name: Build and Test
+        runs-on: ubuntu-latest
+
+        steps:
+            # Step 1: 检出代码
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            # Step 2: 设置 Go 环境
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: 1.23
+
+            # Step 3: 安装依赖并运行测试
+            - name: Install dependencies and run tests
+              run: |
+                  go mod tidy
+                  go test ./...
