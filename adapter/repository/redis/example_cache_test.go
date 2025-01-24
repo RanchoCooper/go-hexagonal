@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"go-hexagonal/internal/adapter/repository"
+	"go-hexagonal/adapter/repository"
 )
 
 func TestExampleCache_HealthCheck(t *testing.T) {

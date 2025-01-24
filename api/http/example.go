@@ -9,8 +9,8 @@ import (
 	"go-hexagonal/api/error_code"
 	"go-hexagonal/api/http/handle"
 	"go-hexagonal/api/http/validator"
-	"go-hexagonal/internal/domain/model"
-	"go-hexagonal/internal/domain/service"
+	"go-hexagonal/domain/model"
+	"go-hexagonal/domain/service"
 	"go-hexagonal/util/log"
 )
 

@@ -9,16 +9,16 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
-	"go-hexagonal/internal/adapter/repository"
-	"go-hexagonal/internal/domain/model"
-	"go-hexagonal/internal/domain/repo"
+	"go-hexagonal/adapter/repository"
+	"go-hexagonal/domain/model"
+	"go-hexagonal/domain/repo"
 )
 
-func NewExample() *Example {
-	return &Example{}
+func NewExample() *EntityExample {
+	return &EntityExample{}
 }
 
-type Example struct {
+type EntityExample struct {
 	Id        int                    `json:"id" gorm:"primarykey" structs:",omitempty,underline"`
 	Name      string                 `json:"name" structs:",omitempty,underline"`
 	Alias     string                 `json:"alias" structs:",omitempty,underline"`
@@ -28,18 +28,18 @@ type Example struct {
 	ChangeMap map[string]interface{} `json:"-" gorm:"-" structs:"-"`
 }
 
-func (e Example) TableName() string {
+func (e EntityExample) TableName() string {
 	return "example"
 }
 
-var _ repo.IExampleRepo = &Example{}
+var _ repo.IExampleRepo = &EntityExample{}
 
 func autoCommit(db *gorm.DB) error {
 	return db.Commit().Error
 }
 
-func (e *Example) Create(ctx context.Context, tr *repository.Transaction, model *model.Example) (result *model.Example, err error) {
-	entity := &Example{}
+func (e *EntityExample) Create(ctx context.Context, tr *repository.Transaction, model *model.Example) (result *model.Example, err error) {
+	entity := &EntityExample{}
 	err = copier.Copy(entity, model)
 	if err != nil {
 		return nil, errors.Wrap(err, "copier fail")
@@ -59,8 +59,8 @@ func (e *Example) Create(ctx context.Context, tr *repository.Transaction, model 
 	return model, nil
 }
 
-func (e *Example) Delete(ctx context.Context, tr *repository.Transaction, id int) (err error) {
-	entity := &Example{}
+func (e *EntityExample) Delete(ctx context.Context, tr *repository.Transaction, id int) (err error) {
+	entity := &EntityExample{}
 
 	db := tr.Conn(ctx)
 	err = db.Delete(entity, id).Error
@@ -69,8 +69,8 @@ func (e *Example) Delete(ctx context.Context, tr *repository.Transaction, id int
 	return err
 }
 
-func (e *Example) Update(ctx context.Context, tr *repository.Transaction, model *model.Example) (err error) {
-	entity := &Example{}
+func (e *EntityExample) Update(ctx context.Context, tr *repository.Transaction, model *model.Example) (err error) {
+	entity := &EntityExample{}
 	err = copier.Copy(entity, model)
 	if err != nil {
 		return errors.Wrap(err, "copier fail")
@@ -84,8 +84,8 @@ func (e *Example) Update(ctx context.Context, tr *repository.Transaction, model 
 	return db.Error
 }
 
-func (e *Example) GetByID(ctx context.Context, tr *repository.Transaction, id int) (domain *model.Example, err error) {
-	entity := &Example{}
+func (e *EntityExample) GetByID(ctx context.Context, tr *repository.Transaction, id int) (domain *model.Example, err error) {
+	entity := &EntityExample{}
 
 	db := tr.Conn(ctx)
 	db = db.Table(entity.TableName()).Find(entity, id)
@@ -102,8 +102,8 @@ func (e *Example) GetByID(ctx context.Context, tr *repository.Transaction, id in
 	return domain, nil
 }
 
-func (e *Example) FindByName(ctx context.Context, tr *repository.Transaction, name string) (model *model.Example, err error) {
-	entity := &Example{}
+func (e *EntityExample) FindByName(ctx context.Context, tr *repository.Transaction, name string) (model *model.Example, err error) {
+	entity := &EntityExample{}
 
 	db := tr.Conn(ctx)
 	db.Table(entity.TableName()).Where("name = ?", name).Last(entity)

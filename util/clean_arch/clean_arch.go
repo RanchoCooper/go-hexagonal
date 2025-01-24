@@ -16,20 +16,31 @@ import (
 type Layer string
 
 const (
+	// LayerDomain represents domain layer.
 	LayerDomain Layer = "domain"
 
+	// LayerApplication represents application layer.
 	LayerApplication Layer = "application"
 
+	// LayerInfrastructure represents infrastructure layer. aka adapters
 	LayerInfrastructure Layer = "infrastructure"
 
+	// LayerInterfaces represents interfaces layer. aka api
 	LayerInterfaces Layer = "interfaces"
 )
 
+const (
+	LayerDomainWeight         = 1
+	LayerApplicationWeight    = 2
+	LayerInterfacesWeight     = 3
+	LayerInfrastructureWeight = 4
+)
+
 var layersHierarchy = map[Layer]int{
-	LayerDomain:         1,
-	LayerApplication:    2,
-	LayerInterfaces:     3,
-	LayerInfrastructure: 4,
+	LayerDomain:         LayerDomainWeight,
+	LayerApplication:    LayerApplicationWeight,
+	LayerInterfaces:     LayerInterfacesWeight,
+	LayerInfrastructure: LayerInfrastructureWeight,
 }
 
 // NewValidator creates new Validator.
@@ -42,7 +53,7 @@ func NewValidator(alias map[string]Layer) *Validator {
 	}
 }
 
-// ValidationError represents error when Clean Architecture rule is not keep.
+// ValidationError represents an error when Clean Architecture rule is not keep.
 type ValidationError error
 
 // Validator is responsible for Clean Architecture validation.
@@ -51,7 +62,7 @@ type Validator struct {
 	alias         map[string]Layer
 }
 
-// Validate validates provided path for Clean Architecture rules.
+// Validate validates provided a path for Clean Architecture rules.
 func (v *Validator) Validate(root string, ignoreTests bool, ignoredPackages []string) (int, bool, []ValidationError, error) {
 	errors := make([]ValidationError, 0)
 	count := 0
@@ -217,6 +228,7 @@ func ParseLayerMetadata(path string, alias map[string]Layer) LayerMetadata {
 			}
 			metadata.Layer = layer
 			metadata.Module = alia
+			break // we assume that one file belongs to one module
 		}
 	}
 

@@ -11,35 +11,18 @@ import (
 
 var layersAliases = map[string]Layer{
 	// Domain
-	"domain":           LayerDomain,
-	"domain/aggregate": LayerDomain,
-	"domain/event":     LayerDomain,
-	"domain/model":     LayerDomain,
-	"domain/repo":      LayerDomain,
-	"domain/service":   LayerDomain,
-	"domain/vo":        LayerDomain,
+	"domain": LayerDomain,
 
 	// Application
 	"application": LayerApplication,
-	"app":         LayerApplication,
 
 	// Interfaces
-	"interfaces": LayerInterfaces,
-	"interface":  LayerInterfaces,
-	"api":        LayerInterfaces,
-	"api/dto":    LayerInterfaces,
-	"api/grpc":   LayerInterfaces,
-	"api/http":   LayerInterfaces,
+	"interface": LayerInterfaces,
+	"api":       LayerInterfaces,
 
 	// Infrastructure
-	"infrastructure":                     LayerInfrastructure,
-	"adapters":                           LayerInfrastructure,
-	"adapter":                            LayerInfrastructure,
-	"adapter/repository":                 LayerInfrastructure,
-	"adapter/repository/mysql":           LayerInfrastructure,
-	"adapter/repository/redis":           LayerInfrastructure,
-	"adapter/repository/mysql/entity":    LayerInfrastructure,
-	"adapter/repository/postgres/entity": LayerInfrastructure,
+	"infrastructure": LayerInfrastructure,
+	"adapter":        LayerInfrastructure,
 }
 
 func TestValidator_Validate(t *testing.T) {
@@ -51,7 +34,7 @@ func TestValidator_Validate(t *testing.T) {
 		aliases[alias] = layer
 	}
 
-	ignoredPackages := []string{"cmd", "config", "util"}
+	ignoredPackages := []string{"cmd", "config", "util", "tests"}
 
 	root := util.GetProjectRootPath()
 	log.SugaredLogger.Infof("[Clean Arch] start checking, root: %s", root)
@@ -84,9 +67,9 @@ func TestParseLayerMetadata(t *testing.T) {
 			},
 		},
 		{
-			Path: "/go-hexagonal/domain/service/file.go",
+			Path: "/go-hexagonal/domain/sub-package/file.go",
 			ExpectedFileMetadata: LayerMetadata{
-				Module: "domain/service",
+				Module: "domain",
 				Layer:  LayerDomain,
 			},
 		},

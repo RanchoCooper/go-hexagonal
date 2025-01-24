@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"go-hexagonal/adapter/repository"
+	"go-hexagonal/adapter/repository/mysql/entity"
 	"go-hexagonal/config"
-	"go-hexagonal/internal/adapter/repository"
-	"go-hexagonal/internal/adapter/repository/mysql/entity"
-	"go-hexagonal/internal/domain/service"
+	"go-hexagonal/domain/service"
 	"go-hexagonal/util/log"
 )
 
@@ -18,7 +18,7 @@ func TestMain(m *testing.M) {
 	log.Init()
 
 	repository.Init(repository.WithMySQL(), repository.WithRedis())
-	_ = repository.Clients.MySQL.GetDB(ctx).AutoMigrate(&entity.Example{})
+	_ = repository.Clients.MySQL.GetDB(ctx).AutoMigrate(&entity.EntityExample{})
 
 	service.Init(ctx)
 

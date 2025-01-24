@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
 	"go-hexagonal/config"
 )
 
 func NewConnPool(conf *config.PostgreSQLConfig) (*pgxpool.Pool, error) {
-
 	pgxPoolConfig, err := pgxpool.ParseConfig(fmt.Sprintf(
 		"postgresql://%s:%s@%s:%d/%s",
 		conf.Username,

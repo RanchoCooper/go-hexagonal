@@ -40,6 +40,5 @@ func TestMockPostgreSQLData(t *testing.T) {
 		}
 		assert.Equal(t, name, "rancho")
 		assert.Equal(t, email, "testing@gmail.com")
-
 	}
 }
