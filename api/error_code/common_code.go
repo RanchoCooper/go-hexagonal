@@ -1,24 +1,51 @@
 package error_code
 
 // basic error code
-var (
-	Success         = NewError(0, "success")
-	ServerError     = NewError(1000, "server internal error")
-	InvalidParams   = NewError(10001, "invalid params")
-	NotFound        = NewError(10002, "record not found")
-	TooManyRequests = NewError(10003, "too many requests")
+const (
+	SuccessCode = 0
+
+	ServerErrorCode     = 10000
+	InvalidParamsCode   = 10001
+	NotFoundCode        = 10002
+	TooManyRequestsCode = 10003
+
+	UnauthorizedAuthNotExistErrorCode  = 20001
+	UnauthorizedTokenErrorCode         = 20002
+	UnauthorizedTokenTimeoutErrorCode  = 20003
+	UnauthorizedTokenGenerateErrorCode = 20004
+
+	CopyErrorErrorCode = 30001
+	JSONErrorErrorCode = 30002
+
+	AccountExistErrorCode  = 40001
+	UserNameExistErrorCode = 40002
 )
 
-// auth error code
+// API error code
 var (
-	UnauthorizedAuthNotExist  = NewError(20001, "unauthorized, auth not exists")
-	UnauthorizedTokenError    = NewError(20002, "unauthorized, token invalid")
-	UnauthorizedTokenTimeout  = NewError(20003, "unauthorized, token timeout")
-	UnauthorizedTokenGenerate = NewError(20004, "unauthorized，token generate failed")
+	Success         = NewError(SuccessCode, "success")
+	ServerError     = NewError(ServerErrorCode, "server internal error")
+	InvalidParams   = NewError(InvalidParamsCode, "invalid params")
+	NotFound        = NewError(NotFoundCode, "record not found")
+	TooManyRequests = NewError(TooManyRequestsCode, "too many requests")
 )
 
-// internal error code
+// Auth error code
 var (
-	CopyError = NewError(30001, "copy obj error")
-	JSONError = NewError(30002, "json marshal/unmarshal error")
+	UnauthorizedAuthNotExist  = NewError(UnauthorizedAuthNotExistErrorCode, "unauthorized, auth not exists")
+	UnauthorizedTokenError    = NewError(UnauthorizedTokenErrorCode, "unauthorized, token invalid")
+	UnauthorizedTokenTimeout  = NewError(UnauthorizedTokenTimeoutErrorCode, "unauthorized, token timeout")
+	UnauthorizedTokenGenerate = NewError(UnauthorizedTokenGenerateErrorCode, "unauthorized，token generate failed")
+)
+
+// Internal error code
+var (
+	CopyError = NewError(CopyErrorErrorCode, "copy obj error")
+	JSONError = NewError(JSONErrorErrorCode, "json marshal/unmarshal error")
+)
+
+// Business error code
+var (
+	AccountExist  = NewError(AccountExistErrorCode, "account already exists")
+	UserNameExist = NewError(UserNameExistErrorCode, "username already exists")
 )

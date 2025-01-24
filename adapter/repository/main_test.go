@@ -8,7 +8,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	config.Init("../../../config", "config")
+	config.Init("../../config", "config.yaml")
 	log.Init()
 
 	m.Run()

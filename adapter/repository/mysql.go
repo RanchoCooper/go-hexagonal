@@ -82,18 +82,7 @@ func openGormDB() (*gorm.DB, error) {
 		dialect = driver.New(driver.Config{
 			DSN:                       dsn,
 			DriverName:                "mysql",
-			DefaultStringSize:         255,
 			SkipInitializeWithVersion: true,
-			// ServerVersion:                 "",
-			// DSNConfig:                     nil,
-			// Conn:                          nil,
-			// DefaultDatetimePrecision:      nil,
-			// DisableWithReturning:          false,
-			// DisableDatetimePrecision:      false,
-			// DontSupportRenameIndex:        false,
-			// DontSupportRenameColumn:       false,
-			// DontSupportForShareClause:     false,
-			// DontSupportNullAsDefaultValue: false,
 		})
 	)
 

@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"go-hexagonal/adapter/repository"
 	"go-hexagonal/api/dto"
-	"go-hexagonal/internal/adapter/repository"
 )
 
 func TestCreateExample(t *testing.T) {

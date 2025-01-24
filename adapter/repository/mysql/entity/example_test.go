@@ -8,9 +8,9 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 
+	"go-hexagonal/adapter/repository"
 	"go-hexagonal/api/dto"
-	"go-hexagonal/internal/adapter/repository"
-	"go-hexagonal/internal/domain/model"
+	"go-hexagonal/domain/model"
 )
 
 func TestExample_Create(t *testing.T) {

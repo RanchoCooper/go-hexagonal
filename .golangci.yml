@@ -24,3 +24,5 @@ linters:
         - scopelint
         - tagalign
         - depguard
+        - cyclop
+        - nosprintfhostport

@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"go-hexagonal/internal/adapter/repository"
-	"go-hexagonal/internal/domain/repo"
+	"go-hexagonal/adapter/repository"
+	"go-hexagonal/domain/repo"
 )
 
 func NewExampleCache() *ExampleCache {

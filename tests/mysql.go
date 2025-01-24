@@ -16,6 +16,10 @@ import (
 	"go-hexagonal/tests/migrations/migrate"
 )
 
+const (
+	MysqlStartTimeout = 2 * time.Minute
+)
+
 func SetupMySQL(t *testing.T) *config.MySQLConfig {
 	t.Log("Setting up an instance of MySQL with testcontainers-go")
 	ctx := context.Background()
@@ -32,7 +36,7 @@ func SetupMySQL(t *testing.T) *config.MySQLConfig {
 			"MYSQL_DATABASE":      dbName,
 		},
 		WaitingFor: wait.ForAll(
-			wait.ForListeningPort("3306/tcp").WithStartupTimeout(2*time.Minute),
+			wait.ForListeningPort("3306/tcp").WithStartupTimeout(MysqlStartTimeout),
 			wait.ForLog("ready for connections"),
 		),
 	}
@@ -100,7 +104,6 @@ func MockMySQLData(t *testing.T, conf *config.Config, sqls []string) *gorm.DB {
 	dialect := driver.New(driver.Config{
 		DSN:                       dsn,
 		DriverName:                "mysql",
-		DefaultStringSize:         255,
 		SkipInitializeWithVersion: true,
 	})
 

@@ -7,7 +7,6 @@ import (
 )
 
 func TestMockRedisData(t *testing.T) {
-
 	var testCases = []struct {
 		Name     string
 		MockData map[string]string
@@ -34,6 +33,5 @@ func TestMockRedisData(t *testing.T) {
 		name, err := miniRedis.Get("name")
 		assert.NoError(t, err)
 		assert.Equal(t, name, "rancho")
-
 	}
 }

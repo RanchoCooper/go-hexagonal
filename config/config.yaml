@@ -22,7 +22,7 @@ mysql:
   password: "mysqlroot"
   host: "localhost"
   port: 3306
-  database: "go-hexagonal"
+  database: "go_hexagonal"
   char_set: "utf8mb4"
   parse_time: true
   time_zone: "Asia%2fShanghai"
@@ -48,4 +48,3 @@ postgres:
     ssl_mode: "disable"
     time_zone: "UTC"
 migration_dir: "./tests/postgre/migrations"
-

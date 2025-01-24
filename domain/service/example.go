@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"go-hexagonal/internal/adapter/repository/mysql/entity"
-	"go-hexagonal/internal/domain/model"
-	"go-hexagonal/internal/domain/repo"
+	"go-hexagonal/adapter/repository/mysql/entity"
+	"go-hexagonal/domain/model"
+	"go-hexagonal/domain/repo"
 )
 
 type ExampleService struct {
