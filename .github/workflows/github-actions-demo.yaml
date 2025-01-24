@@ -21,7 +21,7 @@ jobs:
                     - 3306:3306
                 env:
                     MYSQL_ROOT_PASSWORD: mysqlroot
-                    MYSQL_DATABASE: go-hexagonal
+                    MYSQL_DATABASE: go_hexagonal
                     MYSQL_USER: user
                     MYSQL_PASSWORD: mysqlroot
             postgres:
