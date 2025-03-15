@@ -2,7 +2,12 @@ package config
 
 import (
 	"flag"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 
+	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 )
 
@@ -95,12 +100,119 @@ func Load(configPath string, configFile string) (*Config, error) {
 		return nil, err
 	}
 
+	// Enable environment variables to override config
+	vip.SetEnvPrefix("APP")
+	vip.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	vip.AutomaticEnv()
+
 	err := vip.Unmarshal(&conf)
 	if err != nil {
 		return nil, err
 	}
 
+	// Apply environment variable overrides
+	applyEnvOverrides(conf)
+
 	return conf, nil
+}
+
+// applyEnvOverrides applies environment variable overrides to the configuration
+func applyEnvOverrides(conf *Config) {
+	// Environment
+	if env := os.Getenv("APP_ENV"); env != "" {
+		conf.Env = Env(env)
+	}
+
+	// App config
+	if name := os.Getenv("APP_APP_NAME"); name != "" {
+		conf.App.Name = name
+	}
+	if debug := os.Getenv("APP_APP_DEBUG"); debug != "" {
+		conf.App.Debug = debug == "true"
+	}
+	if version := os.Getenv("APP_APP_VERSION"); version != "" {
+		conf.App.Version = version
+	}
+
+	// HTTP Server
+	if addr := os.Getenv("APP_HTTP_SERVER_ADDR"); addr != "" {
+		conf.HTTPServer.Addr = addr
+	}
+	if pprof := os.Getenv("APP_HTTP_SERVER_PPROF"); pprof != "" {
+		conf.HTTPServer.Pprof = pprof == "true"
+	}
+	if pageSize := os.Getenv("APP_HTTP_SERVER_DEFAULT_PAGE_SIZE"); pageSize != "" {
+		if val, err := strconv.Atoi(pageSize); err == nil {
+			conf.HTTPServer.DefaultPageSize = val
+		}
+	}
+	if maxPageSize := os.Getenv("APP_HTTP_SERVER_MAX_PAGE_SIZE"); maxPageSize != "" {
+		if val, err := strconv.Atoi(maxPageSize); err == nil {
+			conf.HTTPServer.MaxPageSize = val
+		}
+	}
+	if readTimeout := os.Getenv("APP_HTTP_SERVER_READ_TIMEOUT"); readTimeout != "" {
+		conf.HTTPServer.ReadTimeout = readTimeout
+	}
+	if writeTimeout := os.Getenv("APP_HTTP_SERVER_WRITE_TIMEOUT"); writeTimeout != "" {
+		conf.HTTPServer.WriteTimeout = writeTimeout
+	}
+
+	// MySQL
+	if host := os.Getenv("APP_MYSQL_HOST"); host != "" {
+		conf.MySQL.Host = host
+	}
+	if port := os.Getenv("APP_MYSQL_PORT"); port != "" {
+		if val, err := strconv.Atoi(port); err == nil {
+			conf.MySQL.Port = val
+		}
+	}
+	if user := os.Getenv("APP_MYSQL_USER"); user != "" {
+		conf.MySQL.User = user
+	}
+	if password := os.Getenv("APP_MYSQL_PASSWORD"); password != "" {
+		conf.MySQL.Password = password
+	}
+	if database := os.Getenv("APP_MYSQL_DATABASE"); database != "" {
+		conf.MySQL.Database = database
+	}
+
+	// Redis
+	if host := os.Getenv("APP_REDIS_HOST"); host != "" {
+		conf.Redis.Host = host
+	}
+	if port := os.Getenv("APP_REDIS_PORT"); port != "" {
+		if val, err := strconv.Atoi(port); err == nil {
+			conf.Redis.Port = val
+		}
+	}
+	if password := os.Getenv("APP_REDIS_PASSWORD"); password != "" {
+		conf.Redis.Password = password
+	}
+	if db := os.Getenv("APP_REDIS_DB"); db != "" {
+		if val, err := strconv.Atoi(db); err == nil {
+			conf.Redis.DB = val
+		}
+	}
+
+	// PostgreSQL
+	if host := os.Getenv("APP_POSTGRES_HOST"); host != "" {
+		conf.Postgre.Host = host
+	}
+	if port := os.Getenv("APP_POSTGRES_PORT"); port != "" {
+		if val, err := strconv.Atoi(port); err == nil {
+			conf.Postgre.Port = val
+		}
+	}
+	if username := os.Getenv("APP_POSTGRES_USERNAME"); username != "" {
+		conf.Postgre.Username = username
+	}
+	if password := os.Getenv("APP_POSTGRES_PASSWORD"); password != "" {
+		conf.Postgre.Password = password
+	}
+	if dbName := os.Getenv("APP_POSTGRES_DB_NAME"); dbName != "" {
+		conf.Postgre.DbName = dbName
+	}
 }
 
 func Init(path, file string) {
@@ -113,4 +225,9 @@ func Init(path, file string) {
 		panic("Load config fail : " + err.Error())
 	}
 	GlobalConfig = conf
+}
+
+// GetDuration converts a duration string to time.Duration
+func GetDuration(durationStr string) time.Duration {
+	return cast.ToDuration(durationStr)
 }
