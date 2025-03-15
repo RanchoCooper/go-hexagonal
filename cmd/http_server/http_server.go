@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cast"
 
+	"go-hexagonal/adapter/dependency"
 	http2 "go-hexagonal/api/http"
 	"go-hexagonal/application"
 	"go-hexagonal/config"
@@ -14,11 +15,19 @@ import (
 
 // Start initializes and starts the HTTP server
 func Start(ctx context.Context, errChan chan error, httpCloseCh chan struct{}) {
-	// Create use case factory if application layer is enabled
-	var useCaseFactory *application.UseCaseFactory
+	// Initialize services using dependency injection
+	services, err := dependency.InitializeServices(ctx)
+	if err != nil {
+		log.SugaredLogger.Errorf("Failed to initialize services: %v", err)
+		errChan <- err
+		return
+	}
 
-	// Uncomment to enable application layer with use cases
-	// useCaseFactory = application.NewUseCaseFactory(service.ExampleSvc, service.EventBus)
+	// Create application layer use case factory
+	useCaseFactory := application.NewUseCaseFactory(
+		services.ExampleService,
+		services.EventBus,
+	)
 
 	// Initialize server
 	srv := &http.Server{

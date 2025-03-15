@@ -10,35 +10,44 @@ import (
 	"context"
 	"go-hexagonal/adapter/repository/mysql/entity"
 	"go-hexagonal/domain/event"
+	"go-hexagonal/domain/repo"
 	"go-hexagonal/domain/service"
 )
 
+// Injectors from wire.go:
+
 // InitializeServices initializes all services
 func InitializeServices(ctx context.Context) (*service.Services, error) {
-	// Create repositories
 	entityExample := entity.NewExample()
-
-	// Create event bus and handlers
-	inMemoryEventBus := event.NewInMemoryEventBus()
-	loggingHandler := event.NewLoggingEventHandler()
-	exampleHandler := event.NewExampleEventHandler()
-
-	// Register event handlers
-	inMemoryEventBus.Subscribe(loggingHandler)
-	inMemoryEventBus.Subscribe(exampleHandler)
-
-	// Create services
-	exampleService := service.NewExampleService(ctx)
-	exampleService.Repository = entityExample
-	exampleService.EventBus = inMemoryEventBus
-
-	// Create services container
-	services := service.NewServices(exampleService, inMemoryEventBus)
-
+	inMemoryEventBus := provideEventBus()
+	exampleService := provideExampleService(ctx, entityExample, inMemoryEventBus)
+	services := provideServices(exampleService, inMemoryEventBus)
 	return services, nil
 }
 
-// Injected is an alias for InitializeServices for backward compatibility
-func Injected(ctx context.Context) (*service.Services, error) {
-	return InitializeServices(ctx)
+// wire.go:
+
+// provideEventBus 创建并配置事件总线
+func provideEventBus() *event.InMemoryEventBus {
+	eventBus := event.NewInMemoryEventBus()
+
+	loggingHandler := event.NewLoggingEventHandler()
+	exampleHandler := event.NewExampleEventHandler()
+	eventBus.Subscribe(loggingHandler)
+	eventBus.Subscribe(exampleHandler)
+
+	return eventBus
+}
+
+// provideExampleService 创建并配置示例服务
+func provideExampleService(ctx context.Context, repo2 repo.IExampleRepo, eventBus event.EventBus) *service.ExampleService {
+	exampleService := service.NewExampleService(ctx)
+	exampleService.Repository = repo2
+	exampleService.EventBus = eventBus
+	return exampleService
+}
+
+// provideServices 创建服务容器
+func provideServices(exampleService *service.ExampleService, eventBus event.EventBus) *service.Services {
+	return service.NewServices(exampleService, eventBus)
 }

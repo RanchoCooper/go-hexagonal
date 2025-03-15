@@ -7,11 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"go-hexagonal/adapter/dependency"
 	"go-hexagonal/adapter/repository"
 	"go-hexagonal/cmd/http_server"
 	"go-hexagonal/config"
-	"go-hexagonal/domain/service"
 	"go-hexagonal/util/log"
 )
 
@@ -41,16 +39,6 @@ func initRuntime(ctx context.Context) {
 		repository.WithMySQL(),
 		repository.WithRedis(),
 	)
-
-	// Initialize services using Wire dependency injection
-	services, err := dependency.Injected(ctx)
-	if err != nil {
-		log.SugaredLogger.Fatalf("Failed to initialize services: %v", err)
-	}
-
-	// For backward compatibility, assign service instances to global variables
-	service.ExampleSvc = services.ExampleService
-	service.EventBus = services.EventBus
 }
 
 func initServer(ctx context.Context, cancel context.CancelFunc) {

@@ -2,149 +2,149 @@
 
 ![Hexagonal Architecture](https://github.com/Sairyss/domain-driven-hexagon/raw/master/assets/images/DomainDrivenHexagon.png)
 
-## 项目概述
+## Project Overview
 
-本项目是一个基于[六边形架构](https://zh.wikipedia.org/wiki/%E5%85%AD%E8%A7%92%E6%9E%B6%E6%9E%84)（Hexagonal Architecture）和[领域驱动设计](https://zh.wikipedia.org/wiki/%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1)（Domain-Driven Design）的Go语言微服务框架。它提供了一个清晰的项目结构和设计模式，帮助开发者构建可维护、可测试和可扩展的应用程序。
+This project is a Go microservice framework based on [Hexagonal Architecture](https://en.wikipedia.org/wiki/Hexagonal_architecture_(software)) and [Domain-Driven Design](https://en.wikipedia.org/wiki/Domain-driven_design). It provides a clear project structure and design patterns to help developers build maintainable, testable, and scalable applications.
 
-六边形架构（也称为[端口和适配器架构](https://zh.wikipedia.org/wiki/%E5%85%AD%E8%A7%92%E6%9E%B6%E6%9E%84)）将应用程序分为内部和外部两部分，通过定义明确的接口（端口）和实现（适配器）来实现[关注点分离](https://zh.wikipedia.org/wiki/%E5%85%B3%E6%B3%A8%E7%82%B9%E5%88%86%E7%A6%BB)和[依赖倒置原则](https://zh.wikipedia.org/wiki/%E4%BE%9D%E8%B5%96%E5%8F%8D%E8%BD%AC%E5%8E%9F%E5%88%99)。这种架构使得业务逻辑与技术实现细节解耦，便于单元测试和功能扩展。
+Hexagonal Architecture (also known as [Ports and Adapters Architecture](https://en.wikipedia.org/wiki/Hexagonal_architecture_(software))) divides the application into internal and external parts, implementing [Separation of Concerns](https://en.wikipedia.org/wiki/Separation_of_concerns) and [Dependency Inversion Principle](https://en.wikipedia.org/wiki/Dependency_inversion_principle) through well-defined interfaces (ports) and implementations (adapters). This architecture decouples business logic from technical implementation details, facilitating unit testing and feature extension.
 
-## 核心特性
+## Core Features
 
-### 架构设计
-- **[领域驱动设计 (DDD)](https://zh.wikipedia.org/wiki/%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1)** - 通过[聚合](https://zh.wikipedia.org/wiki/%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1)、[实体](https://zh.wikipedia.org/wiki/%E5%AE%9E%E4%BD%93)、[值对象](https://zh.wikipedia.org/wiki/%E5%80%BC%E5%AF%B9%E8%B1%A1)等概念组织业务逻辑
-- **[六边形架构](https://zh.wikipedia.org/wiki/%E5%85%AD%E8%A7%92%E6%9E%B6%E6%9E%84)** - 将应用程序分为领域、应用和适配器层
-- **[依赖注入](https://zh.wikipedia.org/wiki/%E4%BE%9D%E8%B5%96%E6%B3%A8%E5%85%A5)** - 使用[Wire](https://github.com/google/wire)实现依赖注入，提高代码的可测试性和灵活性
-- **[仓储模式](https://zh.wikipedia.org/wiki/%E4%BB%93%E5%82%A8%E6%A8%A1%E5%BC%8F)** - 抽象数据访问层，支持事务处理
-- **[领域事件](https://zh.wikipedia.org/wiki/%E9%A2%86%E5%9F%9F%E4%BA%8B%E4%BB%B6)** - 实现[事件驱动架构](https://zh.wikipedia.org/wiki/%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8%E6%9E%B6%E6%9E%84)，支持系统内部组件的松耦合通信
-- **[CQRS模式](https://zh.wikipedia.org/wiki/%E5%91%BD%E4%BB%A4%E6%9F%A5%E8%AF%A2%E8%B4%A3%E4%BB%BB%E5%88%86%E7%A6%BB)** - 命令和查询职责分离，优化读写操作
+### Architecture Design
+- **[Domain-Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design)** - Organize business logic through concepts like [Aggregates](https://en.wikipedia.org/wiki/Domain-driven_design), [Entities](https://en.wikipedia.org/wiki/Entity), and [Value Objects](https://en.wikipedia.org/wiki/Value_object)
+- **[Hexagonal Architecture](https://en.wikipedia.org/wiki/Hexagonal_architecture_(software))** - Divide the application into domain, application, and adapter layers
+- **[Dependency Injection](https://en.wikipedia.org/wiki/Dependency_injection)** - Use [Wire](https://github.com/google/wire) for dependency injection, improving code testability and flexibility
+- **[Repository Pattern](https://en.wikipedia.org/wiki/Repository_pattern)** - Abstract data access layer with transaction support
+- **[Domain Events](https://en.wikipedia.org/wiki/Domain-driven_design)** - Implement [Event-Driven Architecture](https://en.wikipedia.org/wiki/Event-driven_architecture), supporting loosely coupled communication between system components
+- **[CQRS Pattern](https://en.wikipedia.org/wiki/Command_Query_Responsibility_Segregation)** - Command and Query Responsibility Segregation, optimizing read and write operations
 
-### 技术实现
-- **[RESTful API](https://zh.wikipedia.org/wiki/REST)** - 使用[Gin](https://github.com/gin-gonic/gin)框架实现HTTP API
-- **数据库支持** - 集成[GORM](https://gorm.io)，支持[MySQL](https://zh.wikipedia.org/wiki/MySQL)、[PostgreSQL](https://zh.wikipedia.org/wiki/PostgreSQL)等数据库
-- **缓存支持** - 集成[Redis](https://zh.wikipedia.org/wiki/Redis)缓存
-- **日志系统** - 使用[Zap](https://go.uber.org/zap)实现高性能日志记录
-- **配置管理** - 使用[Viper](https://github.com/spf13/viper)实现灵活的配置管理
-- **[优雅关闭](https://zh.wikipedia.org/wiki/%E4%BC%98%E9%9B%85%E5%85%B3%E9%97%AD)** - 支持服务的优雅启动和关闭
-- **[单元测试](https://zh.wikipedia.org/wiki/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95)** - 使用[go-sqlmock](https://github.com/DATA-DOG/go-sqlmock)和[redismock](https://github.com/go-redis/redismock)实现数据库和缓存的模拟测试
+### Technical Implementation
+- **[RESTful API](https://en.wikipedia.org/wiki/Representational_state_transfer)** - Implement HTTP API using the [Gin](https://github.com/gin-gonic/gin) framework
+- **Database Support** - Integrate [GORM](https://gorm.io) with support for [MySQL](https://en.wikipedia.org/wiki/MySQL), [PostgreSQL](https://en.wikipedia.org/wiki/PostgreSQL), and other databases
+- **Cache Support** - Integrate [Redis](https://en.wikipedia.org/wiki/Redis) caching
+- **Logging System** - Use [Zap](https://go.uber.org/zap) for high-performance logging
+- **Configuration Management** - Use [Viper](https://github.com/spf13/viper) for flexible configuration management
+- **[Graceful Shutdown](https://en.wikipedia.org/wiki/Graceful_exit)** - Support graceful service startup and shutdown
+- **[Unit Testing](https://en.wikipedia.org/wiki/Unit_testing)** - Use [go-sqlmock](https://github.com/DATA-DOG/go-sqlmock) and [redismock](https://github.com/go-redis/redismock) for database and cache mocking
 
-### 开发工具链
-- **代码质量** - 集成[Golangci-lint](https://github.com/golangci/golangci-lint)进行代码质量检查
-- **提交规范** - 使用[Commitlint](https://github.com/conventional-changelog/commitlint)确保Git提交信息符合规范
-- **预提交钩子** - 使用[Pre-commit](https://pre-commit.com)进行代码检查和格式化
-- **[CI/CD](https://zh.wikipedia.org/wiki/CI/CD)** - 集成[GitHub Actions](https://github.com/features/actions)实现持续集成和部署
+### Development Toolchain
+- **Code Quality** - Integrate [Golangci-lint](https://github.com/golangci/golangci-lint) for code quality checks
+- **Commit Standards** - Use [Commitlint](https://github.com/conventional-changelog/commitlint) to ensure Git commit messages follow conventions
+- **Pre-commit Hooks** - Use [Pre-commit](https://pre-commit.com) for code checking and formatting
+- **[CI/CD](https://en.wikipedia.org/wiki/CI/CD)** - Integrate [GitHub Actions](https://github.com/features/actions) for continuous integration and deployment
 
-## 项目结构
+## Project Structure
 
 ```
 .
-├── adapter/                # 适配器层 - 实现与外部系统的交互
-│   ├── amqp/               # 消息队列适配器
-│   ├── dependency/         # 依赖注入配置
-│   ├── job/                # 定时任务适配器
-│   └── repository/         # 数据仓库适配器
-│       ├── mysql/          # MySQL实现
-│       ├── postgre/        # PostgreSQL实现
-│       └── redis/          # Redis实现
-├── api/                    # API层 - 处理HTTP请求和响应
-│   ├── dto/                # 数据传输对象
-│   ├── error_code/         # 错误码定义
+├── adapter/                # Adapter Layer - Interaction with external systems
+│   ├── amqp/               # Message queue adapters
+│   ├── dependency/         # Dependency injection configuration
+│   ├── job/                # Scheduled task adapters
+│   └── repository/         # Data repository adapters
+│       ├── mysql/          # MySQL implementation
+│       ├── postgre/        # PostgreSQL implementation
+│       └── redis/          # Redis implementation
+├── api/                    # API Layer - Handle HTTP requests and responses
+│   ├── dto/                # Data Transfer Objects
+│   ├── error_code/         # Error code definitions
 │   ├── grpc/               # gRPC API
 │   └── http/               # HTTP API
-│       ├── handle/         # 请求处理器
-│       ├── middleware/     # 中间件
-│       ├── paginate/       # 分页处理
-│       └── validator/      # 请求验证
-├── application/            # 应用层 - 协调领域对象完成用例
-│   ├── core/               # 核心接口和错误定义
-│   └── example/            # 示例用例实现
-├── cmd/                    # 命令行入口
-│   └── http_server/        # HTTP服务器启动
-├── config/                 # 配置文件和配置管理
-├── domain/                 # 领域层 - 核心业务逻辑
-│   ├── aggregate/          # 聚合
-│   ├── event/              # 领域事件
-│   ├── model/              # 领域模型
-│   ├── repo/               # 仓库接口
-│   ├── service/            # 领域服务
-│   └── vo/                 # 值对象
-├── tests/                  # 集成测试
-└── util/                   # 工具函数
-    ├── clean_arch/         # 架构检查工具
-    └── log/                # 日志工具
+│       ├── handle/         # Request handlers
+│       ├── middleware/     # Middleware
+│       ├── paginate/       # Pagination handling
+│       └── validator/      # Request validation
+├── application/            # Application Layer - Coordinate domain objects for use cases
+│   ├── core/               # Core interfaces and error definitions
+│   └── example/            # Example use case implementations
+├── cmd/                    # Command-line entry points
+│   └── http_server/        # HTTP server startup
+├── config/                 # Configuration files and management
+├── domain/                 # Domain Layer - Core business logic
+│   ├── aggregate/          # Aggregates
+│   ├── event/              # Domain events
+│   ├── model/              # Domain models
+│   ├── repo/               # Repository interfaces
+│   ├── service/            # Domain services
+│   └── vo/                 # Value objects
+├── tests/                  # Integration tests
+└── util/                   # Utility functions
+    ├── clean_arch/         # Architecture checking tools
+    └── log/                # Logging utilities
 ```
 
-## 架构分层
+## Architecture Layers
 
-### 领域层 (Domain Layer)
-领域层是应用程序的核心，包含业务逻辑和规则。它独立于其他层，不依赖于任何外部组件。
+### Domain Layer
+The domain layer is the core of the application, containing business logic and rules. It is independent of other layers and does not depend on any external components.
 
-- **模型 (Model)**: 领域实体和值对象
-- **仓库接口 (Repository Interface)**: 定义数据访问接口
-- **领域服务 (Service)**: 处理跨实体的业务逻辑
-- **领域事件 (Event)**: 定义领域内的事件
+- **Models**: Domain entities and value objects
+- **Repository Interfaces**: Define data access interfaces
+- **Domain Services**: Handle business logic across entities
+- **Domain Events**: Define events within the domain
 
-### 应用层 (Application Layer)
-应用层协调领域对象完成特定的应用任务。它依赖于领域层，但不包含业务规则。
+### Application Layer
+The application layer coordinates domain objects to complete specific application tasks. It depends on the domain layer but does not contain business rules.
 
-- **用例 (Use Cases)**: 定义应用程序的功能
-- **命令和查询 (Commands & Queries)**: 实现CQRS模式
-- **事件处理器 (Event Handlers)**: 处理领域事件
+- **Use Cases**: Define application functionality
+- **Commands and Queries**: Implement CQRS pattern
+- **Event Handlers**: Process domain events
 
-### 适配器层 (Adapter Layer)
-适配器层实现与外部系统的交互，如数据库、消息队列等。
+### Adapter Layer
+The adapter layer implements interaction with external systems, such as databases and message queues.
 
-- **仓库实现 (Repository Implementation)**: 实现数据访问接口
-- **消息队列适配器 (AMQP Adapter)**: 实现消息发布和订阅
-- **定时任务 (Job)**: 实现定时任务
+- **Repository Implementation**: Implement data access interfaces
+- **Message Queue Adapters**: Implement message publishing and subscription
+- **Scheduled Tasks**: Implement scheduled tasks
 
-### API层 (API Layer)
-API层处理HTTP请求和响应，是应用程序的入口点。
+### API Layer
+The API layer handles HTTP requests and responses, serving as the entry point to the application.
 
-- **控制器 (Controllers)**: 处理HTTP请求
-- **中间件 (Middleware)**: 实现横切关注点
-- **数据传输对象 (DTOs)**: 定义请求和响应的数据结构
+- **Controllers**: Handle HTTP requests
+- **Middleware**: Implement cross-cutting concerns
+- **Data Transfer Objects (DTOs)**: Define request and response data structures
 
-## 依赖注入
+## Dependency Injection
 
-本项目使用Google Wire实现依赖注入，通过以下方式组织依赖关系：
+This project uses Google Wire for dependency injection, organizing dependencies as follows:
 
 ```go
-// 初始化服务
+// Initialize services
 func InitializeServices(ctx context.Context) (*service.Services, error) {
-    // 创建仓库
+    // Create repositories
     entityExample := entity.NewExample()
 
-    // 创建事件总线和处理器
+    // Create event bus and handlers
     inMemoryEventBus := event.NewInMemoryEventBus()
     loggingHandler := event.NewLoggingEventHandler()
     exampleHandler := event.NewExampleEventHandler()
 
-    // 注册事件处理器
+    // Register event handlers
     inMemoryEventBus.Subscribe(loggingHandler)
     inMemoryEventBus.Subscribe(exampleHandler)
 
-    // 创建服务
+    // Create services
     exampleService := service.NewExampleService(ctx)
     exampleService.Repository = entityExample
     exampleService.EventBus = inMemoryEventBus
 
-    // 创建服务容器
+    // Create services container
     services := service.NewServices(exampleService, inMemoryEventBus)
 
     return services, nil
 }
 ```
 
-## 领域事件
+## Domain Events
 
-领域事件用于在系统内部组件之间进行通信，实现松耦合的事件驱动架构：
+Domain events are used for communication between system components, implementing a loosely coupled event-driven architecture:
 
 ```go
-// 发布事件
+// Publish event
 evt := event.NewExampleCreatedEvent(example.Id, example.Name, example.Alias)
 e.EventBus.Publish(ctx, evt)
 
-// 处理事件
+// Handle event
 func (h *ExampleEventHandler) HandleEvent(ctx context.Context, event Event) error {
     switch event.EventName() {
     case ExampleCreatedEventName:
@@ -155,12 +155,12 @@ func (h *ExampleEventHandler) HandleEvent(ctx context.Context, event Event) erro
 }
 ```
 
-## 应用层用例
+## Application Layer Use Cases
 
-应用层用例实现了命令和查询职责分离 (CQRS) 模式：
+Application layer use cases implement the Command and Query Responsibility Segregation (CQRS) pattern:
 
 ```go
-// 创建示例用例
+// Create example use case
 func (h *CreateExampleHandler) Handle(ctx context.Context, input interface{}) (interface{}, error) {
     createInput, ok := input.(CreateExampleInput)
     if !ok {
@@ -185,11 +185,43 @@ func (h *CreateExampleHandler) Handle(ctx context.Context, input interface{}) (i
 }
 ```
 
-## 使用指南
+## Project Improvements
 
-### 环境准备
+The project has recently undergone the following improvements:
 
-使用Docker启动MySQL：
+### 1. Unified API Versions
+- **Problem**: The project had both v1 and v2 API versions, causing code duplication and maintenance difficulties
+- **Solution**:
+  - Unified API routes, placing all APIs under the `/api` path
+  - Retained the `/v2` path for backward compatibility
+  - Used application layer use cases to handle all requests, phasing out direct domain service calls
+
+### 2. Enhanced Dependency Injection
+- **Problem**: Wire dependency injection configuration had duplicate binding issues, causing generation failures
+- **Solution**:
+  - Refactored the `wire.go` file, removing duplicate binding definitions
+  - Used provider functions instead of direct bindings
+  - Added event handler registration logic
+
+### 3. Eliminated Global Variables
+- **Problem**: The project used global variables to store service instances, violating dependency injection principles
+- **Solution**:
+  - Removed the use of global variables `service.ExampleSvc` and `service.EventBus`
+  - Passed service instances through dependency injection
+  - Initialized services using dependency injection when starting the HTTP server
+
+### 4. Improved Application Layer Integration
+- **Problem**: Application layer use cases were not fully utilized, with the HTTP server not enabling the application layer by default
+- **Solution**:
+  - Enabled application layer use cases by default
+  - Used the use case factory to create and manage use cases
+  - Implemented clearer error handling and response mapping
+
+## Usage Guide
+
+### Environment Preparation
+
+Start MySQL using Docker:
 ```bash
 docker run --name mysql-local \
   -e MYSQL_ROOT_PASSWORD=mysqlroot \
@@ -200,60 +232,60 @@ docker run --name mysql-local \
   -d mysql:latest
 ```
 
-### 开发工具安装
+### Development Tool Installation
 
 ```bash
-# 安装开发工具
+# Install development tools
 make init && make precommit.rehook
 ```
 
-或手动安装：
+Or install manually:
 
 ```bash
-# 安装pre-commit
+# Install pre-commit
 brew install pre-commit
-# 安装golangci-lint
+# Install golangci-lint
 brew install golangci-lint
-# 安装commitlint
+# Install commitlint
 npm install -g @commitlint/cli @commitlint/config-conventional
-# 添加commitlint配置
+# Add commitlint configuration
 echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
-# 添加pre-commit钩子
+# Add pre-commit hook
 make precommit.rehook
 ```
 
-### 运行项目
+### Running the Project
 
 ```bash
-# 运行项目
+# Run the project
 go run cmd/main.go
 ```
 
-### 测试
+### Testing
 
 ```bash
-# 运行测试
+# Run tests
 go test ./...
 ```
 
-## 扩展计划
+## Extension Plans
 
-- **依赖注入改进** - 完善Wire依赖注入配置
-- **HTTP处理改进** - 优化HTTP请求处理实现
-- **领域事件增强** - 完善领域事件机制
-- **gRPC支持** - 添加gRPC服务实现
-- **热加载配置** - 实现配置热加载
-- **监控集成** - 集成Prometheus监控
-- **消息队列集成** - 集成Kafka等消息队列
+- **Dependency Injection Improvements** - Enhance Wire dependency injection configuration
+- **HTTP Handling Improvements** - Optimize HTTP request handling implementation
+- **Domain Event Enhancements** - Improve domain event mechanisms
+- **gRPC Support** - Add gRPC service implementation
+- **Hot Reload Configuration** - Implement configuration hot reloading
+- **Monitoring Integration** - Integrate Prometheus monitoring
+- **Message Queue Integration** - Integrate Kafka and other message queues
 
-## 参考资料
+## References
 
-- **架构**
+- **Architecture**
   - [Freedom DDD Framework](https://github.com/8treenet/freedom)
   - [Hexagonal Architecture in Go](https://medium.com/@matiasvarela/hexagonal-architecture-in-go-cfd4e436faa3)
   - [Dependency Injection in A Nutshell](https://appliedgo.net/di/)
-- **项目规范**
+- **Project Standards**
   - [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0)
   - [Improving Your Go Project With pre-commit hooks](https://goangle.medium.com/golang-improving-your-go-project-with-pre-commit-hooks-a265fad0e02f)
-- **代码参考**
+- **Code References**
   - [Go CleanArch](https://github.com/roblaszczak/go-cleanarch)

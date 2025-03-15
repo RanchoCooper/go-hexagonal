@@ -17,25 +17,41 @@ func NewServerRoute(useCaseFactory *application.UseCaseFactory) *gin.Engine {
 
 	router := gin.Default()
 
-	// Legacy API (v1)
-	example := router.Group("/example")
-	{
-		example.POST("", CreateExample)
-		example.DELETE("/:id", DeleteExample)
-		example.PUT("/:id", UpdateExample)
-		example.GET("/:id", GetExample)
+	// Check if use case factory is provided
+	if useCaseFactory == nil {
+		// If no use case factory is provided, use traditional API (not recommended)
+		example := router.Group("/example")
+		{
+			example.POST("", CreateExample)
+			example.DELETE("/:id", DeleteExample)
+			example.PUT("/:id", UpdateExample)
+			example.GET("/:id", GetExample)
+		}
+		return router
 	}
 
-	// New API using application layer use cases (v2)
-	if useCaseFactory != nil {
-		exampleHandler := NewExampleHandlerV2(useCaseFactory)
-		v2 := router.Group("/v2")
+	// Use API with application layer use cases (recommended)
+	exampleHandler := NewExampleHandlerV2(useCaseFactory)
+
+	// API routes
+	api := router.Group("/api")
+	{
+		// Example resource
+		exampleApi := api.Group("/example")
 		{
-			exampleV2 := v2.Group("/example")
-			{
-				exampleV2.POST("", exampleHandler.Create)
-				exampleV2.GET("/:id", exampleHandler.Get)
-			}
+			exampleApi.POST("", exampleHandler.Create)
+			exampleApi.GET("/:id", exampleHandler.Get)
+			// Add more endpoints here
+		}
+	}
+
+	// Keep v2 path for backward compatibility
+	v2 := router.Group("/v2")
+	{
+		exampleV2 := v2.Group("/example")
+		{
+			exampleV2.POST("", exampleHandler.Create)
+			exampleV2.GET("/:id", exampleHandler.Get)
 		}
 	}
 
