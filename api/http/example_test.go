@@ -32,7 +32,8 @@ func TestCreateExample(t *testing.T) {
 	req, _ := http.NewRequest(http.MethodPost, "/example", bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 
-	NewServerRoute().ServeHTTP(w, req)
+	// Pass nil as useCaseFactory to use only legacy API
+	NewServerRoute(nil).ServeHTTP(w, req)
 
 	// verify
 	assert.Equal(t, http.StatusOK, w.Code)
