@@ -4,34 +4,34 @@
 
 ## 项目概述
 
-本项目是一个基于六边形架构（Hexagonal Architecture）和领域驱动设计（Domain-Driven Design）的Go语言微服务框架。它提供了一个清晰的项目结构和设计模式，帮助开发者构建可维护、可测试和可扩展的应用程序。
+本项目是一个基于[六边形架构](https://zh.wikipedia.org/wiki/%E5%85%AD%E8%A7%92%E6%9E%B6%E6%9E%84)（Hexagonal Architecture）和[领域驱动设计](https://zh.wikipedia.org/wiki/%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1)（Domain-Driven Design）的Go语言微服务框架。它提供了一个清晰的项目结构和设计模式，帮助开发者构建可维护、可测试和可扩展的应用程序。
 
-六边形架构（也称为端口和适配器架构）将应用程序分为内部和外部两部分，通过定义明确的接口（端口）和实现（适配器）来实现关注点分离和依赖倒置原则。这种架构使得业务逻辑与技术实现细节解耦，便于单元测试和功能扩展。
+六边形架构（也称为[端口和适配器架构](https://zh.wikipedia.org/wiki/%E5%85%AD%E8%A7%92%E6%9E%B6%E6%9E%84)）将应用程序分为内部和外部两部分，通过定义明确的接口（端口）和实现（适配器）来实现[关注点分离](https://zh.wikipedia.org/wiki/%E5%85%B3%E6%B3%A8%E7%82%B9%E5%88%86%E7%A6%BB)和[依赖倒置原则](https://zh.wikipedia.org/wiki/%E4%BE%9D%E8%B5%96%E5%8F%8D%E8%BD%AC%E5%8E%9F%E5%88%99)。这种架构使得业务逻辑与技术实现细节解耦，便于单元测试和功能扩展。
 
 ## 核心特性
 
 ### 架构设计
-- **领域驱动设计 (DDD)** - 通过聚合、实体、值对象等概念组织业务逻辑
-- **六边形架构** - 将应用程序分为领域、应用和适配器层
-- **依赖注入** - 使用Wire实现依赖注入，提高代码的可测试性和灵活性
-- **仓储模式** - 抽象数据访问层，支持事务处理
-- **领域事件** - 实现事件驱动架构，支持系统内部组件的松耦合通信
-- **CQRS模式** - 命令和查询职责分离，优化读写操作
+- **[领域驱动设计 (DDD)](https://zh.wikipedia.org/wiki/%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1)** - 通过[聚合](https://zh.wikipedia.org/wiki/%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1)、[实体](https://zh.wikipedia.org/wiki/%E5%AE%9E%E4%BD%93)、[值对象](https://zh.wikipedia.org/wiki/%E5%80%BC%E5%AF%B9%E8%B1%A1)等概念组织业务逻辑
+- **[六边形架构](https://zh.wikipedia.org/wiki/%E5%85%AD%E8%A7%92%E6%9E%B6%E6%9E%84)** - 将应用程序分为领域、应用和适配器层
+- **[依赖注入](https://zh.wikipedia.org/wiki/%E4%BE%9D%E8%B5%96%E6%B3%A8%E5%85%A5)** - 使用[Wire](https://github.com/google/wire)实现依赖注入，提高代码的可测试性和灵活性
+- **[仓储模式](https://zh.wikipedia.org/wiki/%E4%BB%93%E5%82%A8%E6%A8%A1%E5%BC%8F)** - 抽象数据访问层，支持事务处理
+- **[领域事件](https://zh.wikipedia.org/wiki/%E9%A2%86%E5%9F%9F%E4%BA%8B%E4%BB%B6)** - 实现[事件驱动架构](https://zh.wikipedia.org/wiki/%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8%E6%9E%B6%E6%9E%84)，支持系统内部组件的松耦合通信
+- **[CQRS模式](https://zh.wikipedia.org/wiki/%E5%91%BD%E4%BB%A4%E6%9F%A5%E8%AF%A2%E8%B4%A3%E4%BB%BB%E5%88%86%E7%A6%BB)** - 命令和查询职责分离，优化读写操作
 
 ### 技术实现
-- **RESTful API** - 使用Gin框架实现HTTP API
-- **数据库支持** - 集成GORM，支持MySQL、PostgreSQL等数据库
-- **缓存支持** - 集成Redis缓存
-- **日志系统** - 使用Zap实现高性能日志记录
-- **配置管理** - 使用Viper实现灵活的配置管理
-- **优雅关闭** - 支持服务的优雅启动和关闭
-- **单元测试** - 使用go-sqlmock和redismock实现数据库和缓存的模拟测试
+- **[RESTful API](https://zh.wikipedia.org/wiki/REST)** - 使用[Gin](https://github.com/gin-gonic/gin)框架实现HTTP API
+- **数据库支持** - 集成[GORM](https://gorm.io)，支持[MySQL](https://zh.wikipedia.org/wiki/MySQL)、[PostgreSQL](https://zh.wikipedia.org/wiki/PostgreSQL)等数据库
+- **缓存支持** - 集成[Redis](https://zh.wikipedia.org/wiki/Redis)缓存
+- **日志系统** - 使用[Zap](https://go.uber.org/zap)实现高性能日志记录
+- **配置管理** - 使用[Viper](https://github.com/spf13/viper)实现灵活的配置管理
+- **[优雅关闭](https://zh.wikipedia.org/wiki/%E4%BC%98%E9%9B%85%E5%85%B3%E9%97%AD)** - 支持服务的优雅启动和关闭
+- **[单元测试](https://zh.wikipedia.org/wiki/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95)** - 使用[go-sqlmock](https://github.com/DATA-DOG/go-sqlmock)和[redismock](https://github.com/go-redis/redismock)实现数据库和缓存的模拟测试
 
 ### 开发工具链
-- **代码质量** - 集成Golangci-lint进行代码质量检查
-- **提交规范** - 使用Commitlint确保Git提交信息符合规范
-- **预提交钩子** - 使用Pre-commit进行代码检查和格式化
-- **CI/CD** - 集成GitHub Actions实现持续集成和部署
+- **代码质量** - 集成[Golangci-lint](https://github.com/golangci/golangci-lint)进行代码质量检查
+- **提交规范** - 使用[Commitlint](https://github.com/conventional-changelog/commitlint)确保Git提交信息符合规范
+- **预提交钩子** - 使用[Pre-commit](https://pre-commit.com)进行代码检查和格式化
+- **[CI/CD](https://zh.wikipedia.org/wiki/CI/CD)** - 集成[GitHub Actions](https://github.com/features/actions)实现持续集成和部署
 
 ## 项目结构
 
