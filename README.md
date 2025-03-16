@@ -217,6 +217,48 @@ The project has recently undergone the following improvements:
   - Used the use case factory to create and manage use cases
   - Implemented clearer error handling and response mapping
 
+## Recent Optimizations
+
+The project has recently undergone the following optimizations:
+
+1. **Environment Variable Support**:
+   - Added functionality for environment variable overrides for configuration files, making the application more flexible in containerized deployments
+   - Used a unified prefix (APP_) and hierarchical structure (e.g., APP_MYSQL_HOST) to organize environment variables
+
+2. **Unified Error Handling**:
+   - Implemented an application-level error type system, supporting different types of errors (validation, not found, unauthorized, etc.)
+   - Added unified error response handling, mapping internal errors to appropriate HTTP status codes
+   - Improved error logging to ensure all unexpected errors are properly recorded
+
+3. **Request Logging Middleware**:
+   - Added detailed request logging middleware to record request methods, paths, status codes, latency, and other information
+   - In debug mode, request and response bodies can be logged to help developers troubleshoot issues
+   - Intelligently identifies content types to avoid logging binary content
+
+4. **Request ID Tracking**:
+   - Generated unique request IDs for each request, facilitating tracking in distributed systems
+   - Returned request IDs in response headers for client reference
+   - Included request IDs in logs to correlate multiple log entries for the same request
+
+5. **Graceful Shutdown**:
+   - Implemented a graceful shutdown mechanism for the server, ensuring all in-flight requests are completed before shutting down
+   - Added shutdown timeout settings to prevent the shutdown process from hanging indefinitely
+   - Improved signal handling, supporting SIGINT and SIGTERM signals
+
+6. **Internationalization Support**:
+   - Added translation middleware for multi-language validation error messages
+   - Automatically selected appropriate language based on the Accept-Language header
+
+7. **CORS Support**:
+   - Added CORS middleware to handle cross-origin requests
+   - Configured allowed origins, methods, headers, and credentials
+
+8. **Debugging Tools**:
+   - Integrated pprof performance analysis tools for diagnosing performance issues in production environments
+   - Can be enabled or disabled via configuration file
+
+These optimizations make the project more robust, maintainable, and provide a better development experience.
+
 ## Usage Guide
 
 ### Environment Preparation

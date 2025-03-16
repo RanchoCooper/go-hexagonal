@@ -52,7 +52,7 @@ func SetupMySQL(t *testing.T) *config.MySQLConfig {
 	t.Cleanup(func() {
 		t.Log("Removing MySQL container from Docker")
 		if err := db.Terminate(ctx); err != nil {
-			t.Errorf("failed to terminate MySQL container, err: %s", err) // 改为 t.Errorf
+			t.Errorf("failed to terminate MySQL container, err: %s", err)
 		}
 	})
 
@@ -63,7 +63,7 @@ func SetupMySQL(t *testing.T) *config.MySQLConfig {
 
 	port, err := db.MappedPort(ctx, "3306/tcp")
 	if err != nil {
-		t.Fatalf("failed to get externally mapped port to MySQL database, err: %s", err) // 修改描述
+		t.Fatalf("failed to get externally mapped port to MySQL database, err: %s", err)
 	}
 
 	t.Log("Got connection port to MySQL: ", port)

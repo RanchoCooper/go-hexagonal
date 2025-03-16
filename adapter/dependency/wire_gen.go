@@ -27,7 +27,7 @@ func InitializeServices(ctx context.Context) (*service.Services, error) {
 
 // wire.go:
 
-// provideEventBus 创建并配置事件总线
+// provideEventBus creates and configures the event bus
 func provideEventBus() *event.InMemoryEventBus {
 	eventBus := event.NewInMemoryEventBus()
 
@@ -39,7 +39,7 @@ func provideEventBus() *event.InMemoryEventBus {
 	return eventBus
 }
 
-// provideExampleService 创建并配置示例服务
+// provideExampleService creates and configures the example service
 func provideExampleService(ctx context.Context, repo2 repo.IExampleRepo, eventBus event.EventBus) *service.ExampleService {
 	exampleService := service.NewExampleService(ctx)
 	exampleService.Repository = repo2
@@ -47,7 +47,7 @@ func provideExampleService(ctx context.Context, repo2 repo.IExampleRepo, eventBu
 	return exampleService
 }
 
-// provideServices 创建服务容器
+// provideServices creates the services container
 func provideServices(exampleService *service.ExampleService, eventBus event.EventBus) *service.Services {
 	return service.NewServices(exampleService, eventBus)
 }

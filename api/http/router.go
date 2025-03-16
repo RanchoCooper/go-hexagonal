@@ -3,6 +3,7 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 
+	"go-hexagonal/api/http/middleware"
 	"go-hexagonal/application"
 	"go-hexagonal/config"
 )
@@ -15,43 +16,35 @@ func NewServerRoute(useCaseFactory *application.UseCaseFactory) *gin.Engine {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	router := gin.Default()
+	router := gin.New()
 
-	// Check if use case factory is provided
-	if useCaseFactory == nil {
-		// If no use case factory is provided, use traditional API (not recommended)
-		example := router.Group("/example")
-		{
-			example.POST("", CreateExample)
-			example.DELETE("/:id", DeleteExample)
-			example.PUT("/:id", UpdateExample)
-			example.GET("/:id", GetExample)
-		}
-		return router
+	// Apply middleware
+	router.Use(gin.Recovery())
+	router.Use(middleware.RequestID()) // Add request ID middleware
+	router.Use(middleware.Cors())
+	router.Use(middleware.RequestLogger()) // Add request logging middleware
+	router.Use(middleware.Translations())
+
+	// Health check
+	router.GET("/ping", func(c *gin.Context) {
+		c.String(200, "pong")
+	})
+
+	// Debug tools
+	if config.GlobalConfig.HTTPServer.Pprof {
+		middleware.RegisterPprof(router)
 	}
 
-	// Use API with application layer use cases (recommended)
-	exampleHandler := NewExampleHandlerV2(useCaseFactory)
-
-	// API routes
+	// Unified API version
 	api := router.Group("/api")
 	{
-		// Example resource
-		exampleApi := api.Group("/example")
+		// Example API
+		exampleHandler := NewExampleHandlerV2(useCaseFactory)
+		examples := api.Group("/examples")
 		{
-			exampleApi.POST("", exampleHandler.Create)
-			exampleApi.GET("/:id", exampleHandler.Get)
-			// Add more endpoints here
-		}
-	}
-
-	// Keep v2 path for backward compatibility
-	v2 := router.Group("/v2")
-	{
-		exampleV2 := v2.Group("/example")
-		{
-			exampleV2.POST("", exampleHandler.Create)
-			exampleV2.GET("/:id", exampleHandler.Get)
+			examples.POST("", exampleHandler.Create)
+			examples.GET("/:id", exampleHandler.Get)
+			// Add more endpoints as needed
 		}
 	}
 
