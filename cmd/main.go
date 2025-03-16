@@ -34,9 +34,6 @@ func main() {
 		repository.WithMySQL(),
 		repository.WithRedis(),
 	)
-<<<<<<< HEAD
-}
-=======
 
 	// Create error channel and HTTP close channel
 	errChan := make(chan error, 1)
@@ -44,7 +41,6 @@ func main() {
 
 	// Start HTTP server
 	go http_server.Start(ctx, errChan, httpCloseCh)
->>>>>>> 4821dda (chore: code improve)
 
 	// Listen for signals
 	sigChan := make(chan os.Signal, 1)
