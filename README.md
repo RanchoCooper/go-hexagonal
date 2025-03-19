@@ -1,5 +1,7 @@
 # Go Hexagonal Architecture
 
+Welcome to visit my [blog post](https://blog.ranchocooper.com/2025/03/20/go-hexagonal/)
+
 ![Hexagonal Architecture](https://github.com/Sairyss/domain-driven-hexagon/raw/master/assets/images/DomainDrivenHexagon.png)
 
 ## Project Overview
