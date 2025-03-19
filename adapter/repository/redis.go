@@ -11,10 +11,6 @@ import (
 	"go-hexagonal/util/log"
 )
 
-// var (
-// 	Client *Redis
-// )
-
 type Redis struct {
 	db *redis.Client
 }
@@ -27,11 +23,13 @@ func (r *Redis) GetClient() *redis.Client {
 	return r.db
 }
 
-func (r *Redis) Close(ctx context.Context) {
+func (r *Redis) Close(ctx context.Context) error {
 	if err := r.db.Close(); err != nil {
-		log.SugaredLogger.Errorf("close redis client fail. err: %s", err.Error())
+		// log.SugaredLogger.Errorf("close redis client fail. err: %s", err.Error())
+		return err
 	}
 	log.Logger.Info("redis client closed")
+	return nil
 }
 
 func (r *Redis) MockClient() redismock.ClientMock {

@@ -23,6 +23,25 @@ type EventBus interface {
 	Unsubscribe(handler EventHandler)
 }
 
+// NoopEventBus implements a no-operation event bus
+type NoopEventBus struct{}
+
+// NewNoopEventBus creates a new no-operation event bus
+func NewNoopEventBus() *NoopEventBus {
+	return &NoopEventBus{}
+}
+
+// Publish does nothing and returns nil
+func (b *NoopEventBus) Publish(ctx context.Context, event Event) error {
+	return nil
+}
+
+// Subscribe does nothing
+func (b *NoopEventBus) Subscribe(handler EventHandler) {}
+
+// Unsubscribe does nothing
+func (b *NoopEventBus) Unsubscribe(handler EventHandler) {}
+
 // InMemoryEventBus implements an in-memory event bus
 type InMemoryEventBus struct {
 	handlers []EventHandler

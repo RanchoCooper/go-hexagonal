@@ -8,7 +8,6 @@ import (
 
 	"go-hexagonal/adapter/dependency"
 	http2 "go-hexagonal/api/http"
-	"go-hexagonal/application"
 	"go-hexagonal/config"
 	"go-hexagonal/util/log"
 )
@@ -16,23 +15,17 @@ import (
 // Start initializes and starts the HTTP server
 func Start(ctx context.Context, errChan chan error, httpCloseCh chan struct{}) {
 	// Initialize services using dependency injection
-	services, err := dependency.InitializeServices(ctx)
+	_, err := dependency.InitializeServices(ctx)
 	if err != nil {
 		log.SugaredLogger.Errorf("Failed to initialize services: %v", err)
 		errChan <- err
 		return
 	}
 
-	// Create application layer use case factory
-	useCaseFactory := application.NewUseCaseFactory(
-		services.ExampleService,
-		services.EventBus,
-	)
-
 	// Initialize server
 	srv := &http.Server{
 		Addr:         config.GlobalConfig.HTTPServer.Addr,
-		Handler:      http2.NewServerRoute(useCaseFactory),
+		Handler:      http2.NewServerRoute(),
 		ReadTimeout:  cast.ToDuration(config.GlobalConfig.HTTPServer.ReadTimeout),
 		WriteTimeout: cast.ToDuration(config.GlobalConfig.HTTPServer.WriteTimeout),
 	}

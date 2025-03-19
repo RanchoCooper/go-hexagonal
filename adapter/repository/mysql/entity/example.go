@@ -4,116 +4,122 @@ import (
 	"context"
 	"time"
 
-	"github.com/RanchoCooper/structs"
-	"github.com/jinzhu/copier"
-	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
 	"go-hexagonal/adapter/repository"
 	"go-hexagonal/domain/model"
 	"go-hexagonal/domain/repo"
+	"go-hexagonal/util/log"
 )
 
+// NewExample creates a new EntityExample instance
 func NewExample() *EntityExample {
 	return &EntityExample{}
 }
 
+// EntityExample represents the database entity for Example
 type EntityExample struct {
-	Id        int                    `json:"id" gorm:"primarykey" structs:",omitempty,underline"`
-	Name      string                 `json:"name" structs:",omitempty,underline"`
-	Alias     string                 `json:"alias" structs:",omitempty,underline"`
-	CreatedAt time.Time              `json:"created_at" structs:",omitempty,underline"`
-	UpdatedAt time.Time              `json:"updated_at" structs:",omitempty,underline"`
-	DeletedAt gorm.DeletedAt         `json:"deleted_at" structs:",omitempty,underline"`
+	ID        int                    `json:"id" gorm:"column:id;primaryKey;autoIncrement" structs:",omitempty,underline"`
+	Name      string                 `json:"name" gorm:"column:name;type:varchar(255);not null" structs:",omitempty,underline"`
+	Alias     string                 `json:"alias" gorm:"column:alias;type:varchar(255)" structs:",omitempty,underline"`
+	CreatedAt time.Time              `json:"created_at" gorm:"column:created_at;autoCreateTime" structs:",omitempty,underline"`
+	UpdatedAt time.Time              `json:"updated_at" gorm:"column:updated_at;autoUpdateTime" structs:",omitempty,underline"`
+	DeletedAt gorm.DeletedAt         `json:"deleted_at" gorm:"column:deleted_at" structs:",omitempty,underline"`
 	ChangeMap map[string]interface{} `json:"-" gorm:"-" structs:"-"`
 }
 
+// TableName returns the table name for the EntityExample
 func (e EntityExample) TableName() string {
 	return "example"
 }
 
+// Ensure EntityExample implements IExampleRepo
 var _ repo.IExampleRepo = &EntityExample{}
 
-func autoCommit(db *gorm.DB) error {
-	return db.Commit().Error
+// ToModel converts the EntityExample to a model.Example
+func (e EntityExample) ToModel() *model.Example {
+	return &model.Example{
+		Id:        e.ID,
+		Name:      e.Name,
+		Alias:     e.Alias,
+		CreatedAt: e.CreatedAt,
+		UpdatedAt: e.UpdatedAt,
+	}
 }
 
-func (e *EntityExample) Create(ctx context.Context, tr *repository.Transaction, model *model.Example) (result *model.Example, err error) {
-	entity := &EntityExample{}
-	err = copier.Copy(entity, model)
-	if err != nil {
-		return nil, errors.Wrap(err, "copier fail")
-	}
+// FromModel converts a model.Example to an EntityExample
+func (e *EntityExample) FromModel(m *model.Example) {
+	e.ID = m.Id
+	e.Name = m.Name
+	e.Alias = m.Alias
+	e.CreatedAt = m.CreatedAt
+	e.UpdatedAt = m.UpdatedAt
+}
 
-	db := tr.Conn(ctx)
-	err = db.Create(entity).Error
-	if err != nil {
+// Create creates a new example record
+func (e *EntityExample) Create(ctx context.Context, tr repo.Transaction, example *model.Example) (*model.Example, error) {
+	entity := &EntityExample{}
+	entity.FromModel(example)
+
+	db := repository.Clients.MySQL.GetDB(ctx)
+
+	if err := db.Create(entity).Error; err != nil {
+		log.SugaredLogger.Errorf("Failed to create example: %v", err)
 		return nil, err
 	}
 
-	err = copier.Copy(model, entity)
-	if err != nil {
-		return nil, errors.Wrap(err, "copier fail")
+	return entity.ToModel(), nil
+}
+
+// Delete deletes an example record by ID
+func (e *EntityExample) Delete(ctx context.Context, tr repo.Transaction, id int) error {
+	db := repository.Clients.MySQL.GetDB(ctx)
+	result := db.Delete(&EntityExample{}, id)
+	if result.Error != nil {
+		return result.Error
 	}
-
-	return model, nil
-}
-
-func (e *EntityExample) Delete(ctx context.Context, tr *repository.Transaction, id int) (err error) {
-	entity := &EntityExample{}
-
-	db := tr.Conn(ctx)
-	err = db.Delete(entity, id).Error
-	// hard delete
-	// err := tx.Unscoped().Delete(entity, Id).Error
-	return err
-}
-
-func (e *EntityExample) Update(ctx context.Context, tr *repository.Transaction, model *model.Example) (err error) {
-	entity := &EntityExample{}
-	err = copier.Copy(entity, model)
-	if err != nil {
-		return errors.Wrap(err, "copier fail")
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
 	}
-	entity.ChangeMap = structs.Map(entity)
-	entity.ChangeMap["updated_at"] = time.Now()
-
-	db := tr.Conn(ctx)
-	db = db.Table(entity.TableName()).Where("id = ? AND deleted_at IS NULL", entity.Id).Updates(entity.ChangeMap)
-
-	return db.Error
+	return nil
 }
 
-func (e *EntityExample) GetByID(ctx context.Context, tr *repository.Transaction, id int) (domain *model.Example, err error) {
+// Update updates an example record
+func (e *EntityExample) Update(ctx context.Context, tr repo.Transaction, example *model.Example) error {
+	entity := &EntityExample{}
+	entity.FromModel(example)
+
+	db := repository.Clients.MySQL.GetDB(ctx)
+	result := db.Model(&EntityExample{}).Where("id = ?", entity.ID).Updates(entity)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+// GetByID retrieves an example record by ID
+func (e *EntityExample) GetByID(ctx context.Context, tr repo.Transaction, id int) (*model.Example, error) {
 	entity := &EntityExample{}
 
-	db := tr.Conn(ctx)
-	db = db.Table(entity.TableName()).Find(entity, id)
-
-	if db.Error != nil {
+	db := repository.Clients.MySQL.GetDB(ctx)
+	if err := db.Model(&EntityExample{}).Where("id = ?", id).First(entity).Error; err != nil {
 		return nil, err
 	}
 
-	domain = &model.Example{}
-	err = copier.Copy(domain, entity)
-	if err != nil {
-		return nil, errors.Wrap(err, "copier fail")
-	}
-	return domain, nil
+	return entity.ToModel(), nil
 }
 
-func (e *EntityExample) FindByName(ctx context.Context, tr *repository.Transaction, name string) (model *model.Example, err error) {
+// FindByName retrieves an example record by name
+func (e *EntityExample) FindByName(ctx context.Context, tr repo.Transaction, name string) (*model.Example, error) {
 	entity := &EntityExample{}
 
-	db := tr.Conn(ctx)
-	db.Table(entity.TableName()).Where("name = ?", name).Last(entity)
-	if db.Error != nil {
+	db := repository.Clients.MySQL.GetDB(ctx)
+	if err := db.Where("name = ?", name).First(entity).Error; err != nil {
 		return nil, err
 	}
 
-	err = copier.Copy(model, entity)
-	if err != nil {
-		return nil, errors.Wrap(err, "copier fail")
-	}
-	return model, err
+	return entity.ToModel(), nil
 }

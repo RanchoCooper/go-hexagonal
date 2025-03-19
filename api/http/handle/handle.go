@@ -20,23 +20,27 @@ type Response struct {
 
 // StandardResponse standard response structure
 type StandardResponse struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
 }
 
 func NewResponse(ctx *gin.Context) *Response {
 	return &Response{Ctx: ctx}
 }
 
-func (r *Response) ToResponse(data interface{}) {
+func (r *Response) ToResponse(data any) {
 	if data == nil {
 		data = gin.H{}
 	}
-	r.Ctx.JSON(http.StatusOK, data)
+	r.Ctx.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data":    data,
+	})
 }
 
-func (r *Response) ToResponseList(list interface{}, totalRows int) {
+func (r *Response) ToResponseList(list any, totalRows int) {
 	r.Ctx.JSON(http.StatusOK, gin.H{
 		"list": list,
 		"pager": dto.Pager{
@@ -56,7 +60,8 @@ func (r *Response) ToErrorResponse(err *error_code.Error) {
 		response["details"] = details
 	}
 
-	r.Ctx.JSON(err.StatusCode(), response)
+	statusCode := err.StatusCode()
+	r.Ctx.JSON(statusCode, response)
 }
 
 // Success returns a success response

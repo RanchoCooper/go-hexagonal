@@ -47,9 +47,8 @@ func provideEventBus() *event.InMemoryEventBus {
 }
 
 // provideExampleService creates and configures the example service
-func provideExampleService(ctx context.Context, repo repo.IExampleRepo, eventBus event.EventBus) *service.ExampleService {
-	exampleService := service.NewExampleService(ctx)
-	exampleService.Repository = repo
+func provideExampleService(repo repo.IExampleRepo, eventBus event.EventBus) *service.ExampleService {
+	exampleService := service.NewExampleService(repo)
 	exampleService.EventBus = eventBus
 	return exampleService
 }

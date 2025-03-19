@@ -2,11 +2,12 @@ package service
 
 import (
 	"context"
+	"fmt"
 
-	"go-hexagonal/adapter/repository/mysql/entity"
 	"go-hexagonal/domain/event"
 	"go-hexagonal/domain/model"
 	"go-hexagonal/domain/repo"
+	"go-hexagonal/util/log"
 )
 
 // ExampleService handles business logic for Example entity
@@ -16,64 +17,97 @@ type ExampleService struct {
 }
 
 // NewExampleService creates a new example service instance
-func NewExampleService(ctx context.Context) *ExampleService {
-	srv := &ExampleService{Repository: entity.NewExample()}
-	return srv
+func NewExampleService(repository repo.IExampleRepo) *ExampleService {
+	return &ExampleService{
+		Repository: repository,
+	}
 }
 
 // Create creates a new example
-func (e *ExampleService) Create(ctx context.Context, model *model.Example) (*model.Example, error) {
-	example, err := e.Repository.Create(ctx, nil, model)
+func (s *ExampleService) Create(ctx context.Context, example *model.Example) (*model.Example, error) {
+	// Create a no-operation transaction
+	tr := repo.NewNoopTransaction(s.Repository)
+
+	createdExample, err := s.Repository.Create(ctx, tr, example)
 	if err != nil {
-		return nil, err
+		log.SugaredLogger.Errorf("Failed to create example: %v", err)
+		return nil, fmt.Errorf("failed to create example: %w", err)
 	}
 
 	// Publish event if event bus is available
-	if e.EventBus != nil {
-		evt := event.NewExampleCreatedEvent(example.Id, example.Name, example.Alias)
-		e.EventBus.Publish(ctx, evt)
+	if s.EventBus != nil {
+		evt := event.NewExampleCreatedEvent(createdExample.Id, createdExample.Name, createdExample.Alias)
+		if err := s.EventBus.Publish(ctx, evt); err != nil {
+			log.SugaredLogger.Warnf("Failed to publish event: %v", err)
+			return createdExample, fmt.Errorf("failed to publish example created event: %w", err)
+		}
 	}
 
-	return example, nil
+	return createdExample, nil
 }
 
 // Delete deletes an example by ID
-func (e *ExampleService) Delete(ctx context.Context, id int) error {
-	err := e.Repository.Delete(ctx, nil, id)
-	if err != nil {
-		return err
+func (s *ExampleService) Delete(ctx context.Context, id int) error {
+	// Create a no-operation transaction
+	tr := repo.NewNoopTransaction(s.Repository)
+
+	if err := s.Repository.Delete(ctx, tr, id); err != nil {
+		return fmt.Errorf("failed to delete example: %w", err)
 	}
 
 	// Publish event if event bus is available
-	if e.EventBus != nil {
+	if s.EventBus != nil {
 		evt := event.NewExampleDeletedEvent(id)
-		e.EventBus.Publish(ctx, evt)
+		if err := s.EventBus.Publish(ctx, evt); err != nil {
+			return fmt.Errorf("failed to publish example deleted event: %w", err)
+		}
 	}
 
 	return nil
 }
 
 // Update updates an existing example
-func (e *ExampleService) Update(ctx context.Context, model *model.Example) error {
-	err := e.Repository.Update(ctx, nil, model)
-	if err != nil {
-		return err
+func (s *ExampleService) Update(ctx context.Context, example *model.Example) error {
+	// Create a no-operation transaction
+	tr := repo.NewNoopTransaction(s.Repository)
+
+	if err := s.Repository.Update(ctx, tr, example); err != nil {
+		return fmt.Errorf("failed to update example: %w", err)
 	}
 
 	// Publish event if event bus is available
-	if e.EventBus != nil {
-		evt := event.NewExampleUpdatedEvent(model.Id, model.Name, model.Alias)
-		e.EventBus.Publish(ctx, evt)
+	if s.EventBus != nil {
+		evt := event.NewExampleUpdatedEvent(example.Id, example.Name, example.Alias)
+		if err := s.EventBus.Publish(ctx, evt); err != nil {
+			return fmt.Errorf("failed to publish example updated event: %w", err)
+		}
 	}
 
 	return nil
 }
 
 // Get retrieves an example by ID
-func (e *ExampleService) Get(ctx context.Context, id int) (*model.Example, error) {
-	example, err := e.Repository.GetByID(ctx, nil, id)
+func (s *ExampleService) Get(ctx context.Context, id int) (*model.Example, error) {
+	// Create a no-operation transaction
+	tr := repo.NewNoopTransaction(s.Repository)
+
+	example, err := s.Repository.GetByID(ctx, tr, id)
 	if err != nil {
 		return nil, err
 	}
+
+	return example, nil
+}
+
+// FindByName retrieves an example by name
+func (s *ExampleService) FindByName(ctx context.Context, name string) (*model.Example, error) {
+	// Create a no-operation transaction
+	tr := repo.NewNoopTransaction(s.Repository)
+
+	example, err := s.Repository.FindByName(ctx, tr, name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find example: %w", err)
+	}
+
 	return example, nil
 }

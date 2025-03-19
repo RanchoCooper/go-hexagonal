@@ -38,15 +38,21 @@ func (c *MySQL) SetDB(db *gorm.DB) {
 	c.db = db
 }
 
-func (c *MySQL) Close(ctx context.Context) {
-	if sqlDB, _ := c.GetDB(ctx).DB(); sqlDB != nil {
-		err := sqlDB.Close()
-		if err != nil {
+func (c *MySQL) Close(ctx context.Context) error {
+	sqlDB, err := c.GetDB(ctx).DB()
+	if err != nil {
+		log.SugaredLogger.Errorf("get MySQL DB fail. err: %v", err)
+		return err
+	}
+	if sqlDB != nil {
+		if err := sqlDB.Close(); err != nil {
 			log.SugaredLogger.Errorf("close MySQL fail. err: %v", err)
+			return err
 		}
 	}
 
 	log.Logger.Info("MySQL closed")
+	return nil
 }
 
 func (c *MySQL) MockClient() (*gorm.DB, sqlmock.Sqlmock) {

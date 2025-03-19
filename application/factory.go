@@ -30,3 +30,18 @@ func (f *UseCaseFactory) CreateExampleUseCase() *example.CreateExampleUseCase {
 func (f *UseCaseFactory) GetExampleUseCase() *example.GetExampleUseCase {
 	return example.NewGetExampleUseCase(f.exampleService)
 }
+
+// UpdateExampleUseCase creates an example update use case
+func (f *UseCaseFactory) UpdateExampleUseCase() *example.UpdateExampleUseCase {
+	return example.NewUpdateExampleUseCase(f.exampleService)
+}
+
+// DeleteExampleUseCase creates an example deletion use case
+func (f *UseCaseFactory) DeleteExampleUseCase() *example.DeleteExampleUseCase {
+	return example.NewDeleteExampleUseCase(f.exampleService)
+}
+
+// FindExampleByNameUseCase creates a use case for finding example by name
+func (f *UseCaseFactory) FindExampleByNameUseCase() *example.FindExampleByNameUseCase {
+	return example.NewFindExampleByNameUseCase(f.exampleService)
+}

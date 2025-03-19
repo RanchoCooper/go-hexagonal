@@ -1,6 +1,8 @@
 package http
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"github.com/spf13/cast"
@@ -25,20 +27,23 @@ func CreateExample(ctx *gin.Context) {
 		response.ToErrorResponse(err)
 		return
 	}
+
 	example := &model.Example{}
 	err := copier.Copy(example, body)
 	if err != nil {
-		log.SugaredLogger.Errorf("CreateExample failed.%v", err.Error())
+		log.SugaredLogger.Errorf("CreateExample failed: %v", err.Error())
 		response.ToErrorResponse(error_code.CopyError)
 		return
 	}
+
 	example, err = service.ExampleSvc.Create(ctx, example)
 	if err != nil {
-		log.SugaredLogger.Errorf("CreateExample failed.%v", err.Error())
+		log.SugaredLogger.Errorf("CreateExample failed: %v", err.Error())
 		response.ToErrorResponse(error_code.ServerError)
 		return
 	}
-	response.ToResponse(example)
+
+	ctx.JSON(http.StatusCreated, example)
 }
 
 func DeleteExample(ctx *gin.Context) {
@@ -101,5 +106,30 @@ func GetExample(ctx *gin.Context) {
 		response.ToErrorResponse(error_code.ServerError)
 		return
 	}
+	response.ToResponse(*result)
+}
+
+func FindExampleByName(ctx *gin.Context) {
+	response := handle.NewResponse(ctx)
+	name := ctx.Param("name")
+
+	if name == "" {
+		log.SugaredLogger.Errorf("FindExampleByName. Name parameter is empty")
+		response.ToErrorResponse(error_code.InvalidParams.WithDetails("name parameter is required"))
+		return
+	}
+
+	result, err := service.ExampleSvc.FindByName(ctx, name)
+	if err != nil {
+		log.SugaredLogger.Errorf("FindExampleByName failed.%v", err.Error())
+		if err.Error() == "record not found" ||
+			err.Error() == "failed to find example: record not found" {
+			response.ToErrorResponse(error_code.NotFound.WithDetails("example not found"))
+			return
+		}
+		response.ToErrorResponse(error_code.ServerError)
+		return
+	}
+
 	response.ToResponse(*result)
 }

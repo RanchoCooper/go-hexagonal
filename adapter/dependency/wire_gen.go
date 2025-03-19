@@ -20,7 +20,7 @@ import (
 func InitializeServices(ctx context.Context) (*service.Services, error) {
 	entityExample := entity.NewExample()
 	inMemoryEventBus := provideEventBus()
-	exampleService := provideExampleService(ctx, entityExample, inMemoryEventBus)
+	exampleService := provideExampleService(entityExample, inMemoryEventBus)
 	services := provideServices(exampleService, inMemoryEventBus)
 	return services, nil
 }
@@ -40,9 +40,8 @@ func provideEventBus() *event.InMemoryEventBus {
 }
 
 // provideExampleService creates and configures the example service
-func provideExampleService(ctx context.Context, repo2 repo.IExampleRepo, eventBus event.EventBus) *service.ExampleService {
-	exampleService := service.NewExampleService(ctx)
-	exampleService.Repository = repo2
+func provideExampleService(repo2 repo.IExampleRepo, eventBus event.EventBus) *service.ExampleService {
+	exampleService := service.NewExampleService(repo2)
 	exampleService.EventBus = eventBus
 	return exampleService
 }

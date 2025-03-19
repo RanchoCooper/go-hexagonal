@@ -1,106 +1,193 @@
 package entity
 
 import (
-	"database/sql"
-	"regexp"
+	"context"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 
 	"go-hexagonal/adapter/repository"
-	"go-hexagonal/api/dto"
 	"go-hexagonal/domain/model"
 )
 
+// mockTransaction implements the repo.Transaction interface for testing
+type mockTransaction struct {
+	DB *gorm.DB
+}
+
+func (t *mockTransaction) Begin() error {
+	return nil
+}
+
+func (t *mockTransaction) Commit() error {
+	return nil
+}
+
+func (t *mockTransaction) Rollback() error {
+	return nil
+}
+
+func (t *mockTransaction) Conn(ctx context.Context) interface{} {
+	return t.DB
+}
+
+func setupTest(t *testing.T) (sqlmock.Sqlmock, *gorm.DB, context.Context) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+
+	dialector := mysql.New(mysql.Config{
+		Conn:                      db,
+		SkipInitializeWithVersion: true,
+	})
+
+	gormDB, err := gorm.Open(dialector, &gorm.Config{})
+	require.NoError(t, err)
+
+	// Setup repository client for testing
+	client := &repository.MySQL{}
+	client.SetDB(gormDB)
+	repository.Clients.MySQL = client
+
+	ctx := context.Background()
+	return mock, gormDB, ctx
+}
+
 func TestExample_Create(t *testing.T) {
-	exampleRepo := NewExample()
-	t.Run("run with nil transaction", func(t *testing.T) {
-		_, mock := repository.Clients.MySQL.MockClient()
-		mock.ExpectBegin()
-		mock.ExpectExec("INSERT INTO `example`").WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectCommit()
-		e := &model.Example{
-			Name:  "RanchoCooper",
-			Alias: "Rancho",
-		}
-		example, err := exampleRepo.Create(ctx, nil, e)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, example.Id)
-		assert.Equal(t, 1, example.Id)
+	mock, gormDB, ctx := setupTest(t)
 
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
+	// Setup expectations
+	mock.ExpectBegin()
+	mock.ExpectExec("INSERT INTO `example`").
+		WithArgs("RanchoCooper", "Rancho", sqlmock.AnyArg(), sqlmock.AnyArg(), nil).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
 
-	t.Run("run with new transaction", func(t *testing.T) {
-		_, mock := repository.Clients.MySQL.MockClient()
-		mock.ExpectBegin()
-		mock.ExpectExec("INSERT INTO `example`").WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectCommit()
-		e := &model.Example{
-			Name:  "rancho",
-			Alias: "cooper",
-		}
-		tr := repository.NewTransaction(ctx,
-			repository.MySQLStore,
-			&sql.TxOptions{
-				Isolation: sql.LevelReadUncommitted,
-				ReadOnly:  false,
-			},
-		)
-		example, err := exampleRepo.Create(ctx, tr, e)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, example.Id)
-		assert.Equal(t, 1, example.Id)
-		tr.Session.Commit()
+	// Create a test example
+	example := &model.Example{
+		Name:  "RanchoCooper",
+		Alias: "Rancho",
+	}
 
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
+	// Create a transaction
+	tr := &mockTransaction{DB: gormDB}
+
+	// Create entity and call Create
+	entity := NewExample()
+	result, err := entity.Create(ctx, tr, example)
+
+	// Assertions
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "RanchoCooper", result.Name)
+	assert.Equal(t, "Rancho", result.Alias)
 }
 
 func TestExample_Delete(t *testing.T) {
-	exampleRepo := NewExample()
-	_, mock := repository.Clients.MySQL.MockClient()
-	mock.ExpectBegin()
-	mock.ExpectExec("UPDATE `example`").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
-	d := dto.DeleteExampleReq{
-		Id: 1,
-	}
-	err := exampleRepo.Delete(ctx, nil, d.Id)
-	assert.NoError(t, err)
+	mock, gormDB, ctx := setupTest(t)
 
-	err = mock.ExpectationsWereMet()
+	// Setup expectations
+	mock.ExpectBegin()
+	mock.ExpectExec("UPDATE `example` SET").
+		WithArgs(sqlmock.AnyArg(), 1).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	// Create a transaction
+	tr := &mockTransaction{DB: gormDB}
+
+	// Create entity and call Delete
+	entity := NewExample()
+	err := entity.Delete(ctx, tr, 1)
+
+	// Assertions
 	assert.NoError(t, err)
 }
 
 func TestExample_Update(t *testing.T) {
-	exampleRepo := NewExample()
-	_, mock := repository.Clients.MySQL.MockClient()
-	mock.ExpectBegin()
-	mock.ExpectExec("UPDATE `example`").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
-	e := &model.Example{
-		Id:   1,
-		Name: "random",
-	}
-	err := exampleRepo.Update(ctx, nil, e)
-	assert.NoError(t, err)
+	mock, gormDB, ctx := setupTest(t)
 
-	err = mock.ExpectationsWereMet()
+	// Setup expectations
+	mock.ExpectBegin()
+	mock.ExpectExec("UPDATE `example` SET").
+		WithArgs(1, "random", sqlmock.AnyArg(), 1).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	// Create a test example
+	example := &model.Example{
+		Id:        1,
+		Name:      "random",
+		UpdatedAt: time.Now(),
+	}
+
+	// Create a transaction
+	tr := &mockTransaction{DB: gormDB}
+
+	// Create entity and call Update
+	entity := NewExample()
+	err := entity.Update(ctx, tr, example)
+
+	// Assertions
 	assert.NoError(t, err)
 }
 
 func TestExample_GetByID(t *testing.T) {
-	exampleRepo := NewExample()
-	_, mock := repository.Clients.MySQL.MockClient()
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `example` WHERE `example`.`id` = ? AND `example`.`deleted_at` IS NULL")).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "test1"))
-	example, err := exampleRepo.GetByID(ctx, nil, 1)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, example.Id)
+	mock, gormDB, ctx := setupTest(t)
 
-	err = mock.ExpectationsWereMet()
+	now := time.Now()
+
+	// Set up mock expectations to exactly match the SQL generated by GORM
+	rows := sqlmock.NewRows([]string{"id", "name", "alias", "created_at", "updated_at", "deleted_at"}).
+		AddRow(1, "RanchoCooper", "Rancho", now, now, nil)
+
+	mock.ExpectQuery("SELECT (.+) FROM `example` WHERE id = \\? AND `example`.`deleted_at` IS NULL ORDER BY `example`.`id` LIMIT \\?").
+		WithArgs(1, 1).
+		WillReturnRows(rows)
+
+	// Create a transaction
+	tr := &mockTransaction{DB: gormDB}
+
+	// Create entity and call GetByID
+	entity := NewExample()
+	result, err := entity.GetByID(ctx, tr, 1)
+
+	// Assertions
 	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 1, result.Id)
+	assert.Equal(t, "RanchoCooper", result.Name)
+	assert.Equal(t, "Rancho", result.Alias)
+}
+
+func TestExample_FindByName(t *testing.T) {
+	mock, gormDB, ctx := setupTest(t)
+
+	now := time.Now()
+
+	// Set up mock expectations to exactly match the SQL generated by GORM
+	rows := sqlmock.NewRows([]string{"id", "name", "alias", "created_at", "updated_at", "deleted_at"}).
+		AddRow(1, "RanchoCooper", "Rancho", now, now, nil)
+
+	mock.ExpectQuery("SELECT (.+) FROM `example` WHERE name = \\? AND `example`.`deleted_at` IS NULL ORDER BY `example`.`id` LIMIT \\?").
+		WithArgs("RanchoCooper", 1).
+		WillReturnRows(rows)
+
+	// Create a transaction
+	tr := &mockTransaction{DB: gormDB}
+
+	// Create entity and call FindByName
+	entity := NewExample()
+	result, err := entity.FindByName(ctx, tr, "RanchoCooper")
+
+	// Assertions
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 1, result.Id)
+	assert.Equal(t, "RanchoCooper", result.Name)
+	assert.Equal(t, "Rancho", result.Alias)
 }

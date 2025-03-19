@@ -2,14 +2,16 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 
 	"go-hexagonal/api/http/middleware"
-	"go-hexagonal/application"
+	"go-hexagonal/api/http/validator/custom"
 	"go-hexagonal/config"
 )
 
 // NewServerRoute creates and configures the HTTP server routes
-func NewServerRoute(useCaseFactory *application.UseCaseFactory) *gin.Engine {
+func NewServerRoute() *gin.Engine {
 	if config.GlobalConfig.App.Debug {
 		gin.SetMode(gin.DebugMode)
 	} else {
@@ -17,6 +19,11 @@ func NewServerRoute(useCaseFactory *application.UseCaseFactory) *gin.Engine {
 	}
 
 	router := gin.New()
+
+	// Register custom validators
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		custom.RegisterValidators(v)
+	}
 
 	// Apply middleware
 	router.Use(gin.Recovery())
@@ -39,12 +46,13 @@ func NewServerRoute(useCaseFactory *application.UseCaseFactory) *gin.Engine {
 	api := router.Group("/api")
 	{
 		// Example API
-		exampleHandler := NewExampleHandlerV2(useCaseFactory)
 		examples := api.Group("/examples")
 		{
-			examples.POST("", exampleHandler.Create)
-			examples.GET("/:id", exampleHandler.Get)
-			// Add more endpoints as needed
+			examples.POST("", CreateExample)
+			examples.GET("/:id", GetExample)
+			examples.PUT("/:id", UpdateExample)
+			examples.DELETE("/:id", DeleteExample)
+			examples.GET("/name/:name", FindExampleByName)
 		}
 	}
 
