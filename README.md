@@ -26,6 +26,7 @@ Hexagonal Architecture (also known as [Ports and Adapters Architecture](https://
 - **Configuration Management** - Use [Viper](https://github.com/spf13/viper) for flexible configuration management
 - **[Graceful Shutdown](https://en.wikipedia.org/wiki/Graceful_exit)** - Support graceful service startup and shutdown
 - **[Unit Testing](https://en.wikipedia.org/wiki/Unit_testing)** - Use [go-sqlmock](https://github.com/DATA-DOG/go-sqlmock) and [redismock](https://github.com/go-redis/redismock) for database and cache mocking
+- **[NoopTransaction](NoopTransaction)** - Provide no-operation transaction implementation, simplifying service layer interaction with repository layer
 
 ### Development Toolchain
 - **Code Quality** - Integrate [Golangci-lint](https://github.com/golangci/golangci-lint) for code quality checks
@@ -43,6 +44,7 @@ Hexagonal Architecture (also known as [Ports and Adapters Architecture](https://
 │   ├── job/                # Scheduled task adapters
 │   └── repository/         # Data repository adapters
 │       ├── mysql/          # MySQL implementation
+│       │   └── entity/     # Database entities
 │       ├── postgre/        # PostgreSQL implementation
 │       └── redis/          # Redis implementation
 ├── api/                    # API Layer - Handle HTTP requests and responses
@@ -79,30 +81,74 @@ Hexagonal Architecture (also known as [Ports and Adapters Architecture](https://
 The domain layer is the core of the application, containing business logic and rules. It is independent of other layers and does not depend on any external components.
 
 - **Models**: Domain entities and value objects
+  - `Example`: Example entity, containing basic properties like ID, name, alias, etc.
+
 - **Repository Interfaces**: Define data access interfaces
+  - `IExampleRepo`: Example repository interface, defining operations like create, read, update, delete, etc.
+  - `IExampleCacheRepo`: Example cache interface, defining health check methods
+  - `Transaction`: Transaction interface, supporting transaction begin, commit, and rollback
+
 - **Domain Services**: Handle business logic across entities
+  - `ExampleService`: Example service, handling business logic for example entities, interacting with repositories and event bus
+
 - **Domain Events**: Define events within the domain
+  - `ExampleCreatedEvent`: Example creation event
+  - `ExampleUpdatedEvent`: Example update event
+  - `ExampleDeletedEvent`: Example deletion event
 
 ### Application Layer
 The application layer coordinates domain objects to complete specific application tasks. It depends on the domain layer but does not contain business rules.
 
 - **Use Cases**: Define application functionality
+  - `CreateExampleUseCase`: Create example use case
+  - `GetExampleUseCase`: Get example use case
+  - `UpdateExampleUseCase`: Update example use case
+  - `DeleteExampleUseCase`: Delete example use case
+  - `FindExampleByNameUseCase`: Find example by name use case
+
 - **Commands and Queries**: Implement CQRS pattern
+  - Each use case defines Input and Output structures, representing command/query inputs and results
+
 - **Event Handlers**: Process domain events
+  - `LoggingEventHandler`: Logging event handler, recording all events
+  - `ExampleEventHandler`: Example event handler, processing events related to examples
 
 ### Adapter Layer
 The adapter layer implements interaction with external systems, such as databases and message queues.
 
 - **Repository Implementation**: Implement data access interfaces
+  - `EntityExample`: MySQL implementation of example repository
+  - `NoopTransaction`: No-operation transaction implementation, simplifying testing
+  - `MySQL`: MySQL connection and transaction management
+  - `Redis`: Redis connection and basic operations
+
 - **Message Queue Adapters**: Implement message publishing and subscription
+  - Support for Kafka and other message queue integrations
+
 - **Scheduled Tasks**: Implement scheduled tasks
+  - Cron-based task scheduling system
 
 ### API Layer
 The API layer handles HTTP requests and responses, serving as the entry point to the application.
 
 - **Controllers**: Handle HTTP requests
+  - `CreateExample`: Create example API
+  - `GetExample`: Get example API
+  - `UpdateExample`: Update example API
+  - `DeleteExample`: Delete example API
+  - `FindExampleByName`: Find example by name API
+
 - **Middleware**: Implement cross-cutting concerns
+  - Internationalization support
+  - CORS support
+  - Request ID tracking
+  - Request logging
+
 - **Data Transfer Objects (DTOs)**: Define request and response data structures
+  - `CreateExampleReq`: Create example request
+  - `UpdateExampleReq`: Update example request
+  - `DeleteExampleReq`: Delete example request
+  - `GetExampleReq`: Get example request
 
 ## Dependency Injection
 
@@ -111,27 +157,45 @@ This project uses Google Wire for dependency injection, organizing dependencies 
 ```go
 // Initialize services
 func InitializeServices(ctx context.Context) (*service.Services, error) {
-    // Create repositories
-    entityExample := entity.NewExample()
+    wire.Build(
+        // Repository dependencies
+        entity.NewExample,
+        wire.Bind(new(repo.IExampleRepo), new(*entity.EntityExample)),
 
-    // Create event bus and handlers
-    inMemoryEventBus := event.NewInMemoryEventBus()
-    loggingHandler := event.NewLoggingEventHandler()
-    exampleHandler := event.NewExampleEventHandler()
+        // Event bus dependencies
+        provideEventBus,
+        wire.Bind(new(event.EventBus), new(*event.InMemoryEventBus)),
+
+        // Service dependencies
+        provideExampleService,
+        provideServices,
+    )
+    return nil, nil
+}
+
+// Provide event bus
+func provideEventBus() *event.InMemoryEventBus {
+    eventBus := event.NewInMemoryEventBus()
 
     // Register event handlers
-    inMemoryEventBus.Subscribe(loggingHandler)
-    inMemoryEventBus.Subscribe(exampleHandler)
+    loggingHandler := event.NewLoggingEventHandler()
+    exampleHandler := event.NewExampleEventHandler()
+    eventBus.Subscribe(loggingHandler)
+    eventBus.Subscribe(exampleHandler)
 
-    // Create services
-    exampleService := service.NewExampleService(ctx)
-    exampleService.Repository = entityExample
-    exampleService.EventBus = inMemoryEventBus
+    return eventBus
+}
 
-    // Create services container
-    services := service.NewServices(exampleService, inMemoryEventBus)
+// Provide example service
+func provideExampleService(repo repo.IExampleRepo, eventBus event.EventBus) *service.ExampleService {
+    exampleService := service.NewExampleService(repo)
+    exampleService.EventBus = eventBus
+    return exampleService
+}
 
-    return services, nil
+// Provide services container
+func provideServices(exampleService *service.ExampleService, eventBus event.EventBus) *service.Services {
+    return service.NewServices(exampleService, eventBus)
 }
 ```
 
@@ -182,6 +246,60 @@ func (h *CreateExampleHandler) Handle(ctx context.Context, input interface{}) (i
         Name:  createdExample.Name,
         Alias: createdExample.Alias,
     }, nil
+}
+```
+
+## Transaction Management
+
+This project implements transaction interfaces and no-operation transactions, supporting different transaction management strategies:
+
+```go
+// Transaction interface
+type Transaction interface {
+    Begin() error
+    Commit() error
+    Rollback() error
+    Conn(ctx context.Context) interface{}
+}
+
+// No-operation transaction implementation
+type NoopTransaction struct {
+    conn interface{}
+}
+
+// Using transactions in services
+func (s *ExampleService) Create(ctx context.Context, example *model.Example) (*model.Example, error) {
+    // Create a no-operation transaction
+    tr := repo.NewNoopTransaction(s.Repository)
+
+    createdExample, err := s.Repository.Create(ctx, tr, example)
+    // ...
+}
+```
+
+## Data Mapping and Transformation
+
+This project implements clear data mapping and transformation between different layers:
+
+```go
+// Entity to model conversion
+func (e EntityExample) ToModel() *model.Example {
+    return &model.Example{
+        Id:        e.ID,
+        Name:      e.Name,
+        Alias:     e.Alias,
+        CreatedAt: e.CreatedAt,
+        UpdatedAt: e.UpdatedAt,
+    }
+}
+
+// Model to entity conversion
+func (e *EntityExample) FromModel(m *model.Example) {
+    e.ID = m.Id
+    e.Name = m.Name
+    e.Alias = m.Alias
+    e.CreatedAt = m.CreatedAt
+    e.UpdatedAt = m.UpdatedAt
 }
 ```
 
