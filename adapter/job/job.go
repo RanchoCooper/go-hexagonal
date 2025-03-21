@@ -28,6 +28,9 @@ type Scheduler struct {
 	mu       sync.RWMutex
 }
 
+// DefaultJobTimeout is the default timeout for job execution
+const DefaultJobTimeout = 5 * time.Minute
+
 // NewScheduler creates a new job scheduler
 func NewScheduler() *Scheduler {
 	return &Scheduler{
@@ -47,7 +50,7 @@ func (s *Scheduler) AddJob(spec string, job Job) error {
 	}
 
 	_, err := s.cron.AddFunc(spec, func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), DefaultJobTimeout)
 		defer cancel()
 
 		start := time.Now()

@@ -35,15 +35,15 @@ func NewFindExampleByNameHandler(exampleService *service.ExampleService) *FindEx
 func (h *FindExampleByNameHandler) Handle(ctx context.Context, input interface{}) (interface{}, error) {
 	findInput, ok := input.(FindExampleByNameInput)
 	if !ok {
-		return nil, core.NewValidationError(400, "invalid input type", core.ErrInvalidInput)
+		return nil, core.NewValidationError(core.StatusBadRequest, "invalid input type", core.ErrInvalidInput)
 	}
 
 	example, err := h.ExampleService.FindByName(ctx, findInput.Name)
 	if err != nil {
-		return nil, core.NewInternalError(500, "failed to find example by name", err)
+		return nil, core.NewInternalError(core.StatusInternalServerError, "failed to find example by name", err)
 	}
 	if example == nil {
-		return nil, core.NewNotFoundError(404, "example not found", core.ErrNotFound)
+		return nil, core.NewNotFoundError(core.StatusNotFound, "example not found", core.ErrNotFound)
 	}
 
 	return FindExampleByNameOutput{

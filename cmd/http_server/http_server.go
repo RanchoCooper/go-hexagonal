@@ -6,21 +6,16 @@ import (
 
 	"github.com/spf13/cast"
 
-	"go-hexagonal/adapter/dependency"
 	http2 "go-hexagonal/api/http"
 	"go-hexagonal/config"
+	"go-hexagonal/domain/service"
 	"go-hexagonal/util/log"
 )
 
 // Start initializes and starts the HTTP server
-func Start(ctx context.Context, errChan chan error, httpCloseCh chan struct{}) {
-	// Initialize services using dependency injection
-	_, err := dependency.InitializeServices(ctx)
-	if err != nil {
-		log.SugaredLogger.Errorf("Failed to initialize services: %v", err)
-		errChan <- err
-		return
-	}
+func Start(ctx context.Context, errChan chan error, httpCloseCh chan struct{}, services *service.Services) {
+	// Register services for API handlers to use
+	http2.RegisterServices(services)
 
 	// Initialize server
 	srv := &http.Server{

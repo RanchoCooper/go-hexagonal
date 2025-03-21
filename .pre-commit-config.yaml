@@ -12,9 +12,11 @@ repos:
     - repo: https://github.com/dnephin/pre-commit-golang
       rev: v0.5.1
       hooks:
-          - id: no-go-testing
-          - id: golangci-lint
+          - id: go-fmt
+          - id: go-imports
           - id: go-unit-tests
+          - id: go-build
+          - id: go-mod-tidy
     - repo: https://github.com/detailyang/pre-commit-shell
       rev: 1.0.5
       hooks:
@@ -25,3 +27,7 @@ repos:
           - id: commitlint
             stages: [commit-msg]
             additional_dependencies: ['@commitlint/config-conventional']
+    - repo: https://github.com/golangci/golangci-lint
+      rev: v1.64.8
+      hooks:
+          - id: golangci-lint

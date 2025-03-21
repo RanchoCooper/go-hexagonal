@@ -6,6 +6,12 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// Min password length constant
+const (
+	// MinPasswordLength defines the minimum length for password validation
+	MinPasswordLength = 8
+)
+
 // RegisterValidators registers custom validators
 func RegisterValidators(v *validator.Validate) {
 	// Register phone number validator
@@ -47,6 +53,6 @@ func validatePassword(fl validator.FieldLevel) bool {
 	hasLower := regexp.MustCompile(`[a-z]`).MatchString(password)
 	hasNumber := regexp.MustCompile(`[0-9]`).MatchString(password)
 	hasSpecial := regexp.MustCompile(`[!@#$%^&*]`).MatchString(password)
-	hasLength := len(password) >= 8
+	hasLength := len(password) >= MinPasswordLength
 	return hasUpper && hasLower && hasNumber && hasSpecial && hasLength
 }

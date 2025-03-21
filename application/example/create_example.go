@@ -7,11 +7,12 @@ import (
 	"go-hexagonal/application/core"
 	"go-hexagonal/domain/model"
 	"go-hexagonal/domain/service"
+	"go-hexagonal/util/errors"
 )
 
 // CreateExampleInput represents input for creating an example
 type CreateExampleInput struct {
-	Name  string `json:"name"`
+	Name  string `json:"name"  validate:"required"`
 	Alias string `json:"alias"`
 }
 
@@ -38,7 +39,12 @@ func NewCreateExampleHandler(exampleService *service.ExampleService) *CreateExam
 func (h *CreateExampleHandler) Handle(ctx context.Context, input interface{}) (interface{}, error) {
 	createInput, ok := input.(CreateExampleInput)
 	if !ok {
-		return nil, core.ErrInvalidInput
+		return nil, errors.NewValidationError("Invalid input data", core.ErrInvalidInput)
+	}
+
+	// Validate input
+	if createInput.Name == "" {
+		return nil, errors.NewValidationError("Name cannot be empty", nil)
 	}
 
 	example := &model.Example{
@@ -48,7 +54,8 @@ func (h *CreateExampleHandler) Handle(ctx context.Context, input interface{}) (i
 
 	createdExample, err := h.ExampleService.Create(ctx, example)
 	if err != nil {
-		return nil, err
+		// Wrap domain error as application error
+		return nil, errors.NewPersistenceError("Failed to create example", err)
 	}
 
 	return CreateExampleOutput{

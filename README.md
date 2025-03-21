@@ -251,6 +251,33 @@ func (h *CreateExampleHandler) Handle(ctx context.Context, input interface{}) (i
 }
 ```
 
+## Coding Standards
+
+This project follows unified coding standards to ensure code quality and consistency. For detailed guidelines, please refer to [CODING_STYLE.md](./CODING_STYLE.md).
+
+Key standards include:
+
+- Code format and style (using go fmt and golangci-lint)
+- Naming conventions (package names, variable names, interfaces and structs)
+- Import package ordering
+- Comment standards
+- Error handling standards (using util/errors package)
+- Testing standards
+- CI/CD standards
+
+Developers should ensure compliance with these standards before submitting code. Use the following commands for verification:
+
+```bash
+# Format code
+make fmt
+
+# Code quality check
+make lint
+
+# Run tests
+make test
+```
+
 ## Transaction Management
 
 This project implements transaction interfaces and no-operation transactions, supporting different transaction management strategies:

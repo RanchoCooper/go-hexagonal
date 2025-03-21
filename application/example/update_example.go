@@ -38,27 +38,28 @@ func NewUpdateExampleHandler(exampleService *service.ExampleService) *UpdateExam
 func (h *UpdateExampleHandler) Handle(ctx context.Context, input interface{}) (interface{}, error) {
 	updateInput, ok := input.(UpdateExampleInput)
 	if !ok {
-		return nil, core.NewValidationError(400, "invalid input type", core.ErrInvalidInput)
+		return nil, core.NewValidationError(core.StatusBadRequest, "invalid input type", core.ErrInvalidInput)
 	}
 
 	// Check if example exists
-	existingExample, err := h.ExampleService.Get(ctx, updateInput.ID)
+	_, err := h.ExampleService.Get(ctx, updateInput.ID)
 	if err != nil {
-		return nil, core.NewInternalError(500, "failed to check example existence", err)
+		return nil, core.NewInternalError(core.StatusInternalServerError, "failed to check example existence", err)
 	}
-	if existingExample == nil {
-		return nil, core.NewNotFoundError(404, "example not found", core.ErrNotFound)
+	if err == core.ErrNotFound {
+		return nil, core.NewNotFoundError(core.StatusNotFound, "example not found", core.ErrNotFound)
 	}
 
-	// Update example
+	// Create domain model from input
 	example := &model.Example{
 		Id:    updateInput.ID,
 		Name:  updateInput.Name,
 		Alias: updateInput.Alias,
 	}
 
+	// Update example - ExampleService.Update only returns error
 	if err := h.ExampleService.Update(ctx, example); err != nil {
-		return nil, core.NewInternalError(500, "failed to update example", err)
+		return nil, core.NewInternalError(core.StatusInternalServerError, "failed to update example", err)
 	}
 
 	return UpdateExampleOutput{
