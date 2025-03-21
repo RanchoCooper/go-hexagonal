@@ -60,14 +60,19 @@ func (m *MockExampleRepo) FindByName(ctx context.Context, tr repo.Transaction, n
 // Setup test
 func setupTest(t *testing.T) (*gin.Engine, *MockExampleRepo, *service.ExampleService, func()) {
 	// Save original service
-	originalService := service.ExampleSvc
+	originalServices := services
 
 	// Create mock and new service
 	mockRepo := new(MockExampleRepo)
 	testService := service.NewExampleService(mockRepo)
 
-	// Replace global service
-	service.ExampleSvc = testService
+	// Create test services
+	testServices := &service.Services{
+		ExampleService: testService,
+	}
+
+	// Register test services
+	RegisterServices(testServices)
 
 	// Set up Gin
 	gin.SetMode(gin.TestMode)
@@ -75,7 +80,7 @@ func setupTest(t *testing.T) (*gin.Engine, *MockExampleRepo, *service.ExampleSer
 
 	// Return cleanup function
 	cleanup := func() {
-		service.ExampleSvc = originalService
+		services = originalServices
 	}
 
 	return router, mockRepo, testService, cleanup
@@ -103,7 +108,7 @@ func TestCreateExample(t *testing.T) {
 		"alias": "test",
 	}
 	jsonData, _ := json.Marshal(requestBody)
-	req, _ := http.NewRequest("POST", "/api/examples", bytes.NewBuffer(jsonData))
+	req, _ := http.NewRequest(http.MethodPost, "/api/examples", bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
 
 	// Execute request
@@ -132,7 +137,7 @@ func TestGetExample(t *testing.T) {
 	mockRepo.On("GetByID", mock.Anything, mock.Anything, 1).Return(expectedExample, nil)
 
 	// Create request
-	req, _ := http.NewRequest("GET", "/api/examples/1", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/api/examples/1", nil)
 
 	// Execute request
 	recorder := httptest.NewRecorder()
@@ -158,7 +163,7 @@ func TestUpdateExample(t *testing.T) {
 		"alias": "updated",
 	}
 	jsonData, _ := json.Marshal(requestBody)
-	req, _ := http.NewRequest("PUT", "/api/examples/1", bytes.NewBuffer(jsonData))
+	req, _ := http.NewRequest(http.MethodPut, "/api/examples/1", bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
 
 	// Execute request
@@ -180,7 +185,7 @@ func TestDeleteExample(t *testing.T) {
 	mockRepo.On("Delete", mock.Anything, mock.Anything, 1).Return(nil)
 
 	// Create request
-	req, _ := http.NewRequest("DELETE", "/api/examples/1", nil)
+	req, _ := http.NewRequest(http.MethodDelete, "/api/examples/1", nil)
 
 	// Execute request
 	recorder := httptest.NewRecorder()
@@ -208,7 +213,7 @@ func TestFindExampleByName(t *testing.T) {
 	mockRepo.On("FindByName", mock.Anything, mock.Anything, "test").Return(expectedExample, nil)
 
 	// Create request
-	req, _ := http.NewRequest("GET", "/api/examples/name/test", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/api/examples/name/test", nil)
 
 	// Execute request
 	recorder := httptest.NewRecorder()
@@ -222,7 +227,7 @@ func TestFindExampleByName(t *testing.T) {
 		Return(nil, fmt.Errorf("record not found"))
 
 	// Create request
-	req, _ = http.NewRequest("GET", "/api/examples/name/nonexistent", nil)
+	req, _ = http.NewRequest(http.MethodGet, "/api/examples/name/nonexistent", nil)
 
 	// Execute request
 	recorder = httptest.NewRecorder()

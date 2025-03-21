@@ -2,6 +2,7 @@ package example
 
 import (
 	"context"
+	"errors"
 
 	"go-hexagonal/application/core"
 	"go-hexagonal/domain/service"
@@ -10,6 +11,11 @@ import (
 // DeleteExampleInput represents input for deleting an example
 type DeleteExampleInput struct {
 	ID int `json:"id" validate:"required"`
+}
+
+// DeleteExampleOutput represents output for deleting an example
+type DeleteExampleOutput struct {
+	Success bool `json:"success"`
 }
 
 // DeleteExampleHandler handles example deletion
@@ -28,18 +34,18 @@ func NewDeleteExampleHandler(exampleService *service.ExampleService) *DeleteExam
 func (h *DeleteExampleHandler) Handle(ctx context.Context, input interface{}) (interface{}, error) {
 	deleteInput, ok := input.(DeleteExampleInput)
 	if !ok {
-		return nil, core.NewValidationError(400, "invalid input type", core.ErrInvalidInput)
+		return nil, core.NewValidationError(core.StatusBadRequest, "invalid input type", core.ErrInvalidInput)
 	}
 
-	// Delete example
-	if err := h.ExampleService.Delete(ctx, deleteInput.ID); err != nil {
-		if err == core.ErrNotFound {
-			return nil, core.NewNotFoundError(404, "example not found", err)
+	err := h.ExampleService.Delete(ctx, deleteInput.ID)
+	if err != nil {
+		if errors.Is(err, core.ErrNotFound) {
+			return nil, core.NewNotFoundError(core.StatusNotFound, "example not found", err)
 		}
-		return nil, core.NewInternalError(500, "failed to delete example", err)
+		return nil, core.NewInternalError(core.StatusInternalServerError, "failed to delete example", err)
 	}
 
-	return nil, nil
+	return DeleteExampleOutput{Success: true}, nil
 }
 
 // DeleteExampleUseCase represents the use case for deleting examples

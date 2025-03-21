@@ -2,11 +2,9 @@ name: CI/CD with Docker for Golang
 
 on:
     push:
-        branches:
-            - master
+        branches: [ main, master ]
     pull_request:
-        branches:
-            - master
+        branches: [ main, master ]
 
 jobs:
     build-and-test:
@@ -43,7 +41,8 @@ jobs:
                   go-version: 1.23
             - name: Install dependencies
               run: go mod tidy
-
+            - name: Build
+              run: go build -v -o hexagonal-app ./cmd/main.go
             - name: Run Tests
               run: go test -v ./...
 

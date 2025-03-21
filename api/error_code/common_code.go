@@ -35,7 +35,7 @@ var (
 	UnauthorizedAuthNotExist  = NewError(UnauthorizedAuthNotExistErrorCode, "unauthorized, auth not exists")
 	UnauthorizedTokenError    = NewError(UnauthorizedTokenErrorCode, "unauthorized, token invalid")
 	UnauthorizedTokenTimeout  = NewError(UnauthorizedTokenTimeoutErrorCode, "unauthorized, token timeout")
-	UnauthorizedTokenGenerate = NewError(UnauthorizedTokenGenerateErrorCode, "unauthorized，token generate failed")
+	UnauthorizedTokenGenerate = NewError(UnauthorizedTokenGenerateErrorCode, "unauthorized, token generate failed")
 )
 
 // Internal error code

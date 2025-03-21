@@ -3,6 +3,15 @@ package core
 import (
 	"errors"
 	"fmt"
+
+	apperrors "go-hexagonal/util/errors"
+)
+
+// HTTP status codes as registered with IANA
+const (
+	StatusBadRequest          = 400 // RFC 7231, 6.5.1
+	StatusNotFound            = 404 // RFC 7231, 6.5.4
+	StatusInternalServerError = 500 // RFC 7231, 6.6.1
 )
 
 // Error types
@@ -15,7 +24,7 @@ const (
 	ErrorTypeInternal     = "INTERNAL_ERROR"
 )
 
-// Application layer error definitions
+// Compatibility errors for backward compatibility
 var (
 	ErrInvalidInput = errors.New("invalid input")
 	ErrNotFound     = errors.New("resource not found")
@@ -25,7 +34,7 @@ var (
 	ErrInternal     = errors.New("internal error")
 )
 
-// Error represents an application error
+// Error represents an application error (will be deprecated in favor of util/errors)
 type Error struct {
 	Type    string // Error type
 	Code    int    // Error code
@@ -47,6 +56,7 @@ func (e *Error) Unwrap() error {
 }
 
 // NewError creates a new application error
+// Deprecated: Use util/errors package instead
 func NewError(errorType string, code int, message string, err error) *Error {
 	return &Error{
 		Type:    errorType,
@@ -57,31 +67,51 @@ func NewError(errorType string, code int, message string, err error) *Error {
 }
 
 // NewValidationError creates a validation error
+// Deprecated: Use util/errors.NewValidationError instead
 func NewValidationError(code int, message string, err error) *Error {
-	return NewError(ErrorTypeValidation, code, message, err)
+	return NewError("VALIDATION_ERROR", code, message, err)
 }
 
 // NewNotFoundError creates a not found error
+// Deprecated: Use util/errors.NewNotFoundError instead
 func NewNotFoundError(code int, message string, err error) *Error {
-	return NewError(ErrorTypeNotFound, code, message, err)
+	return NewError("NOT_FOUND", code, message, err)
 }
 
 // NewUnauthorizedError creates an unauthorized error
+// Deprecated: Use util/errors package instead
 func NewUnauthorizedError(code int, message string, err error) *Error {
-	return NewError(ErrorTypeUnauthorized, code, message, err)
+	return NewError("UNAUTHORIZED", code, message, err)
 }
 
 // NewForbiddenError creates a forbidden error
+// Deprecated: Use util/errors package instead
 func NewForbiddenError(code int, message string, err error) *Error {
-	return NewError(ErrorTypeForbidden, code, message, err)
+	return NewError("FORBIDDEN", code, message, err)
 }
 
 // NewConflictError creates a conflict error
+// Deprecated: Use util/errors package instead
 func NewConflictError(code int, message string, err error) *Error {
-	return NewError(ErrorTypeConflict, code, message, err)
+	return NewError("CONFLICT", code, message, err)
 }
 
 // NewInternalError creates an internal error
+// Deprecated: Use util/errors.NewSystemError instead
 func NewInternalError(code int, message string, err error) *Error {
-	return NewError(ErrorTypeInternal, code, message, err)
+	return NewError("INTERNAL_ERROR", code, message, err)
+}
+
+// ToAppError converts a legacy Error to the new AppError type
+func ToAppError(err *Error) *apperrors.AppError {
+	switch err.Type {
+	case "VALIDATION_ERROR":
+		return apperrors.NewValidationError(err.Message, err.Err)
+	case "NOT_FOUND":
+		return apperrors.NewNotFoundError(err.Message, err.Err)
+	case "INTERNAL_ERROR":
+		return apperrors.NewSystemError(err.Message, err.Err)
+	default:
+		return apperrors.New(apperrors.ErrorTypeSystem, err.Message)
+	}
 }

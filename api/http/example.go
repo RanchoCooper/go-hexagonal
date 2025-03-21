@@ -12,7 +12,6 @@ import (
 	"go-hexagonal/api/http/handle"
 	"go-hexagonal/api/http/validator"
 	"go-hexagonal/domain/model"
-	"go-hexagonal/domain/service"
 	"go-hexagonal/util/log"
 )
 
@@ -36,7 +35,7 @@ func CreateExample(ctx *gin.Context) {
 		return
 	}
 
-	example, err = service.ExampleSvc.Create(ctx, example)
+	example, err = services.ExampleService.Create(ctx, example)
 	if err != nil {
 		log.SugaredLogger.Errorf("CreateExample failed: %v", err.Error())
 		response.ToErrorResponse(error_code.ServerError)
@@ -58,7 +57,7 @@ func DeleteExample(ctx *gin.Context) {
 		return
 	}
 
-	err := service.ExampleSvc.Delete(ctx, param.Id)
+	err := services.ExampleService.Delete(ctx, param.Id)
 	if err != nil {
 		log.SugaredLogger.Errorf("DeleteExample failed.%v", err.Error())
 		response.ToErrorResponse(error_code.ServerError)
@@ -80,7 +79,7 @@ func UpdateExample(ctx *gin.Context) {
 	}
 	example := &model.Example{}
 	copier.Copy(example, body)
-	err := service.ExampleSvc.Update(ctx, example)
+	err := services.ExampleService.Update(ctx, example)
 	if err != nil {
 		log.SugaredLogger.Errorf("UpdateExample failed.%v", err.Error())
 		response.ToErrorResponse(error_code.ServerError)
@@ -100,7 +99,7 @@ func GetExample(ctx *gin.Context) {
 		response.ToErrorResponse(errResp)
 		return
 	}
-	result, err := service.ExampleSvc.Get(ctx, param.Id)
+	result, err := services.ExampleService.Get(ctx, param.Id)
 	if err != nil {
 		log.SugaredLogger.Errorf("GetExample failed.%v", err.Error())
 		response.ToErrorResponse(error_code.ServerError)
@@ -119,7 +118,7 @@ func FindExampleByName(ctx *gin.Context) {
 		return
 	}
 
-	result, err := service.ExampleSvc.FindByName(ctx, name)
+	result, err := services.ExampleService.FindByName(ctx, name)
 	if err != nil {
 		log.SugaredLogger.Errorf("FindExampleByName failed.%v", err.Error())
 		if err.Error() == "record not found" ||

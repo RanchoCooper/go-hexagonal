@@ -1,6 +1,10 @@
 package http
 
 import (
+	"net/http"
+	"time"
+
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
@@ -8,13 +12,22 @@ import (
 	"go-hexagonal/api/http/middleware"
 	"go-hexagonal/api/http/validator/custom"
 	"go-hexagonal/config"
+	"go-hexagonal/domain/service"
 )
+
+// Service instances for API handlers
+var (
+	services *service.Services
+)
+
+// RegisterServices registers service instances for API handlers
+func RegisterServices(s *service.Services) {
+	services = s
+}
 
 // NewServerRoute creates and configures the HTTP server routes
 func NewServerRoute() *gin.Engine {
-	if config.GlobalConfig.App.Debug {
-		gin.SetMode(gin.DebugMode)
-	} else {
+	if config.GlobalConfig.Env.IsProd() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
@@ -31,16 +44,27 @@ func NewServerRoute() *gin.Engine {
 	router.Use(middleware.Cors())
 	router.Use(middleware.RequestLogger()) // Add request logging middleware
 	router.Use(middleware.Translations())
+	router.Use(middleware.ErrorHandlerMiddleware()) // Add unified error handling middleware
 
 	// Health check
 	router.GET("/ping", func(c *gin.Context) {
-		c.String(200, "pong")
+		c.String(http.StatusOK, "pong")
 	})
 
 	// Debug tools
 	if config.GlobalConfig.HTTPServer.Pprof {
 		middleware.RegisterPprof(router)
 	}
+
+	// Configure CORS
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	// Unified API version
 	api := router.Group("/api")

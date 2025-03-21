@@ -8,15 +8,20 @@ import (
 	"syscall"
 	"time"
 
+	"go-hexagonal/adapter/dependency"
 	"go-hexagonal/adapter/repository"
-	"go-hexagonal/adapter/repository/mysql/entity"
 	"go-hexagonal/cmd/http_server"
 	"go-hexagonal/config"
-	"go-hexagonal/domain/service"
 	"go-hexagonal/util/log"
 )
 
 const ServiceName = "go-hexagonal"
+
+// Constants for application settings
+const (
+	// DefaultShutdownTimeout is the default timeout for graceful shutdown
+	DefaultShutdownTimeout = 5 * time.Second
+)
 
 func main() {
 	fmt.Println("Starting " + ServiceName)
@@ -41,15 +46,12 @@ func main() {
 	)
 	fmt.Println("Repositories initialized")
 
-	// Initialize services
+	// Initialize services using dependency injection
 	fmt.Println("Initializing services...")
-	service.Init(ctx)
-
-	// Inject entity layer dependencies
-	if service.ExampleSvc.Repository == nil {
-		service.ExampleSvc.Repository = entity.NewExample()
+	services, err := dependency.InitializeServices(ctx)
+	if err != nil {
+		log.SugaredLogger.Fatalf("Failed to initialize services: %v", err)
 	}
-
 	fmt.Println("Services initialized")
 
 	// Create error channel and HTTP close channel
@@ -58,7 +60,7 @@ func main() {
 
 	// Start HTTP server
 	fmt.Println("Starting HTTP server...")
-	go http_server.Start(ctx, errChan, httpCloseCh)
+	go http_server.Start(ctx, errChan, httpCloseCh, services)
 	fmt.Println("HTTP server started")
 
 	// Listen for signals
@@ -78,17 +80,17 @@ func main() {
 	cancel()
 
 	// Set shutdown timeout
-	shutdownTimeout := 5 * time.Second
+	shutdownTimeout := DefaultShutdownTimeout
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer shutdownCancel()
 
-	// Wait for HTTP server to close or timeout
+	// Wait for HTTP server to close
 	select {
 	case <-httpCloseCh:
-		log.SugaredLogger.Info("HTTP server shutdown complete")
+		log.SugaredLogger.Info("HTTP server shutdown completed")
 	case <-shutdownCtx.Done():
 		log.SugaredLogger.Warn("HTTP server shutdown timed out")
 	}
 
-	log.SugaredLogger.Info("Server exited")
+	log.SugaredLogger.Info("Server gracefully stopped")
 }

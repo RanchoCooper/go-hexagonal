@@ -11,6 +11,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Constants
+const (
+	TrueStr = "true" // String representation of boolean true value
+)
+
 type Env string
 
 func (e Env) IsProd() bool {
@@ -118,6 +123,22 @@ func Load(configPath string, configFile string) (*Config, error) {
 
 // applyEnvOverrides applies environment variable overrides to the configuration
 func applyEnvOverrides(conf *Config) {
+	// Apply config overrides by category
+	applyAppEnvOverrides(conf)
+	applyHTTPServerEnvOverrides(conf)
+	applyMySQLEnvOverrides(conf)
+	applyPostgresEnvOverrides(conf)
+	applyRedisEnvOverrides(conf)
+	applyLogEnvOverrides(conf)
+
+	// Migration directory
+	if migrationDir := os.Getenv("APP_MIGRATION_DIR"); migrationDir != "" {
+		conf.MigrationDir = migrationDir
+	}
+}
+
+// applyAppEnvOverrides applies App related environment variables
+func applyAppEnvOverrides(conf *Config) {
 	// Environment
 	if env := os.Getenv("APP_ENV"); env != "" {
 		conf.Env = Env(env)
@@ -128,18 +149,20 @@ func applyEnvOverrides(conf *Config) {
 		conf.App.Name = name
 	}
 	if debug := os.Getenv("APP_APP_DEBUG"); debug != "" {
-		conf.App.Debug = debug == "true"
+		conf.App.Debug = debug == TrueStr
 	}
 	if version := os.Getenv("APP_APP_VERSION"); version != "" {
 		conf.App.Version = version
 	}
+}
 
-	// HTTP Server
+// applyHTTPServerEnvOverrides applies HTTP server related environment variables
+func applyHTTPServerEnvOverrides(conf *Config) {
 	if addr := os.Getenv("APP_HTTP_SERVER_ADDR"); addr != "" {
 		conf.HTTPServer.Addr = addr
 	}
 	if pprof := os.Getenv("APP_HTTP_SERVER_PPROF"); pprof != "" {
-		conf.HTTPServer.Pprof = pprof == "true"
+		conf.HTTPServer.Pprof = pprof == TrueStr
 	}
 	if pageSize := os.Getenv("APP_HTTP_SERVER_DEFAULT_PAGE_SIZE"); pageSize != "" {
 		if val, err := strconv.Atoi(pageSize); err == nil {
@@ -157,8 +180,10 @@ func applyEnvOverrides(conf *Config) {
 	if writeTimeout := os.Getenv("APP_HTTP_SERVER_WRITE_TIMEOUT"); writeTimeout != "" {
 		conf.HTTPServer.WriteTimeout = writeTimeout
 	}
+}
 
-	// MySQL
+// applyMySQLEnvOverrides applies MySQL related environment variables
+func applyMySQLEnvOverrides(conf *Config) {
 	if host := os.Getenv("APP_MYSQL_HOST"); host != "" {
 		conf.MySQL.Host = host
 	}
@@ -176,26 +201,35 @@ func applyEnvOverrides(conf *Config) {
 	if database := os.Getenv("APP_MYSQL_DATABASE"); database != "" {
 		conf.MySQL.Database = database
 	}
-
-	// Redis
-	if host := os.Getenv("APP_REDIS_HOST"); host != "" {
-		conf.Redis.Host = host
-	}
-	if port := os.Getenv("APP_REDIS_PORT"); port != "" {
-		if val, err := strconv.Atoi(port); err == nil {
-			conf.Redis.Port = val
+	if maxIdleConns := os.Getenv("APP_MYSQL_MAX_IDLE_CONNS"); maxIdleConns != "" {
+		if val, err := strconv.Atoi(maxIdleConns); err == nil {
+			conf.MySQL.MaxIdleConns = val
 		}
 	}
-	if password := os.Getenv("APP_REDIS_PASSWORD"); password != "" {
-		conf.Redis.Password = password
-	}
-	if db := os.Getenv("APP_REDIS_DB"); db != "" {
-		if val, err := strconv.Atoi(db); err == nil {
-			conf.Redis.DB = val
+	if maxOpenConns := os.Getenv("APP_MYSQL_MAX_OPEN_CONNS"); maxOpenConns != "" {
+		if val, err := strconv.Atoi(maxOpenConns); err == nil {
+			conf.MySQL.MaxOpenConns = val
 		}
 	}
+	if maxLifeTime := os.Getenv("APP_MYSQL_MAX_LIFE_TIME"); maxLifeTime != "" {
+		conf.MySQL.MaxLifeTime = maxLifeTime
+	}
+	if maxIdleTime := os.Getenv("APP_MYSQL_MAX_IDLE_TIME"); maxIdleTime != "" {
+		conf.MySQL.MaxIdleTime = maxIdleTime
+	}
+	if charSet := os.Getenv("APP_MYSQL_CHAR_SET"); charSet != "" {
+		conf.MySQL.CharSet = charSet
+	}
+	if parseTime := os.Getenv("APP_MYSQL_PARSE_TIME"); parseTime != "" {
+		conf.MySQL.ParseTime = parseTime == TrueStr
+	}
+	if timeZone := os.Getenv("APP_MYSQL_TIME_ZONE"); timeZone != "" {
+		conf.MySQL.TimeZone = timeZone
+	}
+}
 
-	// PostgreSQL
+// applyPostgresEnvOverrides applies PostgreSQL related environment variables
+func applyPostgresEnvOverrides(conf *Config) {
 	if host := os.Getenv("APP_POSTGRES_HOST"); host != "" {
 		conf.Postgre.Host = host
 	}
@@ -212,6 +246,73 @@ func applyEnvOverrides(conf *Config) {
 	}
 	if dbName := os.Getenv("APP_POSTGRES_DB_NAME"); dbName != "" {
 		conf.Postgre.DbName = dbName
+	}
+	if sslMode := os.Getenv("APP_POSTGRES_SSL_MODE"); sslMode != "" {
+		conf.Postgre.SSLMode = sslMode
+	}
+	if timeZone := os.Getenv("APP_POSTGRES_TIME_ZONE"); timeZone != "" {
+		conf.Postgre.TimeZone = timeZone
+	}
+}
+
+// applyRedisEnvOverrides applies Redis related environment variables
+func applyRedisEnvOverrides(conf *Config) {
+	if host := os.Getenv("APP_REDIS_HOST"); host != "" {
+		conf.Redis.Host = host
+	}
+	if port := os.Getenv("APP_REDIS_PORT"); port != "" {
+		if val, err := strconv.Atoi(port); err == nil {
+			conf.Redis.Port = val
+		}
+	}
+	if password := os.Getenv("APP_REDIS_PASSWORD"); password != "" {
+		conf.Redis.Password = password
+	}
+	if db := os.Getenv("APP_REDIS_DB"); db != "" {
+		if val, err := strconv.Atoi(db); err == nil {
+			conf.Redis.DB = val
+		}
+	}
+	if poolSize := os.Getenv("APP_REDIS_POOL_SIZE"); poolSize != "" {
+		if val, err := strconv.Atoi(poolSize); err == nil {
+			conf.Redis.PoolSize = val
+		}
+	}
+	if idleTimeout := os.Getenv("APP_REDIS_IDLE_TIMEOUT"); idleTimeout != "" {
+		if val, err := strconv.Atoi(idleTimeout); err == nil {
+			conf.Redis.IdleTimeout = val
+		}
+	}
+	if minIdleConns := os.Getenv("APP_REDIS_MIN_IDLE_CONNS"); minIdleConns != "" {
+		if val, err := strconv.Atoi(minIdleConns); err == nil {
+			conf.Redis.MinIdleConns = val
+		}
+	}
+}
+
+// applyLogEnvOverrides applies Log related environment variables
+func applyLogEnvOverrides(conf *Config) {
+	if savePath := os.Getenv("APP_LOG_SAVE_PATH"); savePath != "" {
+		conf.Log.SavePath = savePath
+	}
+	if fileName := os.Getenv("APP_LOG_FILE_NAME"); fileName != "" {
+		conf.Log.FileName = fileName
+	}
+	if maxSize := os.Getenv("APP_LOG_MAX_SIZE"); maxSize != "" {
+		if val, err := strconv.Atoi(maxSize); err == nil {
+			conf.Log.MaxSize = val
+		}
+	}
+	if maxAge := os.Getenv("APP_LOG_MAX_AGE"); maxAge != "" {
+		if val, err := strconv.Atoi(maxAge); err == nil {
+			conf.Log.MaxAge = val
+		}
+	}
+	if localTime := os.Getenv("APP_LOG_LOCAL_TIME"); localTime != "" {
+		conf.Log.LocalTime = localTime == TrueStr
+	}
+	if compress := os.Getenv("APP_LOG_COMPRESS"); compress != "" {
+		conf.Log.Compress = compress == TrueStr
 	}
 }
 

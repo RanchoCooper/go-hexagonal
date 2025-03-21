@@ -7,14 +7,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Cors returns a middleware that enables CORS
+// CORS related constants
+const (
+	// CORSMaxAge defines the maximum age for CORS preflight requests
+	CORSMaxAge = 12 * time.Hour
+)
+
+// Cors provides a CORS middleware
 func Cors() gin.HandlerFunc {
 	return cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With", "X-Request-ID"},
-		ExposeHeaders:    []string{"Content-Length", "Content-Type", "X-Request-ID"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Authorization", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
+		MaxAge:           CORSMaxAge,
 	})
 }

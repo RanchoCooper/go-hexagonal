@@ -84,7 +84,7 @@
 
 - **模型(Models)**: 领域实体和值对象
   - `Example`: 示例实体，包含基本属性如ID、名称、别名等
-  
+
 - **资源库接口(Repository Interfaces)**: 定义数据访问接口
   - `IExampleRepo`: 示例资源库接口，定义了创建、读取、更新、删除等操作
   - `IExampleCacheRepo`: 示例缓存接口，定义了健康检查方法
@@ -273,7 +273,7 @@ type NoopTransaction struct {
 func (s *ExampleService) Create(ctx context.Context, example *model.Example) (*model.Example, error) {
     // 创建一个无操作事务
     tr := repo.NewNoopTransaction(s.Repository)
-    
+
     createdExample, err := s.Repository.Create(ctx, tr, example)
     // ...
 }
