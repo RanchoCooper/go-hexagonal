@@ -10,7 +10,6 @@ import (
 	"go-hexagonal/api/dto"
 	"go-hexagonal/api/error_code"
 	"go-hexagonal/api/http/paginate"
-	"go-hexagonal/application/core"
 	"go-hexagonal/util/log"
 )
 
@@ -65,7 +64,7 @@ func (r *Response) ToErrorResponse(err *error_code.Error) {
 }
 
 // Success returns a success response
-func Success(c *gin.Context, data interface{}) {
+func Success(c *gin.Context, data any) {
 	c.JSON(http.StatusOK, StandardResponse{
 		Code:    0,
 		Message: "success",
@@ -75,16 +74,6 @@ func Success(c *gin.Context, data interface{}) {
 
 // Error unified error handling
 func Error(c *gin.Context, err error) {
-	// Handle application errors
-	if appErr, ok := err.(*core.Error); ok {
-		c.JSON(getHttpStatusFromAppError(appErr), StandardResponse{
-			Code:    appErr.Code,
-			Message: appErr.Message,
-			Data:    nil,
-		})
-		return
-	}
-
 	// Handle API error codes
 	if apiErr, ok := err.(*error_code.Error); ok {
 		c.JSON(http.StatusBadRequest, StandardResponse{
@@ -104,26 +93,6 @@ func Error(c *gin.Context, err error) {
 		Message: "Internal server error",
 		Data:    nil,
 	})
-}
-
-// getHttpStatusFromAppError maps application error types to HTTP status codes
-func getHttpStatusFromAppError(err *core.Error) int {
-	switch err.Type {
-	case core.ErrorTypeValidation:
-		return http.StatusBadRequest
-	case core.ErrorTypeNotFound:
-		return http.StatusNotFound
-	case core.ErrorTypeUnauthorized:
-		return http.StatusUnauthorized
-	case core.ErrorTypeForbidden:
-		return http.StatusForbidden
-	case core.ErrorTypeConflict:
-		return http.StatusConflict
-	case core.ErrorTypeInternal:
-		return http.StatusInternalServerError
-	default:
-		return http.StatusInternalServerError
-	}
 }
 
 // GetQueryInt gets an integer from query parameters with a default value
@@ -149,7 +118,7 @@ func GetQueryString(c *gin.Context, key string, defaultValue string) string {
 }
 
 // IsNil checks if an interface is nil or its underlying value is nil
-func IsNil(i interface{}) bool {
+func IsNil(i any) bool {
 	if i == nil {
 		return true
 	}

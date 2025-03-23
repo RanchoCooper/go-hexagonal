@@ -9,21 +9,103 @@ package dependency
 import (
 	"context"
 
+	"go-hexagonal/adapter/repository"
 	"go-hexagonal/adapter/repository/mysql/entity"
+	"go-hexagonal/config"
 	"go-hexagonal/domain/event"
 	"go-hexagonal/domain/repo"
 	"go-hexagonal/domain/service"
 )
 
-// Injectors from wire.go:
+// ServiceOption defines an option for service initialization
+type ServiceOption func(*service.Services, event.EventBus)
 
-// InitializeServices initializes all services
-func InitializeServices(ctx context.Context) (*service.Services, error) {
-	entityExample := entity.NewExample()
-	inMemoryEventBus := provideEventBus()
-	exampleService := provideExampleService(entityExample, inMemoryEventBus)
-	services := provideServices(exampleService, inMemoryEventBus)
+// WithExampleService returns an option to initialize the Example service
+func WithExampleService() ServiceOption {
+	return func(s *service.Services, eventBus event.EventBus) {
+		if s.ExampleService == nil {
+			exampleRepo := entity.NewExample()
+			s.ExampleService = provideExampleService(exampleRepo, eventBus)
+		}
+	}
+}
+
+// InitializeServices initializes services based on the provided options
+func InitializeServices(ctx context.Context, opts ...ServiceOption) (*service.Services, error) {
+	// Initialize services container
+	eventBus := provideEventBus()
+	services := &service.Services{
+		EventBus: eventBus,
+	}
+
+	// Apply service options
+	for _, opt := range opts {
+		opt(services, eventBus)
+	}
+
 	return services, nil
+}
+
+// RepositoryOption defines an option for repository initialization
+type RepositoryOption func(*repository.ClientContainer)
+
+// WithMySQL returns an option to initialize MySQL
+func WithMySQL() RepositoryOption {
+	return func(c *repository.ClientContainer) {
+		if c.MySQL == nil {
+			mysql, err := ProvideMySQL()
+			if err != nil {
+				panic("Failed to initialize MySQL: " + err.Error())
+			}
+			c.MySQL = mysql
+		}
+	}
+}
+
+// WithRedis returns an option to initialize Redis
+func WithRedis() RepositoryOption {
+	return func(c *repository.ClientContainer) {
+		if c.Redis == nil {
+			redis, err := ProvideRedis()
+			if err != nil {
+				panic("Failed to initialize Redis: " + err.Error())
+			}
+			c.Redis = redis
+		}
+	}
+}
+
+// InitializeRepositories initializes repository clients with the given options
+func InitializeRepositories(opts ...RepositoryOption) (*repository.ClientContainer, error) {
+	container := &repository.ClientContainer{}
+	for _, opt := range opts {
+		opt(container)
+	}
+	return container, nil
+}
+
+// ProvideMySQL creates and initializes a MySQL client
+func ProvideMySQL() (*repository.MySQL, error) {
+	if config.GlobalConfig.MySQL == nil {
+		return nil, repository.ErrMissingMySQLConfig
+	}
+
+	db, err := repository.OpenGormDB()
+	if err != nil {
+		return nil, err
+	}
+
+	return &repository.MySQL{DB: db}, nil
+}
+
+// ProvideRedis creates and initializes a Redis client
+func ProvideRedis() (*repository.Redis, error) {
+	if config.GlobalConfig.Redis == nil {
+		return nil, repository.ErrMissingRedisConfig
+	}
+
+	client := repository.NewRedisConn()
+	return &repository.Redis{DB: client}, nil
 }
 
 // wire.go:
@@ -47,7 +129,7 @@ func provideExampleService(repo2 repo.IExampleRepo, eventBus event.EventBus) *se
 	return exampleService
 }
 
-// provideServices creates the services container
+// Deprecated: Use the new InitializeServices with options pattern instead
 func provideServices(exampleService *service.ExampleService, eventBus event.EventBus) *service.Services {
 	return service.NewServices(exampleService, eventBus)
 }

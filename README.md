@@ -19,16 +19,18 @@ Hexagonal Architecture (also known as [Ports and Adapters Architecture](https://
 - **[Repository Pattern](https://en.wikipedia.org/wiki/Repository_pattern)** - Abstract data access layer with transaction support
 - **[Domain Events](https://en.wikipedia.org/wiki/Domain-driven_design)** - Implement [Event-Driven Architecture](https://en.wikipedia.org/wiki/Event-driven_architecture), supporting loosely coupled communication between system components
 - **[CQRS Pattern](https://en.wikipedia.org/wiki/Command_Query_Responsibility_Segregation)** - Command and Query Responsibility Segregation, optimizing read and write operations
+- **[Interface-Driven Design](https://en.wikipedia.org/wiki/Interface-based_programming)** - Use interfaces to define service contracts, implementing Dependency Inversion Principle
 
 ### Technical Implementation
 - **[RESTful API](https://en.wikipedia.org/wiki/Representational_state_transfer)** - Implement HTTP API using the [Gin](https://github.com/gin-gonic/gin) framework
 - **Database Support** - Integrate [GORM](https://gorm.io) with support for [MySQL](https://en.wikipedia.org/wiki/MySQL), [PostgreSQL](https://en.wikipedia.org/wiki/PostgreSQL), and other databases
-- **Cache Support** - Integrate [Redis](https://en.wikipedia.org/wiki/Redis) caching
+- **Cache Support** - Integrate [Redis](https://en.wikipedia.org/wiki/Redis) caching with comprehensive error handling, local error definitions for cache misses, and health check implementation for monitoring cache availability
+- **MongoDB Support** - Integration with MongoDB for document storage
 - **Logging System** - Use [Zap](https://go.uber.org/zap) for high-performance logging
 - **Configuration Management** - Use [Viper](https://github.com/spf13/viper) for flexible configuration management
 - **[Graceful Shutdown](https://en.wikipedia.org/wiki/Graceful_exit)** - Support graceful service startup and shutdown
-- **[Unit Testing](https://en.wikipedia.org/wiki/Unit_testing)** - Use [go-sqlmock](https://github.com/DATA-DOG/go-sqlmock) and [redismock](https://github.com/go-redis/redismock) for database and cache mocking
-- **[NoopTransaction](NoopTransaction)** - Provide no-operation transaction implementation, simplifying service layer interaction with repository layer
+- **[Unit Testing](https://en.wikipedia.org/wiki/Unit_testing)** - Use [go-sqlmock](https://github.com/DATA-DOG/go-sqlmock), [redismock](https://github.com/go-redis/redismock), and [testify/mock](https://github.com/stretchr/testify) for comprehensive test coverage with enhanced HTTP testing utilities and improved DTO handling
+- **Transaction Support** - Provide no-operation transaction implementation, simplifying service layer interaction with repository layer, complete with mock transaction implementation and lifecycle hooks (Begin, Commit, and Rollback) for testing
 
 ### Development Toolchain
 - **Code Quality** - Integrate [Golangci-lint](https://github.com/golangci/golangci-lint) for code quality checks
@@ -40,42 +42,84 @@ Hexagonal Architecture (also known as [Ports and Adapters Architecture](https://
 
 ```
 .
-├── adapter/                # Adapter Layer - Interaction with external systems
+├── adapter/                # Adapter Layer - External system interactions
 │   ├── amqp/               # Message queue adapters
 │   ├── dependency/         # Dependency injection configuration
+│   │   └── wire.go         # Wire DI setup with interface bindings
 │   ├── job/                # Scheduled task adapters
 │   └── repository/         # Data repository adapters
 │       ├── mysql/          # MySQL implementation
-│       │   └── entity/     # Database entities
+│       │   └── entity/     # Database entities and repo implementations
 │       ├── postgre/        # PostgreSQL implementation
+│       ├── mongo/          # MongoDB implementation
 │       └── redis/          # Redis implementation
-├── api/                    # API Layer - Handle HTTP requests and responses
-│   ├── dto/                # Data Transfer Objects
+├── api/                    # API Layer - HTTP requests and responses
+│   ├── dto/                # Data Transfer Objects for API
 │   ├── error_code/         # Error code definitions
-│   ├── grpc/               # gRPC API
-│   └── http/               # HTTP API
-│       ├── handle/         # Request handlers
-│       ├── middleware/     # Middleware
+│   ├── grpc/               # gRPC API handlers
+│   └── http/               # HTTP API handlers
+│       ├── handle/         # Request handlers using domain interfaces
+│       ├── middleware/     # HTTP middleware
 │       ├── paginate/       # Pagination handling
 │       └── validator/      # Request validation
-├── application/            # Application Layer - Coordinate domain objects for use cases
-│   ├── core/               # Core interfaces and error definitions
+├── application/            # Application Layer - Use cases coordinating domain objects
+│   ├── core/               # Core interfaces and base implementations
+│   │   └── interfaces.go   # UseCase and UseCaseHandler interfaces
 │   └── example/            # Example use case implementations
+│       ├── create_example.go     # Create example use case
+│       ├── delete_example.go     # Delete example use case
+│       ├── get_example.go        # Get example use case
+│       ├── update_example.go     # Update example use case
+│       └── find_example_by_name.go # Find example by name use case
 ├── cmd/                    # Command-line entry points
 │   └── http_server/        # HTTP server startup
 ├── config/                 # Configuration files and management
 ├── domain/                 # Domain Layer - Core business logic
-│   ├── aggregate/          # Aggregates
-│   ├── event/              # Domain events
-│   ├── model/              # Domain models
+│   ├── aggregate/          # Aggregates (DDD concept)
+│   ├── event/              # Domain events and event bus interfaces
+│   │   ├── event_bus.go    # EventBus interface
+│   │   └── handlers.go     # Event handler interfaces
+│   ├── model/              # Domain models (pure business entities)
 │   ├── repo/               # Repository interfaces
-│   ├── service/            # Domain services
-│   └── vo/                 # Value objects
+│   │   └── transaction.go  # Transaction interface
+│   ├── service/            # Domain services with interfaces
+│   │   ├── example.go      # ExampleService implementation
+│   │   └── interfaces.go   # Service interfaces (IExampleService, etc.)
+│   └── vo/                 # Value objects (DDD concept)
 ├── tests/                  # Integration tests
+│   ├── migrations/         # Test database migrations
+│   ├── mysql.go            # MySQL test helpers
+│   ├── postgres.go         # PostgreSQL test helpers
+│   ├── redis.go            # Redis test helpers
+│   └── *_test.go           # Test files
 └── util/                   # Utility functions
     ├── clean_arch/         # Architecture checking tools
     └── log/                # Logging utilities
 ```
+
+### Key Architectural Elements
+
+This structure enforces the Hexagonal Architecture principles:
+
+1. **Interface-Implementation Separation**:
+   - Domain layer defines interfaces (ports)
+   - Adapter layer provides implementations (adapters)
+   - Dependency flows inward, with outer layers depending on inner layers
+
+2. **Dependency Inversion**:
+   - High-level modules (domain/application) depend on abstractions
+   - Low-level modules (adapters) implement these abstractions
+   - All dependencies are injected through interfaces
+
+3. **Domain-Centric Design**:
+   - Domain models are pure business entities without technical concerns
+   - Repository interfaces declare what the domain needs
+   - Service interfaces define business operations
+
+4. **Clean Boundaries**:
+   - Each layer has clear responsibilities and dependencies
+   - Data transformation occurs at layer boundaries
+   - No leakage of implementation details between layers
 
 ## Architecture Layers
 
@@ -91,7 +135,8 @@ The domain layer is the core of the application, containing business logic and r
   - `Transaction`: Transaction interface, supporting transaction begin, commit, and rollback
 
 - **Domain Services**: Handle business logic across entities
-  - `ExampleService`: Example service, handling business logic for example entities, interacting with repositories and event bus
+  - `IExampleService`: Service interface defining contracts for example-related operations
+  - `ExampleService`: Implementation of the example service interface, handling business logic for example entities
 
 - **Domain Events**: Define events within the domain
   - `ExampleCreatedEvent`: Example creation event
@@ -99,7 +144,7 @@ The domain layer is the core of the application, containing business logic and r
   - `ExampleDeletedEvent`: Example deletion event
 
 ### Application Layer
-The application layer coordinates domain objects to complete specific application tasks. It depends on the domain layer but does not contain business rules.
+The application layer coordinates domain objects to complete specific application tasks. It depends on domain interfaces but not on concrete implementations, following the Dependency Inversion Principle.
 
 - **Use Cases**: Define application functionality
   - `CreateExampleUseCase`: Create example use case
@@ -170,6 +215,7 @@ func InitializeServices(ctx context.Context) (*service.Services, error) {
 
         // Service dependencies
         provideExampleService,
+        wire.Bind(new(service.IExampleService), new(*service.ExampleService)),
         provideServices,
     )
     return nil, nil
@@ -196,7 +242,7 @@ func provideExampleService(repo repo.IExampleRepo, eventBus event.EventBus) *ser
 }
 
 // Provide services container
-func provideServices(exampleService *service.ExampleService, eventBus event.EventBus) *service.Services {
+func provideServices(exampleService service.IExampleService, eventBus event.EventBus) *service.Services {
     return service.NewServices(exampleService, eventBus)
 }
 ```
@@ -223,31 +269,115 @@ func (h *ExampleEventHandler) HandleEvent(ctx context.Context, event Event) erro
 
 ## Application Layer Use Cases
 
-Application layer use cases implement the Command and Query Responsibility Segregation (CQRS) pattern:
+Application layer use cases implement the Command and Query Responsibility Segregation (CQRS) pattern and depend on domain interfaces rather than concrete implementations:
 
 ```go
+// Use case with interface dependency
+type CreateUseCase struct {
+    exampleService service.IExampleService
+}
+
 // Create example use case
-func (h *CreateExampleHandler) Handle(ctx context.Context, input interface{}) (interface{}, error) {
-    createInput, ok := input.(CreateExampleInput)
-    if !ok {
-        return nil, core.ErrInvalidInput
-    }
-
-    example := &model.Example{
-        Name:  createInput.Name,
-        Alias: createInput.Alias,
-    }
-
-    createdExample, err := h.ExampleService.Create(ctx, example)
+func (uc *CreateUseCase) Execute(ctx context.Context, input dto.CreateExampleReq) (*dto.CreateExampleResp, error) {
+    // Create a real transaction for atomic operations
+    tx, err := repository.NewTransaction(ctx, repository.MySQLStore, nil)
     if err != nil {
-        return nil, err
+        return nil, fmt.Errorf("failed to create transaction: %w", err)
+    }
+    defer tx.Rollback()
+
+    // Convert DTO to domain model
+    example := &model.Example{
+        Name:  input.Name,
+        Alias: input.Alias,
     }
 
-    return CreateExampleOutput{
-        ID:    createdExample.Id,
-        Name:  createdExample.Name,
-        Alias: createdExample.Alias,
-    }, nil
+    // Call domain service through interface
+    createdExample, err := uc.exampleService.Create(ctx, example)
+    if err != nil {
+        return nil, fmt.Errorf("failed to create example: %w", err)
+    }
+
+    // Commit transaction
+    if err = tx.Commit(); err != nil {
+        return nil, fmt.Errorf("failed to commit transaction: %w", err)
+    }
+
+    // Convert domain model to DTO
+    result := &dto.CreateExampleResp{
+        Id:        uint(createdExample.Id),
+        Name:      createdExample.Name,
+        Alias:     createdExample.Alias,
+        CreatedAt: createdExample.CreatedAt,
+        UpdatedAt: createdExample.UpdatedAt,
+    }
+
+    return result, nil
+}
+```
+
+## Unit Testing
+
+The project implements comprehensive unit testing strategies:
+
+- **Interface-Based Testing**: Test against interfaces rather than concrete implementations
+- **Mock Objects**: Use testify/mock to create mock implementations of interfaces
+- **Transaction Mocking**: Separate database operations from business logic by mocking transactions
+- **Standardized Testing Pattern**: Follow a consistent pattern for all tests
+  - Create mock services
+  - Set up test data and expectations
+  - Execute use case
+  - Assert results
+  - Verify mock expectations
+
+Example of a unit test with mocked dependencies:
+
+```go
+// Mock implementation of IExampleService interface for testing
+type mockExampleService struct {
+    mock.Mock
+}
+
+func (m *mockExampleService) Create(ctx context.Context, example *model.Example) (*model.Example, error) {
+    args := m.Called(ctx, example)
+    if args.Get(0) == nil {
+        return nil, args.Error(1)
+    }
+    return args.Get(0).(*model.Example), args.Error(1)
+}
+
+// Test for successful creation
+func TestCreateUseCase_Execute_Success(t *testing.T) {
+    // Create mock service
+    mockService := new(mockExampleService)
+
+    // Set up mock behavior
+    now := time.Now()
+    expectedExample := &model.Example{
+        Id:        1,
+        Name:      "Test Example",
+        Alias:     "test",
+        CreatedAt: now,
+        UpdatedAt: now,
+    }
+    mockService.On("Create", mock.Anything, mock.Anything).Return(expectedExample, nil)
+
+    // Create testable use case
+    useCase := newTestableCreateUseCase(mockService)
+
+    // Execute use case
+    ctx := context.Background()
+    createReq := dto.CreateExampleReq{
+        Name:  "Test Example",
+        Alias: "test",
+    }
+    result, err := useCase.Execute(ctx, createReq)
+
+    // Assert results
+    assert.NoError(t, err)
+    assert.NotNil(t, result)
+    assert.Equal(t, uint(expectedExample.Id), result.Id)
+    mockService.AssertExpectations(t)
 }
 ```
 
@@ -288,12 +418,12 @@ type Transaction interface {
     Begin() error
     Commit() error
     Rollback() error
-    Conn(ctx context.Context) interface{}
+    Conn(ctx context.Context) any
 }
 
 // No-operation transaction implementation
 type NoopTransaction struct {
-    conn interface{}
+    conn any
 }
 
 // Using transactions in services
@@ -308,29 +438,66 @@ func (s *ExampleService) Create(ctx context.Context, example *model.Example) (*m
 
 ## Data Mapping and Transformation
 
-This project implements clear data mapping and transformation between different layers:
+This project implements clear data mapping and transformation between different layers using the [jinzhu/copier](https://github.com/jinzhu/copier) library for efficient object copying:
 
 ```go
-// Entity to model conversion
+// Entity to model conversion using copier
 func (e EntityExample) ToModel() *model.Example {
-    return &model.Example{
-        Id:        e.ID,
-        Name:      e.Name,
-        Alias:     e.Alias,
-        CreatedAt: e.CreatedAt,
-        UpdatedAt: e.UpdatedAt,
-    }
+    model := &model.Example{}
+    copier.Copy(model, e)
+    return model
 }
 
-// Model to entity conversion
+// Model to entity conversion using copier
 func (e *EntityExample) FromModel(m *model.Example) {
-    e.ID = m.Id
-    e.Name = m.Name
-    e.Alias = m.Alias
-    e.CreatedAt = m.CreatedAt
-    e.UpdatedAt = m.UpdatedAt
+    copier.Copy(e, m)
+}
+
+// Batch conversion from entities to models
+func EntitiesToModels(entities []EntityExample) []*model.Example {
+    result := make([]*model.Example, len(entities))
+    for i, entity := range entities {
+        result[i] = entity.ToModel()
+    }
+    return result
+}
+
+// DTO to model conversion
+func (req *CreateExampleReq) ToModel() *model.Example {
+    model := &model.Example{}
+    copier.Copy(model, req)
+    return model
+}
+
+// Model to response DTO conversion
+func ModelToResponse(m *model.Example) *ExampleResponse {
+    if m == nil {
+        return nil
+    }
+
+    resp := &ExampleResponse{}
+    copier.Copy(resp, m)
+
+    // Format time fields after copying
+    resp.CreatedAt = m.CreatedAt.Format(time.RFC3339)
+    resp.UpdatedAt = m.UpdatedAt.Format(time.RFC3339)
+
+    return resp
 }
 ```
+
+Benefits of using the copier library:
+- Simplifies conversion between similar structs
+- Automatically copies fields with the same name and compatible types
+- Supports deep copying of nested structs
+- Reduces boilerplate code for object transformations
+
+These conversions maintain a clear separation between different layers:
+- Database entities (in the adapter layer)
+- Domain models (in the domain layer)
+- Data Transfer Objects (in the API layer)
+
+This approach allows each layer to have its own representation of the data, optimized for its specific responsibilities.
 
 ## Project Improvements
 
@@ -459,13 +626,8 @@ go test ./...
 
 ## Extension Plans
 
-- **Dependency Injection Improvements** - Enhance Wire dependency injection configuration
-- **HTTP Handling Improvements** - Optimize HTTP request handling implementation
-- **Domain Event Enhancements** - Improve domain event mechanisms
 - **gRPC Support** - Add gRPC service implementation
-- **Hot Reload Configuration** - Implement configuration hot reloading
 - **Monitoring Integration** - Integrate Prometheus monitoring
-- **Message Queue Integration** - Integrate Kafka and other message queues
 
 ## References
 

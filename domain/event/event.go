@@ -21,15 +21,15 @@ type Event interface {
 
 // BaseEvent provides a base implementation for events
 type BaseEvent struct {
-	ID         string      `json:"id"`
-	Name       string      `json:"name"`
-	Aggregate  string      `json:"aggregate"`
-	OccurredOn time.Time   `json:"occurred_on"`
-	Payload    interface{} `json:"payload"`
+	ID         string    `json:"id"`
+	Name       string    `json:"name"`
+	Aggregate  string    `json:"aggregate"`
+	OccurredOn time.Time `json:"occurred_on"`
+	Payload    any       `json:"payload"`
 }
 
 // NewBaseEvent creates a new base event
-func NewBaseEvent(name, aggregateID string, payload interface{}) BaseEvent {
+func NewBaseEvent(name, aggregateID string, payload any) BaseEvent {
 	return BaseEvent{
 		ID:         uuid.New().String(),
 		Name:       name,

@@ -17,6 +17,9 @@ func Start(ctx context.Context, errChan chan error, httpCloseCh chan struct{}, s
 	// Register services for API handlers to use
 	http2.RegisterServices(services)
 
+	// Initialize application factory
+	http2.InitAppFactory(services)
+
 	// Initialize server
 	srv := &http.Server{
 		Addr:         config.GlobalConfig.HTTPServer.Addr,

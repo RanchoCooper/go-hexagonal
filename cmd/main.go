@@ -13,6 +13,8 @@ import (
 	"go-hexagonal/cmd/http_server"
 	"go-hexagonal/config"
 	"go-hexagonal/util/log"
+
+	"go.uber.org/zap"
 )
 
 const ServiceName = "go-hexagonal"
@@ -32,36 +34,45 @@ func main() {
 
 	// Initialize logging
 	log.Init()
-	fmt.Println("Logging initialized")
+	log.Logger.Info("Application starting",
+		zap.String("service", ServiceName),
+		zap.String("env", string(config.GlobalConfig.Env)))
 
 	// Create context and cancel function
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Initialize repositories
-	fmt.Println("Initializing repositories...")
-	repository.Init(
-		repository.WithMySQL(),
-		// repository.WithRedis(), // Temporarily disabled Redis
+	// Initialize repositories using wire dependency injection with options
+	log.Logger.Info("Initializing repositories")
+	clients, err := dependency.InitializeRepositories(
+		dependency.WithMySQL(),
+		dependency.WithRedis(),
 	)
-	fmt.Println("Repositories initialized")
+	if err != nil {
+		log.Logger.Fatal("Failed to initialize repositories",
+			zap.Error(err))
+	}
+	repository.Clients = clients
+	log.Logger.Info("Repositories initialized successfully")
 
 	// Initialize services using dependency injection
-	fmt.Println("Initializing services...")
-	services, err := dependency.InitializeServices(ctx)
+	log.Logger.Info("Initializing services")
+	services, err := dependency.InitializeServices(ctx, dependency.WithExampleService())
 	if err != nil {
-		log.SugaredLogger.Fatalf("Failed to initialize services: %v", err)
+		log.Logger.Fatal("Failed to initialize services",
+			zap.Error(err))
 	}
-	fmt.Println("Services initialized")
+	log.Logger.Info("Services initialized successfully")
 
 	// Create error channel and HTTP close channel
 	errChan := make(chan error, 1)
 	httpCloseCh := make(chan struct{}, 1)
 
 	// Start HTTP server
-	fmt.Println("Starting HTTP server...")
+	log.Logger.Info("Starting HTTP server",
+		zap.String("address", config.GlobalConfig.HTTPServer.Addr))
 	go http_server.Start(ctx, errChan, httpCloseCh, services)
-	fmt.Println("HTTP server started")
+	log.Logger.Info("HTTP server started")
 
 	// Listen for signals
 	sigChan := make(chan os.Signal, 1)
@@ -70,13 +81,13 @@ func main() {
 	// Wait for signal or error
 	select {
 	case err := <-errChan:
-		log.SugaredLogger.Errorf("Server error: %v", err)
+		log.Logger.Error("Server error", zap.Error(err))
 	case sig := <-sigChan:
-		log.SugaredLogger.Infof("Received signal: %v", sig)
+		log.Logger.Info("Received signal", zap.String("signal", sig.String()))
 	}
 
 	// Cancel context, trigger graceful shutdown
-	log.SugaredLogger.Info("Shutting down server...")
+	log.Logger.Info("Shutting down server")
 	cancel()
 
 	// Set shutdown timeout
@@ -87,10 +98,11 @@ func main() {
 	// Wait for HTTP server to close
 	select {
 	case <-httpCloseCh:
-		log.SugaredLogger.Info("HTTP server shutdown completed")
+		log.Logger.Info("HTTP server shutdown completed")
 	case <-shutdownCtx.Done():
-		log.SugaredLogger.Warn("HTTP server shutdown timed out")
+		log.Logger.Warn("HTTP server shutdown timed out",
+			zap.Duration("timeout", DefaultShutdownTimeout))
 	}
 
-	log.SugaredLogger.Info("Server gracefully stopped")
+	log.Logger.Info("Server gracefully stopped")
 }

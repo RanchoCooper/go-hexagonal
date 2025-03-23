@@ -1,47 +1,52 @@
-// Package application provides application layer functionality
 package application
 
 import (
 	"go-hexagonal/application/example"
-	"go-hexagonal/domain/event"
+	"go-hexagonal/domain/repo"
 	"go-hexagonal/domain/service"
 )
 
-// UseCaseFactory creates and provides use cases
-type UseCaseFactory struct {
-	exampleService *service.ExampleService
-	eventBus       event.EventBus
+// Factory provides methods to create application use cases
+type Factory struct {
+	exampleService service.IExampleService
+	converter      service.Converter
+	txFactory      repo.TransactionFactory
 }
 
-// NewUseCaseFactory creates a new use case factory
-func NewUseCaseFactory(exampleService *service.ExampleService, eventBus event.EventBus) *UseCaseFactory {
-	return &UseCaseFactory{
+// NewFactory creates a new application factory
+func NewFactory(
+	exampleService service.IExampleService,
+	converter service.Converter,
+	txFactory repo.TransactionFactory,
+) *Factory {
+	return &Factory{
 		exampleService: exampleService,
-		eventBus:       eventBus,
+		converter:      converter,
+		txFactory:      txFactory,
 	}
 }
 
-// CreateExampleUseCase creates an example creation use case
-func (f *UseCaseFactory) CreateExampleUseCase() *example.CreateExampleUseCase {
-	return example.NewCreateExampleUseCase(f.exampleService)
+// CreateExampleUseCase returns a new create example use case
+func (f *Factory) CreateExampleUseCase() *example.CreateUseCase {
+	return example.NewCreateUseCase(f.exampleService, f.converter, f.txFactory)
 }
 
-// GetExampleUseCase creates an example retrieval use case
-func (f *UseCaseFactory) GetExampleUseCase() *example.GetExampleUseCase {
-	return example.NewGetExampleUseCase(f.exampleService)
+// DeleteExampleUseCase returns a new delete example use case
+func (f *Factory) DeleteExampleUseCase() *example.DeleteUseCase {
+	return example.NewDeleteUseCase(f.exampleService, f.txFactory)
 }
 
-// UpdateExampleUseCase creates an example update use case
-func (f *UseCaseFactory) UpdateExampleUseCase() *example.UpdateExampleUseCase {
-	return example.NewUpdateExampleUseCase(f.exampleService)
+// UpdateExampleUseCase returns a new update example use case
+func (f *Factory) UpdateExampleUseCase() *example.UpdateUseCase {
+	return example.NewUpdateUseCase(f.exampleService, f.converter, f.txFactory)
 }
 
-// DeleteExampleUseCase creates an example deletion use case
-func (f *UseCaseFactory) DeleteExampleUseCase() *example.DeleteExampleUseCase {
-	return example.NewDeleteExampleUseCase(f.exampleService)
+// GetExampleUseCase returns a new get example use case
+func (f *Factory) GetExampleUseCase() *example.GetUseCase {
+	return example.NewGetUseCase(f.exampleService, f.converter, f.txFactory)
 }
 
-// FindExampleByNameUseCase creates a use case for finding example by name
-func (f *UseCaseFactory) FindExampleByNameUseCase() *example.FindExampleByNameUseCase {
-	return example.NewFindExampleByNameUseCase(f.exampleService)
+// FindExampleByNameUseCase returns a new find example by name use case
+func (f *Factory) FindExampleByNameUseCase() *example.FindByNameUseCase {
+	return example.NewFindByNameUseCase(f.exampleService, f.converter, f.txFactory)
 }

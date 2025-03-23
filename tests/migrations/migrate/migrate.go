@@ -22,11 +22,11 @@ func PostgreMigrateUp(conf *config.Config) error {
 		"file://"+conf.MigrationDir,
 		fmt.Sprintf(
 			"postgres://%s:%s@%s:%d/%s?sslmode=%s",
-			conf.Postgre.Username,
+			conf.Postgre.User,
 			conf.Postgre.Password,
 			conf.Postgre.Host,
 			conf.Postgre.Port,
-			conf.Postgre.DbName,
+			conf.Postgre.Database,
 			conf.Postgre.SSLMode,
 		),
 	)
@@ -47,11 +47,11 @@ func PostgreMigrateDrop(conf *config.Config) error {
 		"file://"+conf.MigrationDir,
 		fmt.Sprintf(
 			"postgresql://%s:%s@%s:%d/%s?sslmode=%s",
-			conf.Postgre.Username,
+			conf.Postgre.User,
 			conf.Postgre.Password,
 			conf.Postgre.Host,
 			conf.Postgre.Port,
-			conf.Postgre.DbName,
+			conf.Postgre.Database,
 			conf.Postgre.SSLMode,
 		),
 	)

@@ -14,6 +14,7 @@ type ExampleRepoFactory interface {
 type Services struct {
 	ExampleService *ExampleService
 	EventBus       event.EventBus
+	Converter      Converter
 }
 
 // NewServices creates a services collection
@@ -22,4 +23,10 @@ func NewServices(exampleService *ExampleService, eventBus event.EventBus) *Servi
 		ExampleService: exampleService,
 		EventBus:       eventBus,
 	}
+}
+
+// WithConverter adds a converter to the services
+func (s *Services) WithConverter(converter Converter) *Services {
+	s.Converter = converter
+	return s
 }

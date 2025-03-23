@@ -69,9 +69,9 @@ func SetupPostgreSQL(t *testing.T) (postgreSQLConfig *config.PostgreSQLConfig) {
 	return &config.PostgreSQLConfig{
 		Host:     host,
 		Port:     port.Int(),
-		Username: user,
+		User:     user,
 		Password: password,
-		DbName:   dbName,
+		Database: dbName,
 		SSLMode:  "disable",
 		TimeZone: "UTC",
 	}

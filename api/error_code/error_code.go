@@ -29,7 +29,7 @@ func (e Error) Error() string {
 	return fmt.Sprintf("err_code: %d, err_msg: %s, details: %v", e.Code, e.Msg, e.Details)
 }
 
-func (e Error) Msgf(args []interface{}) string {
+func (e Error) Msgf(args []any) string {
 	return fmt.Sprintf(e.Msg, args...)
 }
 

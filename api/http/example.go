@@ -4,16 +4,23 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
 	"github.com/spf13/cast"
 
 	"go-hexagonal/api/dto"
 	"go-hexagonal/api/error_code"
 	"go-hexagonal/api/http/handle"
 	"go-hexagonal/api/http/validator"
-	"go-hexagonal/domain/model"
+	"go-hexagonal/application"
 	"go-hexagonal/util/log"
 )
+
+// appFactory is the application factory instance
+var appFactory *application.Factory
+
+// SetAppFactory sets the application factory
+func SetAppFactory(factory *application.Factory) {
+	appFactory = factory
+}
 
 func CreateExample(ctx *gin.Context) {
 	response := handle.NewResponse(ctx)
@@ -27,22 +34,15 @@ func CreateExample(ctx *gin.Context) {
 		return
 	}
 
-	example := &model.Example{}
-	err := copier.Copy(example, body)
-	if err != nil {
-		log.SugaredLogger.Errorf("CreateExample failed: %v", err.Error())
-		response.ToErrorResponse(error_code.CopyError)
-		return
-	}
-
-	example, err = services.ExampleService.Create(ctx, example)
+	// Execute the use case
+	result, err := appFactory.CreateExampleUseCase().Execute(ctx, body)
 	if err != nil {
 		log.SugaredLogger.Errorf("CreateExample failed: %v", err.Error())
 		response.ToErrorResponse(error_code.ServerError)
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, example)
+	ctx.JSON(http.StatusCreated, result)
 }
 
 func DeleteExample(ctx *gin.Context) {
@@ -57,7 +57,8 @@ func DeleteExample(ctx *gin.Context) {
 		return
 	}
 
-	err := services.ExampleService.Delete(ctx, param.Id)
+	// Execute the use case
+	err := appFactory.DeleteExampleUseCase().Execute(ctx, param.Id)
 	if err != nil {
 		log.SugaredLogger.Errorf("DeleteExample failed.%v", err.Error())
 		response.ToErrorResponse(error_code.ServerError)
@@ -77,9 +78,9 @@ func UpdateExample(ctx *gin.Context) {
 		response.ToErrorResponse(errResp)
 		return
 	}
-	example := &model.Example{}
-	copier.Copy(example, body)
-	err := services.ExampleService.Update(ctx, example)
+
+	// Execute the use case
+	err := appFactory.UpdateExampleUseCase().Execute(ctx, body)
 	if err != nil {
 		log.SugaredLogger.Errorf("UpdateExample failed.%v", err.Error())
 		response.ToErrorResponse(error_code.ServerError)
@@ -99,13 +100,15 @@ func GetExample(ctx *gin.Context) {
 		response.ToErrorResponse(errResp)
 		return
 	}
-	result, err := services.ExampleService.Get(ctx, param.Id)
+
+	// Execute the use case
+	result, err := appFactory.GetExampleUseCase().Execute(ctx, param.Id)
 	if err != nil {
 		log.SugaredLogger.Errorf("GetExample failed.%v", err.Error())
 		response.ToErrorResponse(error_code.ServerError)
 		return
 	}
-	response.ToResponse(*result)
+	response.ToResponse(result)
 }
 
 func FindExampleByName(ctx *gin.Context) {
@@ -118,7 +121,8 @@ func FindExampleByName(ctx *gin.Context) {
 		return
 	}
 
-	result, err := services.ExampleService.FindByName(ctx, name)
+	// Execute the use case
+	result, err := appFactory.FindExampleByNameUseCase().Execute(ctx, name)
 	if err != nil {
 		log.SugaredLogger.Errorf("FindExampleByName failed.%v", err.Error())
 		if err.Error() == "record not found" ||
@@ -130,5 +134,5 @@ func FindExampleByName(ctx *gin.Context) {
 		return
 	}
 
-	response.ToResponse(*result)
+	response.ToResponse(result)
 }

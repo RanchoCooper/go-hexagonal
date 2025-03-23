@@ -17,6 +17,11 @@ log:
   max_age: 7
   local_time: true
   compress: false
+  level: "info"
+  enable_console: true
+  enable_color: true
+  enable_caller: true
+  enable_stacktrace: true
 mysql:
   user: "root"
   password: "mysqlroot"

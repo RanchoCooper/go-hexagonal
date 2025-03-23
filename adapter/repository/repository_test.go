@@ -1,74 +1,103 @@
-package repository
+package repository_test
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
-	driver "gorm.io/driver/mysql"
+	"github.com/stretchr/testify/mock"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
+
+	"go-hexagonal/adapter/repository"
+	"go-hexagonal/util/log"
 )
 
-var ctx = context.TODO()
-
-func TestNewRepository(t *testing.T) {
-	// Clean up any existing clients first
-	Clients = &clients{}
-
-	// Initialize new connections
-	Init(WithMySQL(), WithRedis())
-	defer Close(ctx)
+// MockDB is a mock implementation of gorm.DB
+type MockDB struct {
+	mock.Mock
 }
 
-func TestTransaction_Conn(t *testing.T) {
-	// Clean up any existing clients first
-	Clients = &clients{
-		MySQL: &MySQL{},
-		Redis: &Redis{},
+func TestNewMySQLClient(t *testing.T) {
+	// Create a nil db
+	var db *gorm.DB = nil
+
+	// Create MySQL client
+	mysqlClient := repository.NewMySQLClient(db)
+
+	// Verify client is not nil
+	assert.NotNil(t, mysqlClient)
+
+	// Verify GetDB returns nil (because db itself is nil)
+	ctx := context.Background()
+	assert.Nil(t, mysqlClient.GetDB(ctx))
+
+	// Verify Close method doesn't return an error
+	err := mysqlClient.Close(ctx)
+	assert.NoError(t, err)
+}
+
+func TestNewPostgreSQLClient(t *testing.T) {
+	// Create a nil db
+	var db *gorm.DB = nil
+
+	// Create PostgreSQL client
+	pgClient := repository.NewPostgreSQLClient(db)
+
+	// Verify client is not nil
+	assert.NotNil(t, pgClient)
+
+	// Verify GetDB returns nil (because db itself is nil)
+	ctx := context.Background()
+	assert.Nil(t, pgClient.GetDB(ctx))
+
+	// Verify Close method doesn't return an error
+	err := pgClient.Close(ctx)
+	assert.NoError(t, err)
+}
+
+func TestNewRedisClient(t *testing.T) {
+	// Create Redis client
+	redisClient := repository.NewRedisClient()
+
+	// Verify client is not nil
+	assert.NotNil(t, redisClient)
+
+	// Verify Close method doesn't return an error
+	ctx := context.Background()
+	err := redisClient.Close(ctx)
+	assert.NoError(t, err)
+}
+
+func TestClientContainer_Close(t *testing.T) {
+	// Create ClientContainer and set test clients
+	container := &repository.ClientContainer{
+		MySQL:      repository.NewMySQLClient(nil),
+		PostgreSQL: repository.NewPostgreSQLClient(nil),
+		Redis:      repository.NewRedisClient(),
 	}
 
-	// Create mock database connection
-	sqlDB, sqlMock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer sqlDB.Close()
-
-	// Set up sqlmock expectations
-	sqlMock.ExpectBegin()
-	sqlMock.ExpectRollback()
-
-	// Manually set up the mock MySQL client
-	mockDB, err := createMockDB(sqlDB)
-	assert.NoError(t, err)
-	Clients.MySQL.SetDB(mockDB)
-
-	// Create transaction
-	tr, err := NewTransaction(ctx, MySQLStore, nil)
-	assert.NoError(t, err)
-	assert.NotNil(t, tr)
-
-	// Test transaction connection
-	db := tr.Conn(ctx)
-	assert.NotNil(t, db)
-
-	// Rollback transaction
-	err = tr.Rollback()
-	assert.NoError(t, err)
-
-	// Verify all expectations are satisfied
-	assert.NoError(t, sqlMock.ExpectationsWereMet())
+	// Verify Close method doesn't panic
+	ctx := context.Background()
+	assert.NotPanics(t, func() {
+		container.Close(ctx)
+	})
 }
 
-// createMockDB creates a mock GORM database connection
-func createMockDB(db *sql.DB) (*gorm.DB, error) {
-	dialect := driver.New(
-		driver.Config{
-			Conn:                      db,
-			DriverName:                "mysql-mock",
-			SkipInitializeWithVersion: true,
-		},
-	)
+func TestClose(t *testing.T) {
+	// Save original Logger
+	originalLogger := log.Logger
+	defer func() {
+		// Restore original Logger after test
+		log.Logger = originalLogger
+	}()
 
-	return gorm.Open(dialect, buildGormConfig())
+	// Set a temporary Logger
+	log.Logger = zap.NewNop()
+
+	// Ensure Close function doesn't panic
+	ctx := context.Background()
+	assert.NotPanics(t, func() {
+		repository.Close(ctx)
+	})
 }

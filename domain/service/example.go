@@ -10,6 +10,9 @@ import (
 	"go-hexagonal/util/log"
 )
 
+// Ensure ExampleService implements IExampleService
+var _ IExampleService = (*ExampleService)(nil)
+
 // ExampleService handles business logic for Example entity
 type ExampleService struct {
 	Repository repo.IExampleRepo

@@ -26,7 +26,7 @@ type AppError struct {
 	Type    ErrorType
 	Message string
 	Cause   error
-	Details map[string]interface{}
+	Details map[string]any
 }
 
 // Error implements the error interface
@@ -43,7 +43,7 @@ func (e *AppError) Unwrap() error {
 }
 
 // WithDetails adds error details
-func (e *AppError) WithDetails(details map[string]interface{}) *AppError {
+func (e *AppError) WithDetails(details map[string]any) *AppError {
 	e.Details = details
 	return e
 }

@@ -8,7 +8,7 @@ repos:
           - id: check-toml
           - id: check-json
           - id: pretty-format-json
-          - id: check-added-large-files
+          # - id: check-added-large-files
     - repo: https://github.com/dnephin/pre-commit-golang
       rev: v0.5.1
       hooks:

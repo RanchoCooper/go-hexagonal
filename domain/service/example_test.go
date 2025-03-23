@@ -61,7 +61,7 @@ func (m *mockTransaction) Rollback() error {
 	return args.Error(0)
 }
 
-func (m *mockTransaction) Conn(ctx context.Context) interface{} {
+func (m *mockTransaction) Conn(ctx context.Context) any {
 	args := m.Called(ctx)
 	return args.Get(0)
 }

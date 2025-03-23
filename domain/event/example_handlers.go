@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 
 	"go-hexagonal/util/log"
+
+	"go.uber.org/zap"
 )
 
 // LoggingEventHandler logs all events it receives
@@ -19,10 +21,12 @@ func NewLoggingEventHandler(events ...string) *LoggingEventHandler {
 	}
 }
 
-// HandleEvent handles the event by logging it
+// HandleEvent logs the event details
 func (h *LoggingEventHandler) HandleEvent(ctx context.Context, event Event) error {
-	payload, _ := json.Marshal(event)
-	log.SugaredLogger.Infof("Event received: %s, payload: %s", event.EventName(), string(payload))
+	eventData, _ := json.Marshal(event)
+	log.Logger.Info("Event received",
+		zap.String("event_name", event.EventName()),
+		zap.String("event_data", string(eventData)))
 	return nil
 }
 
@@ -48,7 +52,7 @@ func NewExampleEventHandler() *ExampleEventHandler {
 	return &ExampleEventHandler{}
 }
 
-// HandleEvent handles the event based on its type
+// HandleEvent handles the example event based on its type
 func (h *ExampleEventHandler) HandleEvent(ctx context.Context, event Event) error {
 	switch event.EventName() {
 	case ExampleCreatedEventName:
@@ -57,8 +61,9 @@ func (h *ExampleEventHandler) HandleEvent(ctx context.Context, event Event) erro
 		return h.handleExampleUpdated(ctx, event)
 	case ExampleDeletedEventName:
 		return h.handleExampleDeleted(ctx, event)
+	default:
+		return nil
 	}
-	return nil
 }
 
 // InterestedIn checks if the handler is interested in the event
@@ -70,18 +75,24 @@ func (h *ExampleEventHandler) InterestedIn(eventName string) bool {
 
 // handleExampleCreated handles example creation events
 func (h *ExampleEventHandler) handleExampleCreated(ctx context.Context, event Event) error {
-	log.SugaredLogger.Infof("Example created: %s", event.AggregateID())
+	log.Logger.Info("Example created",
+		zap.String("id", event.AggregateID()),
+		zap.String("event_id", event.EventID()))
 	return nil
 }
 
 // handleExampleUpdated handles example update events
 func (h *ExampleEventHandler) handleExampleUpdated(ctx context.Context, event Event) error {
-	log.SugaredLogger.Infof("Example updated: %s", event.AggregateID())
+	log.Logger.Info("Example updated",
+		zap.String("id", event.AggregateID()),
+		zap.String("event_id", event.EventID()))
 	return nil
 }
 
 // handleExampleDeleted handles example deletion events
 func (h *ExampleEventHandler) handleExampleDeleted(ctx context.Context, event Event) error {
-	log.SugaredLogger.Infof("Example deleted: %s", event.AggregateID())
+	log.Logger.Info("Example deleted",
+		zap.String("id", event.AggregateID()),
+		zap.String("event_id", event.EventID()))
 	return nil
 }

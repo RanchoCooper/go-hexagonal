@@ -35,7 +35,7 @@ func (v *ValidErrors) Error() string {
 	return strings.Join(v.Errors(), ",")
 }
 
-func BindAndValid(c *gin.Context, obj interface{}, binder func(interface{}) error) (bool, ValidErrors) {
+func BindAndValid(c *gin.Context, obj any, binder func(any) error) (bool, ValidErrors) {
 	var errs ValidErrors
 	err := binder(obj)
 	if err != nil {

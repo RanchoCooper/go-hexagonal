@@ -2,120 +2,66 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
-	"go-hexagonal/config"
 	"go-hexagonal/util/log"
+
+	"github.com/go-redis/redis/v8"
 )
 
-// DefaultTimeout defines the default context timeout for database operations
-const DefaultTimeout = 30 * time.Second
+// DefaultRepositoryTimeout defines the default context timeout for database operations
+const DefaultRepositoryTimeout = 30 * time.Second
 
-var Clients = &clients{}
-
-// Transaction represents a database transaction
-type Transaction struct {
-	Session *gorm.DB
-	TxOpt   *sql.TxOptions
+// ClientContainer holds all repository client instances
+type ClientContainer struct {
+	MySQL      *MySQL
+	Redis      *Redis
+	PostgreSQL *PostgreSQL
 }
 
-type StoreType string
+// Global instance for backward compatibility
+// Note: It's recommended to use dependency injection with Wire instead of this global instance
+var Clients = &ClientContainer{}
 
-const (
-	MySQLStore      StoreType = "MySQL"
-	RedisStore      StoreType = "Redis"
-	MongoStore      StoreType = "Mongo"
-	PostgreSQLStore StoreType = "PostgreSQL"
-)
+// ISQLClient defines the interface for SQL database clients (MySQL, PostgreSQL)
+type ISQLClient interface {
+	// GetDB returns the database instance with context
+	GetDB(ctx context.Context) interface{}
 
-type clients struct {
-	MySQL *MySQL
-	Redis *Redis
+	// SetDB sets the database instance
+	SetDB(db interface{})
+
+	// Close closes the database connection
+	Close(ctx context.Context) error
 }
 
-type Option func(*clients)
-
-// Conn returns a database connection with transaction support
-func (tr *Transaction) Conn(ctx context.Context) interface{} {
-	if tr == nil {
-		return Clients.MySQL.GetDB(ctx)
-	}
-	if tr.Session == nil {
-		tr.Session = Clients.MySQL.GetDB(ctx).Begin(tr.TxOpt)
-	}
-	return tr.Session.WithContext(ctx)
+// IRedisClient defines the interface for Redis clients
+type IRedisClient interface {
+	// Close closes the Redis connection
+	Close(ctx context.Context) error
 }
 
-// Begin starts a new transaction
-func (tr *Transaction) Begin() error {
-	if tr == nil {
-		return fmt.Errorf("invalid transaction")
+// Initialize creates a new client container if not already initialized
+func Initialize() {
+	if Clients == nil {
+		Clients = &ClientContainer{}
 	}
-	if tr.Session == nil {
-		return fmt.Errorf("invalid session")
-	}
-	tr.Session = tr.Session.Begin(tr.TxOpt)
-	if tr.Session.Error != nil {
-		return fmt.Errorf("failed to begin transaction: %w", tr.Session.Error)
-	}
-	return nil
 }
 
-// Commit commits the transaction
-func (tr *Transaction) Commit() error {
-	if tr != nil && tr.Session != nil {
-		return tr.Session.Commit().Error
-	}
-	return nil
-}
-
-// Rollback rolls back the transaction
-func (tr *Transaction) Rollback() error {
-	if tr != nil && tr.Session != nil {
-		return tr.Session.Rollback().Error
-	}
-	return nil
-}
-
-// NewTransaction creates a new transaction with the specified store type and options
-func NewTransaction(ctx context.Context, store StoreType, opt *sql.TxOptions) (*Transaction, error) {
-	tr := &Transaction{TxOpt: opt}
-
-	switch store {
-	case MySQLStore:
-		session := Clients.MySQL.GetDB(ctx)
-		if session == nil {
-			return nil, fmt.Errorf("failed to get database session")
-		}
-		tr.Session = session.Begin(opt)
-		if tr.Session.Error != nil {
-			return nil, fmt.Errorf("failed to begin transaction: %w", tr.Session.Error)
-		}
-	case RedisStore:
-		// TODO: Implement Redis transaction support
-		return nil, fmt.Errorf("redis transaction not implemented")
-	case MongoStore:
-		// TODO: Implement MongoDB transaction support
-		return nil, fmt.Errorf("mongo transaction not implemented")
-	case PostgreSQLStore:
-		// TODO: Implement PostgreSQL transaction support
-		return nil, fmt.Errorf("postgresql transaction not implemented")
-	default:
-		return nil, fmt.Errorf("unsupported store type: %s", store)
-	}
-
-	return tr, nil
-}
-
-func (c *clients) close(ctx context.Context) {
+// Close closes all repository connections
+func (c *ClientContainer) Close(ctx context.Context) {
 	if c.MySQL != nil {
 		if err := c.MySQL.Close(ctx); err != nil {
 			log.Logger.Error("failed to close MySQL connection", zap.Error(err))
+		}
+	}
+	if c.PostgreSQL != nil {
+		if err := c.PostgreSQL.Close(ctx); err != nil {
+			log.Logger.Error("failed to close PostgreSQL connection", zap.Error(err))
 		}
 	}
 	if c.Redis != nil {
@@ -125,49 +71,90 @@ func (c *clients) close(ctx context.Context) {
 	}
 }
 
-// WithMySQL initializes MySQL client with configuration
-func WithMySQL() Option {
-	return func(c *clients) {
-		if c.MySQL == nil {
-			if config.GlobalConfig.MySQL == nil {
-				panic("repository init fail, MySQL config is empty")
-			}
-			c.MySQL = NewMySQLClient()
-			if c.MySQL == nil {
-				panic("failed to create MySQL client")
-			}
-		}
-	}
-}
-
-// WithRedis initializes Redis client with configuration
-func WithRedis() Option {
-	return func(c *clients) {
-		if c.Redis == nil {
-			if config.GlobalConfig.Redis == nil {
-				panic("repository init fail, Redis config is empty")
-			}
-			c.Redis = NewRedisClient()
-			if c.Redis == nil {
-				panic("failed to create Redis client")
-			}
-		}
-	}
-}
-
-// Init initializes the repository with the provided options
-func Init(opts ...Option) {
-	for _, opt := range opts {
-		opt(Clients)
-	}
-	log.Logger.Info("repository init successfully")
-}
-
 // Close closes all repository connections
 func Close(ctx context.Context) {
-	ctx, cancel := context.WithTimeout(ctx, DefaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DefaultRepositoryTimeout)
 	defer cancel()
 
-	Clients.close(ctx)
+	Clients.Close(ctx)
+
 	log.Logger.Info("repository closed")
+}
+
+// MySQL represents a MySQL database client
+type MySQL struct {
+	DB *gorm.DB
+}
+
+// SetDB sets the GORM database connection
+func (m *MySQL) SetDB(db *gorm.DB) {
+	m.DB = db
+}
+
+// GetDB returns the GORM database connection
+func (m *MySQL) GetDB(ctx context.Context) *gorm.DB {
+	if m.DB == nil {
+		return nil
+	}
+	return m.DB.WithContext(ctx)
+}
+
+// Close closes the MySQL connection
+func (m *MySQL) Close(ctx context.Context) error {
+	// No-op for now, as GORM manages connection pooling
+	return nil
+}
+
+// NewMySQLClient creates a new MySQL client
+func NewMySQLClient(db *gorm.DB) *MySQL {
+	return &MySQL{DB: db}
+}
+
+// PostgreSQL represents a PostgreSQL database client
+type PostgreSQL struct {
+	DB *gorm.DB
+}
+
+// SetDB sets the GORM database connection
+func (p *PostgreSQL) SetDB(db *gorm.DB) {
+	p.DB = db
+}
+
+// GetDB returns the GORM database connection
+func (p *PostgreSQL) GetDB(ctx context.Context) *gorm.DB {
+	if p.DB == nil {
+		return nil
+	}
+	return p.DB.WithContext(ctx)
+}
+
+// Close closes the PostgreSQL connection
+func (p *PostgreSQL) Close(ctx context.Context) error {
+	// No-op for now, as GORM manages connection pooling
+	return nil
+}
+
+// NewPostgreSQLClient creates a new PostgreSQL client
+func NewPostgreSQLClient(db *gorm.DB) *PostgreSQL {
+	return &PostgreSQL{DB: db}
+}
+
+// Redis represents a Redis client
+type Redis struct {
+	DB *redis.Client
+}
+
+// Close closes the Redis connection
+func (r *Redis) Close(ctx context.Context) error {
+	if r.DB != nil {
+		if err := r.DB.Close(); err != nil {
+			return fmt.Errorf("failed to close Redis connection: %w", err)
+		}
+	}
+	return nil
+}
+
+// NewRedisClient creates a new Redis client
+func NewRedisClient() *Redis {
+	return &Redis{}
 }

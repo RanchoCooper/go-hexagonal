@@ -11,7 +11,9 @@ import (
 
 	"go-hexagonal/api/http/middleware"
 	"go-hexagonal/api/http/validator/custom"
+	"go-hexagonal/application"
 	"go-hexagonal/config"
+	"go-hexagonal/domain/repo"
 	"go-hexagonal/domain/service"
 )
 
@@ -23,6 +25,21 @@ var (
 // RegisterServices registers service instances for API handlers
 func RegisterServices(s *service.Services) {
 	services = s
+}
+
+// InitAppFactory initializes the application factory and sets it for API handlers
+func InitAppFactory(s *service.Services) {
+	// Create transaction factory instance
+	txFactory := repo.NewNoOpTransactionFactory()
+
+	// Create application factory with necessary parameters
+	factory := application.NewFactory(
+		s.ExampleService,
+		s.Converter,
+		txFactory,
+	)
+
+	SetAppFactory(factory)
 }
 
 // NewServerRoute creates and configures the HTTP server routes
