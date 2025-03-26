@@ -25,18 +25,43 @@ Hexagonal Architecture (also known as [Ports and Adapters Architecture](https://
 - **[RESTful API](https://en.wikipedia.org/wiki/Representational_state_transfer)** - Implement HTTP API using the [Gin](https://github.com/gin-gonic/gin) framework
 - **Database Support** - Integrate [GORM](https://gorm.io) with support for [MySQL](https://en.wikipedia.org/wiki/MySQL), [PostgreSQL](https://en.wikipedia.org/wiki/PostgreSQL), and other databases
 - **Cache Support** - Integrate [Redis](https://en.wikipedia.org/wiki/Redis) caching with comprehensive error handling, local error definitions for cache misses, and health check implementation for monitoring cache availability
+- **Enhanced Cache** - Advanced cache features including negative caching to prevent cache penetration, distributed locking for cache consistency, and key tracking for improved hit rates
 - **MongoDB Support** - Integration with MongoDB for document storage
-- **Logging System** - Use [Zap](https://go.uber.org/zap) for high-performance logging
+- **Logging System** - Use [Zap](https://go.uber.org/zap) for high-performance logging with structured context support for tracing and debugging
 - **Configuration Management** - Use [Viper](https://github.com/spf13/viper) for flexible configuration management
 - **[Graceful Shutdown](https://en.wikipedia.org/wiki/Graceful_exit)** - Support graceful service startup and shutdown
 - **[Unit Testing](https://en.wikipedia.org/wiki/Unit_testing)** - Use [go-sqlmock](https://github.com/DATA-DOG/go-sqlmock), [redismock](https://github.com/go-redis/redismock), and [testify/mock](https://github.com/stretchr/testify) for comprehensive test coverage with enhanced HTTP testing utilities and improved DTO handling
 - **Transaction Support** - Provide no-operation transaction implementation, simplifying service layer interaction with repository layer, complete with mock transaction implementation and lifecycle hooks (Begin, Commit, and Rollback) for testing
+- **Asynchronous Event Processing** - Support for asynchronous event handling with worker pools, event persistence, and replay capabilities
 
 ### Development Toolchain
 - **Code Quality** - Integrate [Golangci-lint](https://github.com/golangci/golangci-lint) for code quality checks
 - **Commit Standards** - Use [Commitlint](https://github.com/conventional-changelog/commitlint) to ensure Git commit messages follow conventions
 - **Pre-commit Hooks** - Use [Pre-commit](https://pre-commit.com) for code checking and formatting
 - **[CI/CD](https://en.wikipedia.org/wiki/CI/CD)** - Integrate [GitHub Actions](https://github.com/features/actions) for continuous integration and deployment
+
+## Recent Enhancements
+
+### Unified Error Handling
+- Extended error handling with consistent error types and error wrapping functions
+- Support for structured error details and HTTP status code mapping
+- Error comparison capabilities for more robust error checking
+
+### Enhanced Structured Logging
+- Context-aware logging with support for request IDs, user IDs, and trace IDs
+- Consistent log formatting and level management
+- Improved debugging capabilities with contextual information
+
+### Asynchronous Event System
+- Worker pool-based event processing for improved throughput
+- Event persistence and replay capabilities for reliability
+- Graceful shutdown support for event processing
+
+### Advanced Caching Features
+- Negative caching to protect against cache penetration
+- Distributed locking to prevent cache stampede
+- Key tracking for improved cache hit rates
+- Cache consistency mechanisms for data integrity
 
 ## Project Structure
 
@@ -53,6 +78,7 @@ Hexagonal Architecture (also known as [Ports and Adapters Architecture](https://
 │       ├── postgre/        # PostgreSQL implementation
 │       ├── mongo/          # MongoDB implementation
 │       └── redis/          # Redis implementation
+│           └── enhanced_cache.go  # Enhanced cache with advanced features
 ├── api/                    # API Layer - HTTP requests and responses
 │   ├── dto/                # Data Transfer Objects for API
 │   ├── error_code/         # Error code definitions
@@ -78,6 +104,7 @@ Hexagonal Architecture (also known as [Ports and Adapters Architecture](https://
 │   ├── aggregate/          # Aggregates (DDD concept)
 │   ├── event/              # Domain events and event bus interfaces
 │   │   ├── event_bus.go    # EventBus interface
+│   │   ├── async_event_bus.go # Asynchronous event bus implementation
 │   │   └── handlers.go     # Event handler interfaces
 │   ├── model/              # Domain models (pure business entities)
 │   ├── repo/               # Repository interfaces
@@ -94,7 +121,8 @@ Hexagonal Architecture (also known as [Ports and Adapters Architecture](https://
 │   └── *_test.go           # Test files
 └── util/                   # Utility functions
     ├── clean_arch/         # Architecture checking tools
-    └── log/                # Logging utilities
+    ├── errors/             # Enhanced error types and handling
+    └── log/                # Enhanced logging with context support
 ```
 
 ### Key Architectural Elements
@@ -142,6 +170,7 @@ The domain layer is the core of the application, containing business logic and r
   - `ExampleCreatedEvent`: Example creation event
   - `ExampleUpdatedEvent`: Example update event
   - `ExampleDeletedEvent`: Example deletion event
+  - `AsyncEventBus`: Asynchronous event processing with persistence
 
 ### Application Layer
 The application layer coordinates domain objects to complete specific application tasks. It depends on domain interfaces but not on concrete implementations, following the Dependency Inversion Principle.
@@ -168,6 +197,7 @@ The adapter layer implements interaction with external systems, such as database
   - `NoopTransaction`: No-operation transaction implementation, simplifying testing
   - `MySQL`: MySQL connection and transaction management
   - `Redis`: Redis connection and basic operations
+  - `EnhancedCache`: Advanced Redis caching with anti-penetration protection
 
 - **Message Queue Adapters**: Implement message publishing and subscription
   - Support for Kafka and other message queue integrations
@@ -249,255 +279,88 @@ func provideServices(exampleService service.IExampleService, eventBus event.Even
 
 ## Domain Events
 
-Domain events are used for communication between system components, implementing a loosely coupled event-driven architecture:
+The project supports both synchronous and asynchronous event handling:
+
+### Synchronous Event Handling
+```go
+// Publish an event synchronously
+err := eventBus.Publish(ctx, event.NewExampleCreatedEvent(example.ID, example.Name))
+```
+
+### Asynchronous Event Handling
+```go
+// Configure asynchronous event bus
+config := event.DefaultAsyncEventBusConfig()
+config.QueueSize = 1000
+config.WorkerCount = 10
+asyncEventBus := event.NewAsyncEventBus(config)
+
+// Publish an event asynchronously
+err := asyncEventBus.Publish(ctx, event.NewExampleCreatedEvent(example.ID, example.Name))
+
+// Graceful shutdown
+err := asyncEventBus.Close(5 * time.Second)
+```
+
+## Enhanced Caching
+
+The enhanced caching system provides advanced features for robust caching:
 
 ```go
-// Publish event
-evt := event.NewExampleCreatedEvent(example.Id, example.Name, example.Alias)
-e.EventBus.Publish(ctx, evt)
+// Create an enhanced cache with default options
+cache := redis.NewEnhancedCache(redisClient, redis.DefaultCacheOptions())
 
-// Handle event
-func (h *ExampleEventHandler) HandleEvent(ctx context.Context, event Event) error {
-    switch event.EventName() {
-    case ExampleCreatedEventName:
-        return h.handleExampleCreated(ctx, event)
-    // ...
-    }
-    return nil
-}
+// Try to get a value with auto-loading if missing
+var result MyData
+err := cache.TryGetSet(ctx, "key:123", &result, 30*time.Minute, func() (interface{}, error) {
+    // This only executes if the key is not in cache
+    return fetchDataFromDatabase()
+})
+
+// Use distributed lock to prevent concurrent operations
+err := cache.WithLock(ctx, "lock:resource", func() error {
+    // This code is protected by a distributed lock
+    return updateSharedResource()
+})
 ```
 
-## Application Layer Use Cases
+## Error Handling
 
-Application layer use cases implement the Command and Query Responsibility Segregation (CQRS) pattern and depend on domain interfaces rather than concrete implementations:
+The error system provides a consistent way to handle and propagate errors:
 
 ```go
-// Use case with interface dependency
-type CreateUseCase struct {
-    exampleService service.IExampleService
+// Create a domain error
+if entity == nil {
+    return errors.New(errors.ErrorTypeNotFound, "entity not found")
 }
 
-// Create example use case
-func (uc *CreateUseCase) Execute(ctx context.Context, input dto.CreateExampleReq) (*dto.CreateExampleResp, error) {
-    // Create a real transaction for atomic operations
-    tx, err := repository.NewTransaction(ctx, repository.MySQLStore, nil)
-    if err != nil {
-        return nil, fmt.Errorf("failed to create transaction: %w", err)
-    }
-    defer tx.Rollback()
+// Wrap an error with additional context
+if err := repo.Save(entity); err != nil {
+    return errors.Wrapf(err, errors.ErrorTypePersistence, "failed to save entity %d", entity.ID)
+}
 
-    // Convert DTO to domain model
-    example := &model.Example{
-        Name:  input.Name,
-        Alias: input.Alias,
-    }
-
-    // Call domain service through interface
-    createdExample, err := uc.exampleService.Create(ctx, example)
-    if err != nil {
-        return nil, fmt.Errorf("failed to create example: %w", err)
-    }
-
-    // Commit transaction
-    if err = tx.Commit(); err != nil {
-        return nil, fmt.Errorf("failed to commit transaction: %w", err)
-    }
-
-    // Convert domain model to DTO
-    result := &dto.CreateExampleResp{
-        Id:        uint(createdExample.Id),
-        Name:      createdExample.Name,
-        Alias:     createdExample.Alias,
-        CreatedAt: createdExample.CreatedAt,
-        UpdatedAt: createdExample.UpdatedAt,
-    }
-
-    return result, nil
+// Check error types
+if errors.IsNotFoundError(err) {
+    // Handle not found case
 }
 ```
 
-## Unit Testing
+## Structured Logging
 
-The project implements comprehensive unit testing strategies:
-
-- **Interface-Based Testing**: Test against interfaces rather than concrete implementations
-- **Mock Objects**: Use testify/mock to create mock implementations of interfaces
-- **Transaction Mocking**: Separate database operations from business logic by mocking transactions
-- **Standardized Testing Pattern**: Follow a consistent pattern for all tests
-  - Create mock services
-  - Set up test data and expectations
-  - Execute use case
-  - Assert results
-  - Verify mock expectations
-
-Example of a unit test with mocked dependencies:
+The logging system supports context-aware structured logging:
 
 ```go
-// Mock implementation of IExampleService interface for testing
-type mockExampleService struct {
-    mock.Mock
-}
+// Create a log context
+logCtx := log.NewLogContext().
+    WithRequestID(requestID).
+    WithUserID(userID).
+    WithOperation("CreateEntity")
 
-func (m *mockExampleService) Create(ctx context.Context, example *model.Example) (*model.Example, error) {
-    args := m.Called(ctx, example)
-    if args.Get(0) == nil {
-        return nil, args.Error(1)
-    }
-    return args.Get(0).(*model.Example), args.Error(1)
-}
-
-// Test for successful creation
-func TestCreateUseCase_Execute_Success(t *testing.T) {
-    // Create mock service
-    mockService := new(mockExampleService)
-
-    // Set up mock behavior
-    now := time.Now()
-    expectedExample := &model.Example{
-        Id:        1,
-        Name:      "Test Example",
-        Alias:     "test",
-        CreatedAt: now,
-        UpdatedAt: now,
-    }
-    mockService.On("Create", mock.Anything, mock.Anything).Return(expectedExample, nil)
-
-    // Create testable use case
-    useCase := newTestableCreateUseCase(mockService)
-
-    // Execute use case
-    ctx := context.Background()
-    createReq := dto.CreateExampleReq{
-        Name:  "Test Example",
-        Alias: "test",
-    }
-    result, err := useCase.Execute(ctx, createReq)
-
-    // Assert results
-    assert.NoError(t, err)
-    assert.NotNil(t, result)
-    assert.Equal(t, uint(expectedExample.Id), result.Id)
-    mockService.AssertExpectations(t)
-}
+// Log with context
+logger.InfoContext(logCtx, "Creating new entity",
+    zap.Int("entity_id", entity.ID),
+    zap.String("entity_name", entity.Name))
 ```
-
-## Coding Standards
-
-This project follows unified coding standards to ensure code quality and consistency. For detailed guidelines, please refer to [CODING_STYLE.md](./CODING_STYLE.md).
-
-Key standards include:
-
-- Code format and style (using go fmt and golangci-lint)
-- Naming conventions (package names, variable names, interfaces and structs)
-- Import package ordering
-- Comment standards
-- Error handling standards (using util/errors package)
-- Testing standards
-- CI/CD standards
-
-Developers should ensure compliance with these standards before submitting code. Use the following commands for verification:
-
-```bash
-# Format code
-make fmt
-
-# Code quality check
-make lint
-
-# Run tests
-make test
-```
-
-## Transaction Management
-
-This project implements transaction interfaces and no-operation transactions, supporting different transaction management strategies:
-
-```go
-// Transaction interface
-type Transaction interface {
-    Begin() error
-    Commit() error
-    Rollback() error
-    Conn(ctx context.Context) any
-}
-
-// No-operation transaction implementation
-type NoopTransaction struct {
-    conn any
-}
-
-// Using transactions in services
-func (s *ExampleService) Create(ctx context.Context, example *model.Example) (*model.Example, error) {
-    // Create a no-operation transaction
-    tr := repo.NewNoopTransaction(s.Repository)
-
-    createdExample, err := s.Repository.Create(ctx, tr, example)
-    // ...
-}
-```
-
-## Data Mapping and Transformation
-
-This project implements clear data mapping and transformation between different layers using the [jinzhu/copier](https://github.com/jinzhu/copier) library for efficient object copying:
-
-```go
-// Entity to model conversion using copier
-func (e EntityExample) ToModel() *model.Example {
-    model := &model.Example{}
-    copier.Copy(model, e)
-    return model
-}
-
-// Model to entity conversion using copier
-func (e *EntityExample) FromModel(m *model.Example) {
-    copier.Copy(e, m)
-}
-
-// Batch conversion from entities to models
-func EntitiesToModels(entities []EntityExample) []*model.Example {
-    result := make([]*model.Example, len(entities))
-    for i, entity := range entities {
-        result[i] = entity.ToModel()
-    }
-    return result
-}
-
-// DTO to model conversion
-func (req *CreateExampleReq) ToModel() *model.Example {
-    model := &model.Example{}
-    copier.Copy(model, req)
-    return model
-}
-
-// Model to response DTO conversion
-func ModelToResponse(m *model.Example) *ExampleResponse {
-    if m == nil {
-        return nil
-    }
-
-    resp := &ExampleResponse{}
-    copier.Copy(resp, m)
-
-    // Format time fields after copying
-    resp.CreatedAt = m.CreatedAt.Format(time.RFC3339)
-    resp.UpdatedAt = m.UpdatedAt.Format(time.RFC3339)
-
-    return resp
-}
-```
-
-Benefits of using the copier library:
-- Simplifies conversion between similar structs
-- Automatically copies fields with the same name and compatible types
-- Supports deep copying of nested structs
-- Reduces boilerplate code for object transformations
-
-These conversions maintain a clear separation between different layers:
-- Database entities (in the adapter layer)
-- Domain models (in the domain layer)
-- Data Transfer Objects (in the API layer)
-
-This approach allows each layer to have its own representation of the data, optimized for its specific responsibilities.
 
 ## Project Improvements
 

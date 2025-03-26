@@ -22,6 +22,90 @@ var (
 	SugaredLogger *zap.SugaredLogger
 )
 
+// LogContext holds contextual information for structured logging
+type LogContext struct {
+	RequestID string
+	UserID    string
+	TraceID   string
+	SpanID    string
+	Operation string
+	Component string
+}
+
+// NewLogContext creates a new log context with default values
+func NewLogContext() *LogContext {
+	return &LogContext{
+		Component: "system",
+	}
+}
+
+// WithRequestID sets the request ID in the log context
+func (c *LogContext) WithRequestID(requestID string) *LogContext {
+	c.RequestID = requestID
+	return c
+}
+
+// WithUserID sets the user ID in the log context
+func (c *LogContext) WithUserID(userID string) *LogContext {
+	c.UserID = userID
+	return c
+}
+
+// WithTraceID sets the trace ID in the log context
+func (c *LogContext) WithTraceID(traceID string) *LogContext {
+	c.TraceID = traceID
+	return c
+}
+
+// WithSpanID sets the span ID in the log context
+func (c *LogContext) WithSpanID(spanID string) *LogContext {
+	c.SpanID = spanID
+	return c
+}
+
+// WithOperation sets the operation name in the log context
+func (c *LogContext) WithOperation(operation string) *LogContext {
+	c.Operation = operation
+	return c
+}
+
+// WithComponent sets the component name in the log context
+func (c *LogContext) WithComponent(component string) *LogContext {
+	c.Component = component
+	return c
+}
+
+// ToFields converts the log context to zap fields
+func (c *LogContext) ToFields() []zap.Field {
+	fields := make([]zap.Field, 0)
+
+	if c.RequestID != "" {
+		fields = append(fields, zap.String("request_id", c.RequestID))
+	}
+
+	if c.UserID != "" {
+		fields = append(fields, zap.String("user_id", c.UserID))
+	}
+
+	if c.TraceID != "" {
+		fields = append(fields, zap.String("trace_id", c.TraceID))
+	}
+
+	if c.SpanID != "" {
+		fields = append(fields, zap.String("span_id", c.SpanID))
+	}
+
+	if c.Operation != "" {
+		fields = append(fields, zap.String("operation", c.Operation))
+	}
+
+	if c.Component != "" {
+		fields = append(fields, zap.String("component", c.Component))
+	}
+
+	return fields
+}
+
 // Options defines the configuration options for the logger
 type Options struct {
 	// Log level
@@ -386,4 +470,88 @@ func Init() {
 	// Register deferred sync
 	// Direct Sync() call is commented out because it might cause errors on program shutdown
 	// defer Logger.Sync()
+}
+
+// DebugContext logs a debug message with context
+func (l *AppLogger) DebugContext(ctx *LogContext, msg string, fields ...zap.Field) {
+	if ctx != nil {
+		fields = append(ctx.ToFields(), fields...)
+	}
+	l.zap.Debug(msg, fields...)
+}
+
+// InfoContext logs an info message with context
+func (l *AppLogger) InfoContext(ctx *LogContext, msg string, fields ...zap.Field) {
+	if ctx != nil {
+		fields = append(ctx.ToFields(), fields...)
+	}
+	l.zap.Info(msg, fields...)
+}
+
+// WarnContext logs a warning message with context
+func (l *AppLogger) WarnContext(ctx *LogContext, msg string, fields ...zap.Field) {
+	if ctx != nil {
+		fields = append(ctx.ToFields(), fields...)
+	}
+	l.zap.Warn(msg, fields...)
+}
+
+// ErrorContext logs an error message with context
+func (l *AppLogger) ErrorContext(ctx *LogContext, msg string, fields ...zap.Field) {
+	if ctx != nil {
+		fields = append(ctx.ToFields(), fields...)
+	}
+	l.zap.Error(msg, fields...)
+}
+
+// DPanicContext logs a critical error message with context
+func (l *AppLogger) DPanicContext(ctx *LogContext, msg string, fields ...zap.Field) {
+	if ctx != nil {
+		fields = append(ctx.ToFields(), fields...)
+	}
+	l.zap.DPanic(msg, fields...)
+}
+
+// PanicContext logs a panic message with context and then panics
+func (l *AppLogger) PanicContext(ctx *LogContext, msg string, fields ...zap.Field) {
+	if ctx != nil {
+		fields = append(ctx.ToFields(), fields...)
+	}
+	l.zap.Panic(msg, fields...)
+}
+
+// FatalContext logs a fatal message with context and then exits
+func (l *AppLogger) FatalContext(ctx *LogContext, msg string, fields ...zap.Field) {
+	if ctx != nil {
+		fields = append(ctx.ToFields(), fields...)
+	}
+	l.zap.Fatal(msg, fields...)
+}
+
+// SugaredDebugContext logs a debug message with context using sugared logger
+func (l *AppLogger) SugaredDebugContext(ctx *LogContext, template string, args ...any) {
+	l.withSugaredContext(ctx).Debugf(template, args...)
+}
+
+// SugaredInfoContext logs an info message with context using sugared logger
+func (l *AppLogger) SugaredInfoContext(ctx *LogContext, template string, args ...any) {
+	l.withSugaredContext(ctx).Infof(template, args...)
+}
+
+// SugaredWarnContext logs a warning message with context using sugared logger
+func (l *AppLogger) SugaredWarnContext(ctx *LogContext, template string, args ...any) {
+	l.withSugaredContext(ctx).Warnf(template, args...)
+}
+
+// SugaredErrorContext logs an error message with context using sugared logger
+func (l *AppLogger) SugaredErrorContext(ctx *LogContext, template string, args ...any) {
+	l.withSugaredContext(ctx).Errorf(template, args...)
+}
+
+// withSugaredContext adds context fields to the sugared logger
+func (l *AppLogger) withSugaredContext(ctx *LogContext) *zap.SugaredLogger {
+	if ctx == nil {
+		return l.sugar
+	}
+	return l.zap.With(ctx.ToFields()...).Sugar()
 }

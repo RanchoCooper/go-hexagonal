@@ -25,18 +25,43 @@
 - **[RESTful API](https://en.wikipedia.org/wiki/Representational_state_transfer)** - 使用[Gin](https://github.com/gin-gonic/gin)框架实现HTTP API
 - **数据库支持** - 集成[GORM](https://gorm.io)，支持[MySQL](https://en.wikipedia.org/wiki/MySQL)、[PostgreSQL](https://en.wikipedia.org/wiki/PostgreSQL)等数据库
 - **缓存支持** - 集成[Redis](https://en.wikipedia.org/wiki/Redis)缓存，具有全面的错误处理机制和专用错误定义，支持健康检查功能监控缓存可用性
+- **增强缓存** - 高级缓存功能，包括防止缓存穿透的负缓存、保证缓存一致性的分布式锁以及提高命中率的键跟踪
 - **MongoDB支持** - 集成MongoDB文档存储
-- **日志系统** - 使用[Zap](https://go.uber.org/zap)进行高性能日志记录
+- **日志系统** - 使用[Zap](https://go.uber.org/zap)进行高性能日志记录，支持用于跟踪和调试的结构化上下文
 - **配置管理** - 使用[Viper](https://github.com/spf13/viper)进行灵活的配置管理
 - **[优雅关闭](https://en.wikipedia.org/wiki/Graceful_exit)** - 支持服务优雅启动和关闭
 - **[单元测试](https://en.wikipedia.org/wiki/Unit_testing)** - 使用[go-sqlmock](https://github.com/DATA-DOG/go-sqlmock)、[redismock](https://github.com/go-redis/redismock)和[testify/mock](https://github.com/stretchr/testify)实现全面的测试覆盖，支持请求/响应数据传输对象的增强测试
 - **事务支持** - 提供无操作事务实现，简化服务层与仓储层的交互，同时支持完整的模拟事务实现和生命周期钩子（Begin、Commit和Rollback），便于单元测试
+- **异步事件处理** - 支持具有工作池、事件持久化和重放功能的异步事件处理
 
 ### 开发工具链
 - **代码质量** - 集成[Golangci-lint](https://github.com/golangci/golangci-lint)进行代码质量检查
 - **提交标准** - 使用[Commitlint](https://github.com/conventional-changelog/commitlint)确保Git提交消息遵循约定
 - **预提交钩子** - 使用[Pre-commit](https://pre-commit.com)进行代码检查和格式化
 - **[CI/CD](https://en.wikipedia.org/wiki/CI/CD)** - 集成[GitHub Actions](https://github.com/features/actions)进行持续集成和部署
+
+## 最近增强功能
+
+### 统一错误处理
+- 扩展了错误处理功能，提供统一的错误类型和错误包装函数
+- 支持结构化错误详情和HTTP状态码映射
+- 提供更健壮的错误检查比较功能
+
+### 增强结构化日志
+- 上下文感知的日志记录，支持请求ID、用户ID和跟踪ID
+- 一致的日志格式和级别管理
+- 通过上下文信息提供更强大的调试能力
+
+### 异步事件系统
+- 基于工作池的事件处理，提高吞吐量
+- 事件持久化和重放功能，增强可靠性
+- 事件处理的优雅关闭支持
+
+### 高级缓存功能
+- 负缓存机制，防止缓存穿透
+- 分布式锁，防止缓存击穿
+- 键跟踪功能，提高缓存命中率
+- 缓存一致性机制，保证数据完整性
 
 ## 项目结构
 
@@ -53,6 +78,7 @@
 │       ├── postgre/        # PostgreSQL实现
 │       ├── mongo/          # MongoDB实现
 │       └── redis/          # Redis实现
+│           └── enhanced_cache.go  # 带高级功能的增强缓存
 ├── api/                    # API层 - 处理HTTP请求和响应
 │   ├── dto/                # API的数据传输对象
 │   ├── error_code/         # 错误码定义
@@ -78,6 +104,7 @@
 │   ├── aggregate/          # 聚合（DDD概念）
 │   ├── event/              # 领域事件和事件总线接口
 │   │   ├── event_bus.go    # 事件总线接口
+│   │   ├── async_event_bus.go # 异步事件总线实现
 │   │   └── handlers.go     # 事件处理器接口
 │   ├── model/              # 领域模型（纯业务实体）
 │   ├── repo/               # 资源库接口
@@ -94,7 +121,8 @@
 │   └── *_test.go           # 测试文件
 └── util/                   # 工具函数
     ├── clean_arch/         # 架构检查工具
-    └── log/                # 日志工具
+    ├── errors/             # 增强的错误类型和处理
+    └── log/                # 带上下文支持的增强日志
 ```
 
 ### 关键架构元素
@@ -142,6 +170,7 @@
   - `ExampleCreatedEvent`: 示例创建事件
   - `ExampleUpdatedEvent`: 示例更新事件
   - `ExampleDeletedEvent`: 示例删除事件
+  - `AsyncEventBus`: 具有持久化功能的异步事件处理
 
 ### 应用层
 应用层协调领域对象完成特定应用任务。它依赖于领域接口而非具体实现，遵循依赖倒置原则。
@@ -168,6 +197,7 @@
   - `NoopTransaction`: 无操作事务实现，简化测试
   - `MySQL`: MySQL连接和事务管理
   - `Redis`: Redis连接和基本操作
+  - `EnhancedCache`: 具有防穿透保护的高级Redis缓存
 
 - **消息队列适配器(Message Queue Adapters)**: 实现消息发布和订阅
   - 支持Kafka等消息队列的集成
@@ -249,163 +279,88 @@ func provideServices(exampleService service.IExampleService, eventBus event.Even
 
 ## 领域事件
 
-领域事件用于系统组件之间的通信，实现松耦合的事件驱动架构：
+项目支持同步和异步事件处理：
+
+### 同步事件处理
+```go
+// 同步发布事件
+err := eventBus.Publish(ctx, event.NewExampleCreatedEvent(example.ID, example.Name))
+```
+
+### 异步事件处理
+```go
+// 配置异步事件总线
+config := event.DefaultAsyncEventBusConfig()
+config.QueueSize = 1000
+config.WorkerCount = 10
+asyncEventBus := event.NewAsyncEventBus(config)
+
+// 异步发布事件
+err := asyncEventBus.Publish(ctx, event.NewExampleCreatedEvent(example.ID, example.Name))
+
+// 优雅关闭
+err := asyncEventBus.Close(5 * time.Second)
+```
+
+## 增强缓存
+
+增强的缓存系统提供了强大的高级缓存功能：
 
 ```go
-// 发布事件
-evt := event.NewExampleCreatedEvent(example.Id, example.Name, example.Alias)
-e.EventBus.Publish(ctx, evt)
+// 创建带默认选项的增强缓存
+cache := redis.NewEnhancedCache(redisClient, redis.DefaultCacheOptions())
 
-// 处理事件
-func (h *ExampleEventHandler) HandleEvent(ctx context.Context, event Event) error {
-    switch event.EventName() {
-    case ExampleCreatedEventName:
-        return h.handleExampleCreated(ctx, event)
-    // ...
-    }
-    return nil
+// 尝试获取值，如果缺失则自动加载
+var result MyData
+err := cache.TryGetSet(ctx, "key:123", &result, 30*time.Minute, func() (interface{}, error) {
+    // 仅当键不在缓存中才执行此函数
+    return fetchDataFromDatabase()
+})
+
+// 使用分布式锁防止并发操作
+err := cache.WithLock(ctx, "lock:resource", func() error {
+    // 此代码受分布式锁保护
+    return updateSharedResource()
+})
+```
+
+## 错误处理
+
+错误系统提供了一致的方式来处理和传播错误：
+
+```go
+// 创建领域错误
+if entity == nil {
+    return errors.New(errors.ErrorTypeNotFound, "未找到实体")
+}
+
+// 包装错误并添加额外上下文
+if err := repo.Save(entity); err != nil {
+    return errors.Wrapf(err, errors.ErrorTypePersistence, "保存实体 %d 失败", entity.ID)
+}
+
+// 检查错误类型
+if errors.IsNotFoundError(err) {
+    // 处理未找到的情况
 }
 ```
 
-## 应用层用例
+## 结构化日志
 
-应用层用例实现命令和查询责任分离(CQRS)模式，并依赖领域接口而非具体实现：
-
-```go
-// 使用接口依赖的用例
-type CreateUseCase struct {
-    exampleService service.IExampleService
-}
-
-// 创建示例用例
-func (uc *CreateUseCase) Execute(ctx context.Context, input dto.CreateExampleReq) (*dto.CreateExampleResp, error) {
-    // 创建事务保证原子操作
-    tx, err := repository.NewTransaction(ctx, repository.MySQLStore, nil)
-    if err != nil {
-        return nil, fmt.Errorf("创建事务失败: %w", err)
-    }
-    defer tx.Rollback()
-
-    // 将DTO转换为领域模型
-    example := &model.Example{
-        Name:  input.Name,
-        Alias: input.Alias,
-    }
-
-    // 通过接口调用领域服务
-    createdExample, err := uc.exampleService.Create(ctx, example)
-    if err != nil {
-        return nil, fmt.Errorf("创建示例失败: %w", err)
-    }
-
-    // 提交事务
-    if err = tx.Commit(); err != nil {
-        return nil, fmt.Errorf("提交事务失败: %w", err)
-    }
-
-    // 将领域模型转换为DTO
-    result := &dto.CreateExampleResp{
-        Id:        uint(createdExample.Id),
-        Name:      createdExample.Name,
-        Alias:     createdExample.Alias,
-        CreatedAt: createdExample.CreatedAt,
-        UpdatedAt: createdExample.UpdatedAt,
-    }
-
-    return result, nil
-}
-```
-
-## 事务管理
-
-本项目实现了事务接口和无操作事务，支持不同的事务管理策略：
+日志系统支持上下文感知的结构化日志记录：
 
 ```go
-// 事务接口
-type Transaction interface {
-    Begin() error
-    Commit() error
-    Rollback() error
-    Conn(ctx context.Context) any
-}
+// 创建日志上下文
+logCtx := log.NewLogContext().
+    WithRequestID(requestID).
+    WithUserID(userID).
+    WithOperation("CreateEntity")
 
-// 无操作事务实现
-type NoopTransaction struct {
-    conn any
-}
-
-// 在服务中使用事务
-func (s *ExampleService) Create(ctx context.Context, example *model.Example) (*model.Example, error) {
-    // 创建一个无操作事务
-    tr := repo.NewNoopTransaction(s.Repository)
-
-    createdExample, err := s.Repository.Create(ctx, tr, example)
-    // ...
-}
+// 带上下文记录日志
+logger.InfoContext(logCtx, "正在创建新实体",
+    zap.Int("entity_id", entity.ID),
+    zap.String("entity_name", entity.Name))
 ```
-
-## 数据映射和转换
-
-本项目在不同层次间实现了清晰的数据映射和转换，使用[jinzhu/copier](https://github.com/jinzhu/copier)库进行高效的对象复制：
-
-```go
-// 使用copier进行实体到模型的转换
-func (e EntityExample) ToModel() *model.Example {
-    model := &model.Example{}
-    copier.Copy(model, e)
-    return model
-}
-
-// 使用copier进行模型到实体的转换
-func (e *EntityExample) FromModel(m *model.Example) {
-    copier.Copy(e, m)
-}
-
-// 批量将实体转换为模型
-func EntitiesToModels(entities []EntityExample) []*model.Example {
-    result := make([]*model.Example, len(entities))
-    for i, entity := range entities {
-        result[i] = entity.ToModel()
-    }
-    return result
-}
-
-// 数据传输对象到模型的转换
-func (req *CreateExampleReq) ToModel() *model.Example {
-    model := &model.Example{}
-    copier.Copy(model, req)
-    return model
-}
-
-// 模型到响应数据传输对象的转换
-func ModelToResponse(m *model.Example) *ExampleResponse {
-    if m == nil {
-        return nil
-    }
-
-    resp := &ExampleResponse{}
-    copier.Copy(resp, m)
-
-    // 复制后格式化时间字段
-    resp.CreatedAt = m.CreatedAt.Format(time.RFC3339)
-    resp.UpdatedAt = m.UpdatedAt.Format(time.RFC3339)
-
-    return resp
-}
-```
-
-使用copier库的优势：
-- 简化相似结构体之间的转换
-- 自动复制同名且类型兼容的字段
-- 支持嵌套结构体的深度复制
-- 减少对象转换的样板代码
-
-这些转换保持了不同层次之间的清晰分离：
-- 数据库实体（在适配器层）
-- 领域模型（在领域层）
-- 数据传输对象（在API层）
-
-这种方法允许每一层拥有自己的数据表示形式，针对其特定职责进行优化。
 
 ## 项目优化
 
