@@ -3,94 +3,53 @@ package redis
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
-	"time"
 
-	"github.com/docker/go-connections/nat"
+	"github.com/alicebob/miniredis/v2"
 	"github.com/go-redis/redis/v8"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
+
+	"go-hexagonal/config"
 )
 
-// RedisContainerConfig holds configuration for Redis test container
-type RedisContainerConfig struct {
-	Password string
-	Host     string
-	Port     string
-	DB       int
-}
-
-// SetupRedisContainer creates a Redis container for testing
-func SetupRedisContainer(t *testing.T) *RedisContainerConfig {
+// SetupRedisContainer creates a Redis mock for testing using miniredis
+func SetupRedisContainer(t *testing.T) *config.RedisConfig {
 	t.Helper()
 
-	ctx := context.Background()
+	// Start miniredis server (in-memory implementation)
+	s := miniredis.RunT(t)
 
-	// Define Redis port
-	redisPort := "6379/tcp"
-
-	// Redis container configuration
-	containerReq := testcontainers.ContainerRequest{
-		Image:        "redis:6-alpine",
-		ExposedPorts: []string{redisPort},
-		Env: map[string]string{
-			"REDIS_PASSWORD": "", // No password for test container
-		},
-		Cmd: []string{"redis-server", "--requirepass", ""},
-		WaitingFor: wait.ForLog("Ready to accept connections").
-			WithStartupTimeout(time.Minute),
-	}
-
-	// Start Redis container
-	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: containerReq,
-		Started:          true,
-	})
+	// Convert port to int
+	portInt, err := strconv.Atoi(s.Port())
 	if err != nil {
-		t.Fatalf("Failed to start Redis container: %v", err)
+		t.Fatalf("Failed to convert port to integer: %v", err)
 	}
 
-	// Add cleanup function to terminate container after test
+	// Create config using config.RedisConfig
+	redisConfig := &config.RedisConfig{
+		Host:         s.Host(),
+		Port:         portInt,
+		Password:     "", // No password for test instance
+		DB:           0,
+		PoolSize:     10,
+		IdleTimeout:  300,
+		MinIdleConns: 2,
+	}
+
+	// Return server instance via test cleanup to ensure proper shutdown
 	t.Cleanup(func() {
-		if err := container.Terminate(ctx); err != nil {
-			t.Fatalf("Failed to terminate Redis container: %v", err)
-		}
+		s.Close()
 	})
 
-	// Get host and port
-	host, err := container.Host(ctx)
-	if err != nil {
-		t.Fatalf("Failed to get Redis container host: %v", err)
-	}
-
-	port, err := container.MappedPort(ctx, nat.Port(redisPort))
-	if err != nil {
-		t.Fatalf("Failed to get Redis container port: %v", err)
-	}
-
-	// Create config
-	config := &RedisContainerConfig{
-		Password: "",
-		Host:     host,
-		Port:     port.Port(),
-		DB:       0,
-	}
-
-	// Wait a bit for initialization to complete
-	time.Sleep(2 * time.Second)
-
-	return config
+	return redisConfig
 }
 
-// GetRedisClient returns a test Redis client
-func GetRedisClient(t *testing.T, config *RedisContainerConfig) *RedisClient {
+// GetRedisClient returns a Redis client for testing
+func GetRedisClient(t *testing.T, config *config.RedisConfig) *RedisClient {
 	t.Helper()
 
-	client, err := NewRedisClient(
-		fmt.Sprintf("%s:%s", config.Host, config.Port),
-		config.Password,
-		config.DB,
-	)
+	addr := fmt.Sprintf("%s:%d", config.Host, config.Port)
+	client, err := NewRedisClient(addr, config.Password, config.DB)
 	if err != nil {
 		t.Fatalf("Failed to create Redis client: %v", err)
 	}
@@ -104,7 +63,7 @@ func MockRedisData(t *testing.T, client *RedisClient, data map[string]interface{
 
 	ctx := context.Background()
 
-	// Clear any existing data
+	// Clear existing data
 	redisClient := client.GetClient()
 	keys, err := redisClient.Keys(ctx, "*").Result()
 	if err != nil {
@@ -117,21 +76,21 @@ func MockRedisData(t *testing.T, client *RedisClient, data map[string]interface{
 		}
 	}
 
-	// Add test data with default expiration
-	for key, value := range data {
-		if err := redisClient.Set(ctx, key, value, 10*time.Minute).Err(); err != nil {
-			t.Fatalf("Failed to set Redis data for key %s: %v", key, err)
+	// Add the test data
+	for k, v := range data {
+		if err := redisClient.Set(ctx, k, v, 0).Err(); err != nil {
+			t.Fatalf("Failed to set Redis data for key %s: %v", k, err)
 		}
 	}
 }
 
-// AssertRedisData checks if the Redis data matches expected values
+// AssertRedisData checks if Redis data matches expected values
 func AssertRedisData(t *testing.T, client *RedisClient, key string, expected interface{}) {
 	t.Helper()
 
 	ctx := context.Background()
 
-	// Get the value
+	// Get value from Redis
 	val, err := client.GetClient().Get(ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {

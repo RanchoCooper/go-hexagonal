@@ -12,6 +12,8 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"gorm.io/gorm"
+
+	"go-hexagonal/config"
 )
 
 const (
@@ -19,32 +21,8 @@ const (
 	PostgreSQLStartTimeout = 2 * time.Minute
 )
 
-// PostgreConfig stores PostgreSQL connection configuration
-type PostgreConfig struct {
-	User     string
-	Password string
-	Host     string
-	Port     int
-	Database string
-	SSLMode  string
-	TimeZone string
-}
-
-// PostgreSQLContainerConfig holds configuration for PostgreSQL test container
-type PostgreSQLContainerConfig struct {
-	DatabaseName string
-	User         string
-	Password     string
-	Port         string
-	Host         string
-	DSN          string
-	Database     string
-	SSLMode      string
-	TimeZone     string
-}
-
 // SetupPostgreSQLContainer creates and starts a PostgreSQL test container
-func SetupPostgreSQLContainer(t *testing.T) *PostgreSQLContainerConfig {
+func SetupPostgreSQLContainer(t *testing.T) *config.PostgreSQLConfig {
 	t.Helper()
 
 	ctx := context.Background()
@@ -94,15 +72,26 @@ func SetupPostgreSQLContainer(t *testing.T) *PostgreSQLContainerConfig {
 		Image:        "postgres:13-alpine",
 		ExposedPorts: []string{postgresPort},
 		Env: map[string]string{
-			"POSTGRES_USER":     "test_user",
-			"POSTGRES_PASSWORD": "test_password",
-			"POSTGRES_DB":       "test_db",
+			"POSTGRES_USER":     "postgres",
+			"POSTGRES_PASSWORD": "123456",
+			"POSTGRES_DB":       "postgres",
 		},
-		Mounts: []testcontainers.ContainerMount{
-			testcontainers.BindMount(initScriptPath, "/docker-entrypoint-initdb.d/init.sql"),
+		Files: []testcontainers.ContainerFile{
+			{
+				HostFilePath:      initScriptPath,
+				ContainerFilePath: "/docker-entrypoint-initdb.d/init.sql",
+				FileMode:          0644,
+			},
 		},
-		WaitingFor: wait.ForLog("database system is ready to accept connections").
-			WithStartupTimeout(time.Minute),
+		WaitingFor: wait.ForAll(
+			wait.ForListeningPort("5432/tcp"),
+			wait.ForExec([]string{"pg_isready"}).
+				WithPollInterval(1*time.Second).
+				WithExitCodeMatcher(func(exitCode int) bool {
+					return exitCode == 0
+				}),
+			wait.ForLog("database system is ready to accept connections"),
+		).WithStartupTimeout(PostgreSQLStartTimeout),
 	}
 
 	// Start PostgreSQL container
@@ -132,30 +121,71 @@ func SetupPostgreSQLContainer(t *testing.T) *PostgreSQLContainerConfig {
 		t.Fatalf("Failed to get PostgreSQL container port: %v", err)
 	}
 
-	// Create config
-	config := &PostgreSQLContainerConfig{
-		DatabaseName: "test_db",
-		User:         "test_user",
-		Password:     "test_password",
-		Host:         host,
-		Port:         port.Port(),
-		DSN:          fmt.Sprintf("host=%s port=%s user=test_user password=test_password dbname=test_db sslmode=disable", host, port.Port()),
-		Database:     "test_db",
-		SSLMode:      "disable",
-		TimeZone:     "UTC",
+	// Get port as integer
+	portInt := port.Int()
+
+	// Create config using config.PostgreSQLConfig
+	postgresConfig := &config.PostgreSQLConfig{
+		User:            "postgres",
+		Password:        "123456",
+		Host:            host,
+		Port:            portInt,
+		Database:        "postgres",
+		SSLMode:         "disable",
+		Options:         "",
+		MaxConnections:  100,
+		MinConnections:  10,
+		MaxConnLifetime: 3600,
+		IdleTimeout:     300,
+		ConnectTimeout:  10,
+		TimeZone:        "UTC",
+	}
+
+	// Create the test database and user
+	dsn := fmt.Sprintf("host=%s port=%d user=postgres password=123456 dbname=postgres sslmode=disable",
+		host, portInt)
+
+	// Create a temporary client to setup test database and user
+	tmpClient, err := NewPostgreSQLClient(dsn)
+	if err != nil {
+		t.Fatalf("Failed to create temporary PostgreSQL client: %v", err)
+	}
+
+	// Create test database and user - use simple statements that won't fail if objects already exist
+	queries := []string{
+		"SELECT 1", // Replace with appropriate statements for your database
+		// Skip database creation as we use the default postgres database
+		// Skip user creation as we use the postgres user
+	}
+
+	for _, query := range queries {
+		if err := tmpClient.DB.Exec(query).Error; err != nil {
+			t.Fatalf("Failed to execute query %s: %v", query, err)
+		}
 	}
 
 	// Wait a bit for initialization to complete
 	time.Sleep(2 * time.Second)
 
-	return config
+	return postgresConfig
 }
 
 // GetTestDB creates a GORM connection based on PostgreSQL configuration
-func GetTestDB(t *testing.T, config *PostgreSQLContainerConfig) *PostgreSQLClient {
+func GetTestDB(t *testing.T, config *config.PostgreSQLConfig) *PostgreSQLClient {
 	t.Helper()
 
-	client, err := NewPostgreSQLClient(config.DSN)
+	// Create DSN
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s TimeZone=%s",
+		config.Host,
+		config.Port,
+		config.User,
+		config.Password,
+		config.Database,
+		config.SSLMode,
+		config.TimeZone,
+	)
+
+	client, err := NewPostgreSQLClient(dsn)
 	if err != nil {
 		t.Fatalf("Failed to create PostgreSQL client: %v", err)
 	}
@@ -170,7 +200,7 @@ func GetTestDB(t *testing.T, config *PostgreSQLContainerConfig) *PostgreSQLClien
 
 // ExampleTable represents the example table for testing
 type ExampleTable struct {
-	ID        int       `gorm:"column:id;primaryKey;autoIncrement"`
+	ID        uint      `gorm:"column:id;primaryKey;autoIncrement"`
 	Name      string    `gorm:"column:name;type:varchar(255);not null"`
 	Alias     string    `gorm:"column:alias;type:varchar(255)"`
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
@@ -185,6 +215,8 @@ func (ExampleTable) TableName() string {
 
 // MockPostgreSQLData executes SQL statements in the PostgreSQL database
 func MockPostgreSQLData(t *testing.T, db *gorm.DB, sqls []string) {
+	t.Helper()
+
 	// Execute all SQL statements
 	for _, sql := range sqls {
 		tx := db.Exec(sql)

@@ -18,12 +18,18 @@ func TestSetupMySQLContainer(t *testing.T) {
 	// Validate configuration
 	assert.NotEmpty(t, config.Host, "Host should not be empty")
 	assert.NotZero(t, config.Port, "Port should be greater than 0")
-	assert.Equal(t, "test_user", config.User)
-	assert.Equal(t, "test_password", config.Password)
-	assert.Equal(t, "test_db", config.Database)
+	assert.Equal(t, "root", config.User)
+	assert.Equal(t, "mysqlroot", config.Password)
+	assert.Equal(t, "go_hexagonal", config.Database)
 	assert.Equal(t, "utf8mb4", config.CharSet)
 	assert.Equal(t, true, config.ParseTime)
 	assert.Equal(t, "UTC", config.TimeZone)
+
+	// Validate additional config fields
+	assert.Equal(t, 10, config.MaxIdleConns)
+	assert.Equal(t, 100, config.MaxOpenConns)
+	assert.Equal(t, "1h", config.MaxLifeTime)
+	assert.Equal(t, "30m", config.MaxIdleTime)
 
 	// Get database connection
 	db := GetTestDB(t, config)

@@ -17,12 +17,20 @@ func TestSetupPostgreSQLContainer(t *testing.T) {
 
 	// Validate configuration
 	assert.NotEmpty(t, config.Host, "Host should not be empty")
-	assert.NotEmpty(t, config.Port, "Port should not be empty")
-	assert.Equal(t, "test_user", config.User)
-	assert.Equal(t, "test_password", config.Password)
-	assert.Equal(t, "test_db", config.Database)
+	assert.NotZero(t, config.Port, "Port should be greater than 0")
+	assert.Equal(t, "postgres", config.User)
+	assert.Equal(t, "123456", config.Password)
+	assert.Equal(t, "postgres", config.Database)
 	assert.Equal(t, "disable", config.SSLMode)
 	assert.Equal(t, "UTC", config.TimeZone)
+
+	// Validate additional config fields
+	assert.Equal(t, int32(100), config.MaxConnections)
+	assert.Equal(t, int32(10), config.MinConnections)
+	assert.Equal(t, 3600, config.MaxConnLifetime)
+	assert.Equal(t, 300, config.IdleTimeout)
+	assert.Equal(t, 10, config.ConnectTimeout)
+	assert.Empty(t, config.Options)
 
 	// Get database connection
 	db := GetTestDB(t, config)
@@ -48,7 +56,7 @@ func TestSetupPostgreSQLContainer(t *testing.T) {
 		"INSERT INTO test_table (name) VALUES ('test2')",
 	}
 
-	// Use the MockPostgreSQLData function with proper type parameter
+	// Use the MockPostgreSQLData function
 	MockPostgreSQLData(t, db.DB, mockSQLs)
 
 	// Verify data was inserted

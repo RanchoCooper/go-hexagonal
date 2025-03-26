@@ -11,24 +11,17 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+
+	"go-hexagonal/config"
 )
 
-// MySQLContainerConfig holds configuration for MySQL test container
-type MySQLContainerConfig struct {
-	DatabaseName string
-	User         string
-	Password     string
-	Port         string
-	Host         string
-	DSN          string
-	Database     string
-	CharSet      string
-	ParseTime    bool
-	TimeZone     string
-}
+const (
+	// MySQLStartTimeout defines the timeout for starting the MySQL container
+	MySQLStartTimeout = 2 * time.Minute
+)
 
 // SetupMySQLContainer creates a MySQL container for testing
-func SetupMySQLContainer(t *testing.T) *MySQLContainerConfig {
+func SetupMySQLContainer(t *testing.T) *config.MySQLConfig {
 	t.Helper()
 
 	ctx := context.Background()
@@ -72,16 +65,22 @@ func SetupMySQLContainer(t *testing.T) *MySQLContainerConfig {
 		Image:        "mysql:8.0",
 		ExposedPorts: []string{mysqlPort},
 		Env: map[string]string{
-			"MYSQL_ROOT_PASSWORD": "root",
-			"MYSQL_DATABASE":      "test_db",
-			"MYSQL_USER":          "test_user",
-			"MYSQL_PASSWORD":      "test_password",
+			"MYSQL_ROOT_PASSWORD": "mysqlroot",
+			"MYSQL_DATABASE":      "go_hexagonal",
+			"MYSQL_USER":          "user",
+			"MYSQL_PASSWORD":      "mysqlroot",
 		},
-		Mounts: []testcontainers.ContainerMount{
-			testcontainers.BindMount(initScriptPath, "/docker-entrypoint-initdb.d/init.sql"),
+		Files: []testcontainers.ContainerFile{
+			{
+				HostFilePath:      initScriptPath,
+				ContainerFilePath: "/docker-entrypoint-initdb.d/init.sql",
+				FileMode:          0644,
+			},
 		},
-		WaitingFor: wait.ForLog("port: 3306  MySQL Community Server - GPL").
-			WithStartupTimeout(time.Minute),
+		WaitingFor: wait.ForAll(
+			wait.ForListeningPort("3306/tcp"),
+			wait.ForLog("port: 3306  MySQL Community Server - GPL"),
+		).WithStartupTimeout(MySQLStartTimeout),
 	}
 
 	// Start MySQL container
@@ -111,15 +110,20 @@ func SetupMySQLContainer(t *testing.T) *MySQLContainerConfig {
 		t.Fatalf("Failed to get MySQL container port: %v", err)
 	}
 
-	// Create config
-	config := &MySQLContainerConfig{
-		DatabaseName: "test_db",
-		User:         "test_user",
-		Password:     "test_password",
+	// Get port as integer
+	portInt := port.Int()
+
+	// Create config using config.MySQLConfig
+	mySQLConfig := &config.MySQLConfig{
+		User:         "root",
+		Password:     "mysqlroot",
 		Host:         host,
-		Port:         port.Port(),
-		DSN:          fmt.Sprintf("test_user:test_password@tcp(%s:%s)/test_db?charset=utf8mb4&parseTime=true&loc=Local", host, port.Port()),
-		Database:     "test_db",
+		Port:         portInt,
+		Database:     "go_hexagonal",
+		MaxIdleConns: 10,
+		MaxOpenConns: 100,
+		MaxLifeTime:  "1h",
+		MaxIdleTime:  "30m",
 		CharSet:      "utf8mb4",
 		ParseTime:    true,
 		TimeZone:     "UTC",
@@ -128,14 +132,26 @@ func SetupMySQLContainer(t *testing.T) *MySQLContainerConfig {
 	// Wait a bit for initialization to complete
 	time.Sleep(2 * time.Second)
 
-	return config
+	return mySQLConfig
 }
 
 // GetTestDB returns a test MySQL client
-func GetTestDB(t *testing.T, config *MySQLContainerConfig) *MySQLClient {
+func GetTestDB(t *testing.T, config *config.MySQLConfig) *MySQLClient {
 	t.Helper()
 
-	client, err := NewMySQLClient(config.DSN)
+	// Create DSN
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=%t&loc=%s",
+		config.User,
+		config.Password,
+		config.Host,
+		config.Port,
+		config.Database,
+		config.CharSet,
+		config.ParseTime,
+		config.TimeZone,
+	)
+
+	client, err := NewMySQLClient(dsn)
 	if err != nil {
 		t.Fatalf("Failed to create MySQL client: %v", err)
 	}
@@ -150,7 +166,7 @@ func GetTestDB(t *testing.T, config *MySQLContainerConfig) *MySQLClient {
 
 // ExampleTable represents the example table for testing
 type ExampleTable struct {
-	ID        int       `gorm:"column:id;primaryKey;autoIncrement"`
+	ID        uint      `gorm:"column:id;primaryKey;autoIncrement"`
 	Name      string    `gorm:"column:name;type:varchar(255);not null"`
 	Alias     string    `gorm:"column:alias;type:varchar(255)"`
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
@@ -164,11 +180,12 @@ func (ExampleTable) TableName() string {
 }
 
 // MockMySQLData executes SQL statements in the test database
-func MockMySQLData(t *testing.T, db *MySQLClient, sqls []string) {
+func MockMySQLData(t *testing.T, client *MySQLClient, sqls []string) {
 	t.Helper()
 
+	// Execute all SQL statements
 	for _, sql := range sqls {
-		tx := db.DB.Exec(sql)
+		tx := client.DB.Exec(sql)
 		if tx.Error != nil {
 			t.Fatalf("Unable to insert data: %v", tx.Error)
 		}
