@@ -13,12 +13,12 @@ jobs:
 
         steps:
             - name: Checkout code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Set up Go
               uses: actions/setup-go@v4
               with:
-                  go-version: '1.24'
+                  go-version: '1.21'
 
             - name: Set up Docker
               uses: docker/setup-buildx-action@v3
@@ -48,13 +48,32 @@ jobs:
             - name: Build
               run: go build -v -o hexagonal-app ./cmd/main.go
 
-            - name: Setup Test Environment
+            - name: Create CI Helper
               run: |
-                # Create migrations directory structure
+                # 创建CI跳过测试帮助函数
                 mkdir -p tests/migrations/migrate
+                cat > tests/ci_helper_test.go << EOF
+                package tests
 
-                # Create basic migration file structure if it doesn't exist
-                cat > tests/migrations/migrate/mysql.go << 'EOF'
+                import (
+                    "os"
+                    "testing"
+                )
+
+                // SkipInCI skips tests that should not run in CI environment
+                func SkipInCI(t *testing.T) {
+                    if os.Getenv("CI") == "true" {
+                        t.Skip("Skipping in CI environment")
+                    }
+                }
+                EOF
+
+            - name: Create Migration Files
+              run: |
+                # 检查是否已存在迁移文件
+                if [ ! -f tests/migrations/migrate/migrate.go ]; then
+                  # 如果不存在，创建MySQL迁移帮助实现
+                  cat > tests/migrations/migrate/mysql.go << EOF
                 package migrate
 
                 import (
@@ -74,25 +93,8 @@ jobs:
                 }
                 EOF
 
-                # Create CI skip test helper
-                cat > tests/ci_helper_test.go << 'EOF'
-                package tests
-
-                import (
-                    "os"
-                    "testing"
-                )
-
-                // SkipInCI skips tests that should not run in CI environment
-                func SkipInCI(t *testing.T) {
-                    if os.Getenv("CI") == "true" {
-                        t.Skip("Skipping in CI environment")
-                    }
-                }
-                EOF
-
-                # Add mock postgresql implementation
-                cat > tests/migrations/migrate/postgresql.go << 'EOF'
+                  # 创建PostgreSQL迁移帮助实现
+                  cat > tests/migrations/migrate/postgresql.go << EOF
                 package migrate
 
                 import (
@@ -111,23 +113,38 @@ jobs:
                     return nil
                 }
                 EOF
+                else
+                  echo "Migration files already exist. Skipping creation."
+                fi
 
-                # Modify mysql_example_test.go to include CI skip
+            - name: Update Test Files for CI
+              run: |
+                # 修改测试文件以在CI环境中跳过
                 if [ -f tests/mysql_example_test.go ]; then
-                  sed -i '1s/^/\/\/ +build !ci\n\n/' tests/mysql_example_test.go
-                  sed -i '/func TestMockMySQLData/a\\tSkipInCI(t)' tests/mysql_example_test.go
+                  if ! grep -q "+build !ci" tests/mysql_example_test.go; then
+                    sed -i '1s/^/\/\/ +build !ci\n\n/' tests/mysql_example_test.go
+                  fi
+                  if ! grep -q "SkipInCI" tests/mysql_example_test.go; then
+                    sed -i '/func TestMockMySQLData/a\\tSkipInCI(t)' tests/mysql_example_test.go
+                  fi
                 fi
 
-                # Modify postgresql_example_test.go to include CI skip
                 if [ -f tests/postgresql_example_test.go ]; then
-                  sed -i '1s/^/\/\/ +build !ci\n\n/' tests/postgresql_example_test.go
-                  sed -i '/func TestMockPostgresData/a\\tSkipInCI(t)' tests/postgresql_example_test.go
+                  if ! grep -q "+build !ci" tests/postgresql_example_test.go; then
+                    sed -i '1s/^/\/\/ +build !ci\n\n/' tests/postgresql_example_test.go
+                  fi
+                  if ! grep -q "SkipInCI" tests/postgresql_example_test.go; then
+                    sed -i '/func TestMockPostgresData/a\\tSkipInCI(t)' tests/postgresql_example_test.go
+                  fi
                 fi
 
-                # Modify redis_example_test.go to include CI skip
                 if [ -f tests/redis_example_test.go ]; then
-                  sed -i '1s/^/\/\/ +build !ci\n\n/' tests/redis_example_test.go
-                  sed -i '/func TestRedis/a\\tSkipInCI(t)' tests/redis_example_test.go
+                  if ! grep -q "+build !ci" tests/redis_example_test.go; then
+                    sed -i '1s/^/\/\/ +build !ci\n\n/' tests/redis_example_test.go
+                  fi
+                  if ! grep -q "SkipInCI" tests/redis_example_test.go; then
+                    sed -i '/func TestRedis/a\\tSkipInCI(t)' tests/redis_example_test.go
+                  fi
                 fi
 
             - name: Run Unit Tests Only
