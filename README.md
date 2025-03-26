@@ -383,109 +383,64 @@ The project has recently undergone the following improvements:
 ### 3. Eliminated Global Variables
 - **Problem**: The project used global variables to store service instances, violating dependency injection principles
 - **Solution**:
-  - Removed the use of global variables `service.ExampleSvc` and `service.EventBus`
-  - Passed service instances through dependency injection
-  - Initialized services using dependency injection when starting the HTTP server
+  - Removed global service variables
+  - Properly injected services via the Factory pattern
+  - Improved testability by making dependencies explicit
 
-### 4. Improved Application Layer Integration
-- **Problem**: Application layer use cases were not fully utilized, with the HTTP server not enabling the application layer by default
+### 4. Enhanced Architecture Validation
+- **Problem**: Architecture validation was manual and prone to errors
 - **Solution**:
-  - Enabled application layer use cases by default
-  - Used the use case factory to create and manage use cases
-  - Implemented clearer error handling and response mapping
+  - Implemented automated layer dependency checking
+  - Enforced strict architectural boundaries through code scanning
+  - Added validation to CI pipeline
 
-## Recent Optimizations
+### 5. Graceful Shutdown
+- **Problem**: Application didn't handle shutdown gracefully, potentially causing data loss
+- **Solution**:
+  - Implemented a graceful shutdown mechanism for the server, ensuring all in-flight requests are completed before shutting down
+  - Added shutdown timeout settings to prevent the shutdown process from hanging indefinitely
+  - Improved signal handling, supporting SIGINT and SIGTERM signals
 
-The project has recently undergone the following optimizations:
+### 6. Internationalization Support
+- **Problem**: The application lacked proper internationalization support
+- **Solution**:
+  - Added translation middleware for multi-language validation error messages
+  - Automatically selected appropriate language based on the Accept-Language header
 
-1. **Environment Variable Support**:
-   - Added functionality for environment variable overrides for configuration files, making the application more flexible in containerized deployments
-   - Used a unified prefix (APP_) and hierarchical structure (e.g., APP_MYSQL_HOST) to organize environment variables
+### 7. CORS Support
+- **Problem**: Cross-origin requests were not properly handled
+- **Solution**:
+  - Added CORS middleware to handle cross-origin requests
+  - Configured allowed origins, methods, headers, and credentials
 
-2. **Unified Error Handling**:
-   - Implemented an application-level error type system, supporting different types of errors (validation, not found, unauthorized, etc.)
-   - Added unified error response handling, mapping internal errors to appropriate HTTP status codes
-   - Improved error logging to ensure all unexpected errors are properly recorded
+### 8. Debugging Tools
+- **Problem**: Diagnosis of performance issues in production was difficult
+- **Solution**:
+  - Integrated pprof performance analysis tools for diagnosing performance issues in production environments
+  - Can be enabled or disabled via configuration file
 
-3. **Request Logging Middleware**:
-   - Added detailed request logging middleware to record request methods, paths, status codes, latency, and other information
-   - In debug mode, request and response bodies can be logged to help developers troubleshoot issues
-   - Intelligently identifies content types to avoid logging binary content
+### 9. Advanced Redis Integration
+- **Problem**: Redis implementation was limited and lacked proper connection management
+- **Solution**:
+  - Enhanced Redis client with proper connection pooling
+  - Added comprehensive health checks and monitoring
+  - Improved error handling and connection lifecycle management
 
-4. **Request ID Tracking**:
-   - Generated unique request IDs for each request, facilitating tracking in distributed systems
-   - Returned request IDs in response headers for client reference
-   - Included request IDs in logs to correlate multiple log entries for the same request
+### 10. Structured Request Logging
+- **Problem**: API requests lacked proper logging, making debugging difficult
+- **Solution**:
+  - Implemented comprehensive request logging middleware
+  - Added request ID tracking for correlating logs
+  - Configured log levels based on status codes
 
-5. **Graceful Shutdown**:
-   - Implemented a graceful shutdown mechanism for the server, ensuring all in-flight requests are completed before shutting down
-   - Added shutdown timeout settings to prevent the shutdown process from hanging indefinitely
-   - Improved signal handling, supporting SIGINT and SIGTERM signals
-
-6. **Internationalization Support**:
-   - Added translation middleware for multi-language validation error messages
-   - Automatically selected appropriate language based on the Accept-Language header
-
-7. **CORS Support**:
-   - Added CORS middleware to handle cross-origin requests
-   - Configured allowed origins, methods, headers, and credentials
-
-8. **Debugging Tools**:
-   - Integrated pprof performance analysis tools for diagnosing performance issues in production environments
-   - Can be enabled or disabled via configuration file
+### 11. Unified Error Response Format
+- **Problem**: Error responses had inconsistent formats across the API
+- **Solution**:
+  - Standardized error response structure with code, message, and details
+  - Added documentation references to errors
+  - Implemented consistent HTTP status code mapping
 
 These optimizations make the project more robust, maintainable, and provide a better development experience.
-
-## Usage Guide
-
-### Environment Preparation
-
-Start MySQL using Docker:
-```bash
-docker run --name mysql-local \
-  -e MYSQL_ROOT_PASSWORD=mysqlroot \
-  -e MYSQL_DATABASE=go-hexagonal \
-  -e MYSQL_USER=user \
-  -e MYSQL_PASSWORD=mysqlroot \
-  -p 3306:3306 \
-  -d mysql:latest
-```
-
-### Development Tool Installation
-
-```bash
-# Install development tools
-make init && make precommit.rehook
-```
-
-Or install manually:
-
-```bash
-# Install pre-commit
-brew install pre-commit
-# Install golangci-lint
-brew install golangci-lint
-# Install commitlint
-npm install -g @commitlint/cli @commitlint/config-conventional
-# Add commitlint configuration
-echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
-# Add pre-commit hook
-make precommit.rehook
-```
-
-### Running the Project
-
-```bash
-# Run the project
-go run cmd/main.go
-```
-
-### Testing
-
-```bash
-# Run tests
-go test ./...
-```
 
 ## Extension Plans
 

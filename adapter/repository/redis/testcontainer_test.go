@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,11 +26,11 @@ func TestSetupRedisContainer(t *testing.T) {
 	client := GetRedisClient(t, config)
 
 	// Test redis connection by executing simple commands
-	ctx := client.GetClient().Context()
-	err := client.GetClient().Set(ctx, "test_key", "test_value", 0).Err()
+	ctx := context.Background()
+	err := client.Client.Set(ctx, "test_key", "test_value", 0).Err()
 	assert.NoError(t, err, "Should be able to set a value")
 
-	val, err := client.GetClient().Get(ctx, "test_key").Result()
+	val, err := client.Client.Get(ctx, "test_key").Result()
 	assert.NoError(t, err, "Should be able to get a value")
 	assert.Equal(t, "test_value", val, "Value should match what was set")
 
@@ -44,7 +45,7 @@ func TestSetupRedisContainer(t *testing.T) {
 	MockRedisData(t, client, testData)
 
 	// Verify data was inserted
-	val, err = client.GetClient().Get(ctx, "key1").Result()
+	val, err = client.Client.Get(ctx, "key1").Result()
 	assert.NoError(t, err, "Should be able to get key1")
 	assert.Equal(t, "value1", val, "Value should match what was set")
 

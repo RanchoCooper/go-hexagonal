@@ -48,8 +48,8 @@ func SetupRedisContainer(t *testing.T) *config.RedisConfig {
 func GetRedisClient(t *testing.T, config *config.RedisConfig) *RedisClient {
 	t.Helper()
 
-	addr := fmt.Sprintf("%s:%d", config.Host, config.Port)
-	client, err := NewRedisClient(addr, config.Password, config.DB)
+	opts := ClientOptionsFromConfig(config)
+	client, err := NewClient(opts)
 	if err != nil {
 		t.Fatalf("Failed to create Redis client: %v", err)
 	}
@@ -64,21 +64,20 @@ func MockRedisData(t *testing.T, client *RedisClient, data map[string]interface{
 	ctx := context.Background()
 
 	// Clear existing data
-	redisClient := client.GetClient()
-	keys, err := redisClient.Keys(ctx, "*").Result()
+	keys, err := client.Client.Keys(ctx, "*").Result()
 	if err != nil {
 		t.Fatalf("Failed to get Redis keys: %v", err)
 	}
 
 	if len(keys) > 0 {
-		if _, err := redisClient.Del(ctx, keys...).Result(); err != nil {
+		if _, err := client.Client.Del(ctx, keys...).Result(); err != nil {
 			t.Fatalf("Failed to clear Redis data: %v", err)
 		}
 	}
 
 	// Add the test data
 	for k, v := range data {
-		if err := redisClient.Set(ctx, k, v, 0).Err(); err != nil {
+		if err := client.Client.Set(ctx, k, v, 0).Err(); err != nil {
 			t.Fatalf("Failed to set Redis data for key %s: %v", k, err)
 		}
 	}
@@ -91,7 +90,7 @@ func AssertRedisData(t *testing.T, client *RedisClient, key string, expected int
 	ctx := context.Background()
 
 	// Get value from Redis
-	val, err := client.GetClient().Get(ctx, key).Result()
+	val, err := client.Client.Get(ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {
 			t.Fatalf("Key %s does not exist in Redis", key)

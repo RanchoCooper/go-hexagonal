@@ -17,50 +17,59 @@ type Response struct {
 	Ctx *gin.Context
 }
 
-// StandardResponse standard response structure
+// StandardResponse defines the standard API response structure
 type StandardResponse struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Data    any    `json:"data"`
+	Code    int         `json:"code"`              // Status code
+	Message string      `json:"message"`           // Response message
+	Data    interface{} `json:"data,omitempty"`    // Response data
+	DocRef  string      `json:"doc_ref,omitempty"` // Documentation reference
 }
 
 func NewResponse(ctx *gin.Context) *Response {
 	return &Response{Ctx: ctx}
 }
 
-func (r *Response) ToResponse(data any) {
+func (r *Response) ToResponse(data interface{}) {
 	if data == nil {
 		data = gin.H{}
 	}
-	r.Ctx.JSON(http.StatusOK, gin.H{
-		"code":    0,
-		"message": "success",
-		"data":    data,
+	r.Ctx.JSON(http.StatusOK, StandardResponse{
+		Code:    0,
+		Message: "success",
+		Data:    data,
 	})
 }
 
-func (r *Response) ToResponseList(list any, totalRows int) {
-	r.Ctx.JSON(http.StatusOK, gin.H{
-		"list": list,
-		"pager": dto.Pager{
-			Page:      paginate.GetPage(r.Ctx),
-			PageSize:  paginate.GetPageSize(r.Ctx),
-			TotalRows: totalRows,
+func (r *Response) ToResponseList(list interface{}, totalRows int) {
+	r.Ctx.JSON(http.StatusOK, StandardResponse{
+		Code:    0,
+		Message: "success",
+		Data: gin.H{
+			"list": list,
+			"pager": dto.Pager{
+				Page:      paginate.GetPage(r.Ctx),
+				PageSize:  paginate.GetPageSize(r.Ctx),
+				TotalRows: totalRows,
+			},
 		},
 	})
 }
 
 func (r *Response) ToErrorResponse(err *error_code.Error) {
-	response := gin.H{
-		"code": err.Code,
-		"msg":  err.Msg,
-	}
-	if details := err.Details; len(details) > 0 {
-		response["details"] = details
+	response := StandardResponse{
+		Code:    err.Code,
+		Message: err.Msg,
 	}
 
-	statusCode := err.StatusCode()
-	r.Ctx.JSON(statusCode, response)
+	if len(err.Details) > 0 {
+		response.Data = gin.H{"details": err.Details}
+	}
+
+	if err.DocRef != "" {
+		response.DocRef = err.DocRef
+	}
+
+	r.Ctx.JSON(err.StatusCode(), response)
 }
 
 // Success returns a success response
@@ -76,10 +85,11 @@ func Success(c *gin.Context, data any) {
 func Error(c *gin.Context, err error) {
 	// Handle API error codes
 	if apiErr, ok := err.(*error_code.Error); ok {
-		c.JSON(http.StatusBadRequest, StandardResponse{
+		c.JSON(apiErr.StatusCode(), StandardResponse{
 			Code:    apiErr.Code,
 			Message: apiErr.Msg,
-			Data:    nil,
+			Data:    gin.H{"details": apiErr.Details},
+			DocRef:  apiErr.DocRef,
 		})
 		return
 	}
@@ -91,7 +101,6 @@ func Error(c *gin.Context, err error) {
 	c.JSON(http.StatusInternalServerError, StandardResponse{
 		Code:    error_code.ServerErrorCode,
 		Message: "Internal server error",
-		Data:    nil,
 	})
 }
 
