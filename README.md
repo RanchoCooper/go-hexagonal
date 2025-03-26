@@ -98,32 +98,51 @@ Hexagonal Architecture (also known as [Ports and Adapters Architecture](https://
 │       ├── update_example.go     # Update example use case
 │       └── find_example_by_name.go # Find example by name use case
 ├── cmd/                    # Command-line entry points
-│   └── http_server/        # HTTP server startup
-├── config/                 # Configuration files and management
+│   └── main.go             # Main application entry point
+├── config/                 # Configuration management
+│   ├── config.go           # Configuration structure and loading
+│   └── config.yaml         # Configuration file
 ├── domain/                 # Domain Layer - Core business logic
-│   ├── aggregate/          # Aggregates (DDD concept)
-│   ├── event/              # Domain events and event bus interfaces
-│   │   ├── event_bus.go    # EventBus interface
-│   │   ├── async_event_bus.go # Asynchronous event bus implementation
-│   │   └── handlers.go     # Event handler interfaces
-│   ├── model/              # Domain models (pure business entities)
+│   ├── aggregate/          # Domain aggregates
+│   ├── dto/                # Domain Data Transfer Objects
+│   ├── event/              # Domain events
+│   ├── model/              # Domain models
 │   ├── repo/               # Repository interfaces
-│   │   └── transaction.go  # Transaction interface
-│   ├── service/            # Domain services with interfaces
-│   │   ├── example.go      # ExampleService implementation
-│   │   └── interfaces.go   # Service interfaces (IExampleService, etc.)
-│   └── vo/                 # Value objects (DDD concept)
-├── tests/                  # Integration tests
-│   ├── migrations/         # Test database migrations
-│   ├── mysql.go            # MySQL test helpers
-│   ├── postgres.go         # PostgreSQL test helpers
-│   ├── redis.go            # Redis test helpers
-│   └── *_test.go           # Test files
-└── util/                   # Utility functions
-    ├── clean_arch/         # Architecture checking tools
-    ├── errors/             # Enhanced error types and handling
-    └── log/                # Enhanced logging with context support
+│   ├── service/            # Domain services
+│   └── vo/                 # Value Objects
+└── tests/                  # Test utilities and examples
+    ├── migrations/         # Database migrations for testing
+    ├── mysql.go            # MySQL test utilities
+    ├── postgresql.go       # PostgreSQL test utilities
+    └── redis.go            # Redis test utilities
 ```
+
+## Architecture Design Principles
+
+### Layer Separation
+1. **Domain Layer** (`domain/`)
+   - Contains core business logic and rules
+   - Defines domain models, aggregates, and value objects
+   - Declares repository interfaces and domain services
+   - Independent of external concerns
+
+2. **Application Layer** (`application/`)
+   - Implements use cases and orchestrates domain objects
+   - Handles transaction boundaries
+   - Coordinates between domain objects and external systems
+   - Contains no business rules
+
+3. **Adapter Layer** (`adapter/`)
+   - Implements interfaces defined by domain and application layers
+   - Handles external concerns (databases, HTTP, messaging)
+   - Provides concrete implementations of ports
+   - Contains technical details and frameworks
+
+4. **API Layer** (`api/`)
+   - Handles HTTP/gRPC requests and responses
+   - Manages data transformation between DTOs and domain objects
+   - Implements API-specific validation and error handling
+   - Provides API documentation and versioning
 
 ### Key Architectural Elements
 
@@ -148,6 +167,28 @@ This structure enforces the Hexagonal Architecture principles:
    - Each layer has clear responsibilities and dependencies
    - Data transformation occurs at layer boundaries
    - No leakage of implementation details between layers
+
+### Design Patterns and Principles
+
+1. **Dependency Inversion**
+   - High-level modules define interfaces
+   - Low-level modules implement interfaces
+   - Dependencies point inward toward the domain
+
+2. **Interface Segregation**
+   - Interfaces are specific to use cases
+   - Clients only depend on methods they use
+   - Prevents interface pollution
+
+3. **Single Responsibility**
+   - Each component has one reason to change
+   - Clear separation of concerns
+   - Focused and maintainable code
+
+4. **Open/Closed**
+   - Open for extension
+   - Closed for modification
+   - New features through new implementations
 
 ## Architecture Layers
 
@@ -226,6 +267,23 @@ The API layer handles HTTP requests and responses, serving as the entry point to
   - `UpdateExampleReq`: Update example request
   - `DeleteExampleReq`: Delete example request
   - `GetExampleReq`: Get example request
+
+### Testing Strategy
+
+1. **Unit Testing**
+   - Domain logic tested in isolation
+   - Mock external dependencies
+   - Fast and reliable tests
+
+2. **Integration Testing**
+   - Test adapter implementations
+   - Verify external system interactions
+   - Database and cache testing
+
+3. **End-to-End Testing**
+   - Test complete use cases
+   - Verify system behavior
+   - API contract testing
 
 ## Dependency Injection
 
@@ -442,6 +500,114 @@ The project has recently undergone the following improvements:
 
 These optimizations make the project more robust, maintainable, and provide a better development experience.
 
+## Getting Started
+
+### Prerequisites
+- Go 1.21 or later
+- Docker (for running dependencies)
+- Homebrew (for macOS users)
+- Node.js and npm (for commit linting)
+- pre-commit (for code quality checks)
+- golangci-lint (for code linting)
+
+### Installation
+
+#### 1. Clone the Repository
+```bash
+git clone https://github.com/RanchoCooper/go-hexagonal.git
+cd go-hexagonal
+```
+
+#### 2. Initialize Development Environment (macOS)
+The project includes a convenient init target in the Makefile to set up all required tools:
+
+```bash
+# Install and configure all required dependencies
+make init
+```
+
+This command installs:
+- Go (if not already installed)
+- Node.js and npm (for commit linting)
+- pre-commit hooks
+- golangci-lint
+- commitlint for ensuring commit message standards
+
+#### 3. Manual Installation (non-macOS)
+If you're not using macOS or prefer manual setup:
+
+```bash
+# Install golangci-lint
+# See https://golangci-lint.run/usage/install/
+
+# Install pre-commit
+pip install pre-commit
+
+# Install commitlint
+npm install -g @commitlint/cli @commitlint/config-conventional
+
+# Set up pre-commit hooks
+make pre-commit.install
+```
+
+### Development Workflow
+
+#### Code Formatting
+```bash
+# Format code according to Go standards
+make fmt
+```
+
+#### Running Tests
+```bash
+# Run tests with race detection and coverage reporting
+make test
+```
+
+#### Code Quality Checks
+```bash
+# Run linters to check code quality
+make ci.lint
+```
+
+#### Run All Checks
+```bash
+# Run formatting, linting, and tests
+make all
+```
+
+### Configuration
+1. Copy `config/config.yaml.example` to `config/config.yaml` (if applicable)
+2. Adjust configuration values as needed
+3. Environment variables can override config file values
+
+### Docker Setup (Optional)
+If your project uses Docker for local development:
+
+```bash
+# Start the required services (MySQL, Redis, etc.)
+docker-compose up -d
+
+# Stop services when done
+docker-compose down
+```
+
+### Pre-commit Hooks Management
+
+The project uses pre-commit hooks to ensure code quality before committing:
+
+```bash
+# Update pre-commit hooks to latest versions
+make precommit.rehook
+```
+
+### Running the Application
+
+```bash
+# Run the application
+go run cmd/main.go
+```
+
 ## Extension Plans
 
 - **gRPC Support** - Add gRPC service implementation
@@ -458,3 +624,15 @@ These optimizations make the project more robust, maintainable, and provide a be
   - [Improving Your Go Project With pre-commit hooks](https://goangle.medium.com/golang-improving-your-go-project-with-pre-commit-hooks-a265fad0e02f)
 - **Code References**
   - [Go CleanArch](https://github.com/roblaszczak/go-cleanarch)
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
