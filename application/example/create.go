@@ -4,60 +4,56 @@ import (
 	"context"
 	"fmt"
 
+	"go-hexagonal/application/core"
 	"go-hexagonal/domain/repo"
 	"go-hexagonal/domain/service"
+	"go-hexagonal/util/log"
 )
 
 // CreateUseCase handles the create example use case
 type CreateUseCase struct {
+	*core.UseCaseHandler
 	exampleService service.IExampleService
-	converter      service.Converter
-	txFactory      repo.TransactionFactory
 }
 
 // NewCreateUseCase creates a new CreateUseCase instance
 func NewCreateUseCase(
 	exampleService service.IExampleService,
-	converter service.Converter,
 	txFactory repo.TransactionFactory,
 ) *CreateUseCase {
 	return &CreateUseCase{
+		UseCaseHandler: core.NewUseCaseHandler(txFactory),
 		exampleService: exampleService,
-		converter:      converter,
-		txFactory:      txFactory,
 	}
 }
 
 // Execute processes the create example request
 func (uc *CreateUseCase) Execute(ctx context.Context, input any) (any, error) {
-	// Convert input to domain model using the converter
-	example, err := uc.converter.FromCreateRequest(input)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert request: %w", err)
+	// Convert and validate input
+	createInput, ok := input.(*CreateInput)
+	if !ok {
+		return nil, core.ValidationError("invalid input type", nil)
 	}
 
-	// Create a real transaction for atomic operations
-	tx, err := uc.txFactory.NewTransaction(ctx, repo.MySQLStore, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create transaction: %w", err)
-	}
-	defer tx.Rollback()
-
-	// Call domain service
-	createdExample, err := uc.exampleService.Create(ctx, example)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create example: %w", err)
+	if err := createInput.Validate(); err != nil {
+		return nil, err
 	}
 
-	// Commit transaction
-	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
-	}
+	// Execute in transaction
+	result, err := uc.ExecuteInTransaction(ctx, repo.MySQLStore, func(ctx context.Context, tx repo.Transaction) (any, error) {
+		// Call domain service
+		example, err := uc.exampleService.Create(ctx, createInput.Name, createInput.Alias)
+		if err != nil {
+			log.SugaredLogger.Errorf("Failed to create example: %v", err)
+			return nil, fmt.Errorf("failed to create example: %w", err)
+		}
 
-	// Convert domain model to response using the converter
-	result, err := uc.converter.ToExampleResponse(createdExample)
+		// Create output DTO
+		return NewExampleOutput(example), nil
+	})
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert response: %w", err)
+		return nil, err
 	}
 
 	return result, nil

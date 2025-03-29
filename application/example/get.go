@@ -4,55 +4,52 @@ import (
 	"context"
 	"fmt"
 
+	"go-hexagonal/application/core"
 	"go-hexagonal/domain/repo"
 	"go-hexagonal/domain/service"
+	"go-hexagonal/util/log"
 )
 
-// GetUseCase handles the get example by ID use case
+// GetUseCase handles the get example use case
 type GetUseCase struct {
+	*core.UseCaseHandler
 	exampleService service.IExampleService
-	converter      service.Converter
-	txFactory      repo.TransactionFactory
 }
 
 // NewGetUseCase creates a new GetUseCase instance
 func NewGetUseCase(
 	exampleService service.IExampleService,
-	converter service.Converter,
 	txFactory repo.TransactionFactory,
 ) *GetUseCase {
 	return &GetUseCase{
+		UseCaseHandler: core.NewUseCaseHandler(txFactory),
 		exampleService: exampleService,
-		converter:      converter,
-		txFactory:      txFactory,
 	}
 }
 
-// Execute processes the get example by ID request
-func (uc *GetUseCase) Execute(ctx context.Context, id int) (any, error) {
-	// Create a transaction for consistent read
-	tx, err := uc.txFactory.NewTransaction(ctx, repo.MySQLStore, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create transaction: %w", err)
+// Execute processes the get example request
+func (uc *GetUseCase) Execute(ctx context.Context, input any) (any, error) {
+	// Convert and validate input
+	getInput, ok := input.(*GetInput)
+	if !ok {
+		return nil, core.ValidationError("invalid input type", nil)
 	}
-	defer tx.Rollback()
 
-	// Call domain service
-	example, err := uc.exampleService.Get(ctx, id)
+	if err := getInput.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Retrieve example directly (no transaction needed)
+	example, err := uc.exampleService.Get(ctx, getInput.ID)
 	if err != nil {
+		log.SugaredLogger.Errorf("Failed to get example: %v", err)
 		return nil, fmt.Errorf("failed to get example: %w", err)
 	}
 
-	// Commit read-only transaction
-	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	if example == nil {
+		return nil, core.NotFoundError(fmt.Sprintf("example with ID %d not found", getInput.ID))
 	}
 
-	// Convert domain model to response using the converter
-	result, err := uc.converter.ToExampleResponse(example)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert response: %w", err)
-	}
-
-	return result, nil
+	// Create output DTO
+	return NewExampleOutput(example), nil
 }

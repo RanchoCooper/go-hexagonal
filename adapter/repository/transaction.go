@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"time"
 
+	"go-hexagonal/domain/repo"
+
 	"gorm.io/gorm"
 )
 
@@ -15,19 +17,22 @@ const DefaultTimeout = 30 * time.Second
 
 // Transaction represents a database transaction
 type Transaction struct {
+	ctx     context.Context
 	Session *gorm.DB
 	TxOpt   *sql.TxOptions
+	store   repo.StoreType
+	options *repo.TransactionOptions
 }
 
 // Conn returns a database connection with transaction support
-func (tr *Transaction) Conn(ctx context.Context) any {
+func (tr *Transaction) Conn() any {
 	if tr == nil {
 		return nil
 	}
 	if tr.Session == nil {
 		return nil
 	}
-	return tr.Session.WithContext(ctx)
+	return tr.Session.WithContext(tr.ctx)
 }
 
 // Begin starts a new transaction
@@ -62,9 +67,55 @@ func (tr *Transaction) Rollback() error {
 	return nil
 }
 
+// WithContext returns a new transaction with the given context
+func (tr *Transaction) WithContext(ctx context.Context) repo.Transaction {
+	if tr == nil {
+		return nil
+	}
+	newTr := *tr
+	newTr.ctx = ctx
+	if newTr.Session != nil {
+		newTr.Session = newTr.Session.WithContext(ctx)
+	}
+	return &newTr
+}
+
+// Context returns the transaction's context
+func (tr *Transaction) Context() context.Context {
+	return tr.ctx
+}
+
+// StoreType returns the store type
+func (tr *Transaction) StoreType() repo.StoreType {
+	return tr.store
+}
+
+// Options returns the transaction options
+func (tr *Transaction) Options() *repo.TransactionOptions {
+	return tr.options
+}
+
 // NewTransaction creates a new transaction with the specified store type and options
-func NewTransaction(ctx context.Context, store StoreType, client any, opt *sql.TxOptions) (*Transaction, error) {
-	tr := &Transaction{TxOpt: opt}
+func NewTransaction(ctx context.Context, store StoreType, client any, sqlOpt *sql.TxOptions) (*Transaction, error) {
+	// Convert store type to domain store type
+	domainStore := repo.StoreType(store)
+
+	// Convert SQL options to transaction options
+	var options *repo.TransactionOptions
+	if sqlOpt != nil {
+		options = &repo.TransactionOptions{
+			ReadOnly: sqlOpt.ReadOnly,
+		}
+	} else {
+		options = repo.DefaultTransactionOptions()
+	}
+
+	tr := &Transaction{
+		ctx:     ctx,
+		TxOpt:   sqlOpt,
+		store:   domainStore,
+		options: options,
+	}
 
 	switch store {
 	case MySQLStore, PostgreSQLStore:

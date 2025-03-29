@@ -19,8 +19,8 @@ type mockExampleService struct {
 	mock.Mock
 }
 
-func (m *mockExampleService) Create(ctx context.Context, example *model.Example) (*model.Example, error) {
-	args := m.Called(ctx, example)
+func (m *mockExampleService) Create(ctx context.Context, name string, alias string) (*model.Example, error) {
+	args := m.Called(ctx, name, alias)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -32,8 +32,8 @@ func (m *mockExampleService) Delete(ctx context.Context, id int) error {
 	return args.Error(0)
 }
 
-func (m *mockExampleService) Update(ctx context.Context, example *model.Example) error {
-	args := m.Called(ctx, example)
+func (m *mockExampleService) Update(ctx context.Context, id int, name string, alias string) error {
+	args := m.Called(ctx, id, name, alias)
 	return args.Error(0)
 }
 
@@ -84,7 +84,7 @@ func (uc *testableCreateUseCase) Execute(ctx context.Context, input dto.CreateEx
 	}
 
 	// Call domain service
-	createdExample, err := uc.exampleService.Create(ctx, example)
+	createdExample, err := uc.exampleService.Create(ctx, example.Name, example.Alias)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create example: %w", err)
 	}
@@ -127,7 +127,7 @@ func TestCreateUseCase_Execute_Success(t *testing.T) {
 	}
 
 	// Setup any Create call to return the expected result
-	mockService.On("Create", mock.Anything, mock.Anything).Return(expectedExample, nil)
+	mockService.On("Create", mock.Anything, mock.Anything, mock.Anything).Return(expectedExample, nil)
 
 	// Create use case with testable version
 	useCase := newTestableCreateUseCase(mockService)
@@ -161,7 +161,7 @@ func TestCreateUseCase_Execute_Error(t *testing.T) {
 
 	// Setup mock behavior - simulate error
 	expectedError := assert.AnError
-	mockService.On("Create", mock.Anything, mock.Anything).Return(nil, expectedError)
+	mockService.On("Create", mock.Anything, mock.Anything, mock.Anything).Return(nil, expectedError)
 
 	// Create use case with testable version
 	useCase := newTestableCreateUseCase(mockService)

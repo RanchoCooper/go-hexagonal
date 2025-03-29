@@ -63,6 +63,22 @@ Hexagonal Architecture (also known as [Ports and Adapters Architecture](https://
 - Key tracking for improved cache hit rates
 - Cache consistency mechanisms for data integrity
 
+### Dual-Mode HTTP Handlers
+- Flexible HTTP handlers that can work with both application layer factories and direct domain services
+- Support for direct service calls in testing and simpler use cases
+- Improved testability with better converter integration for request/response transformations
+- Graceful fallback to application factory mode when direct service mode is not available
+- Enhanced testing capabilities with simplified mock setup
+
+### Comprehensive Monitoring and Observability
+- Prometheus metrics collection for all layers of the application
+- HTTP request tracking with duration, status codes, and error rates
+- Database operation monitoring with query duration and error counts
+- Transaction performance metrics with operation tracking
+- Cache performance monitoring with hit/miss ratios
+- Domain event monitoring for business process insights
+- Customizable metrics endpoints with health check support
+
 ## Project Structure
 
 ```
@@ -83,6 +99,7 @@ Hexagonal Architecture (also known as [Ports and Adapters Architecture](https://
 │   ├── dto/                # Data Transfer Objects for API
 │   ├── error_code/         # Error code definitions
 │   ├── grpc/               # gRPC API handlers
+│   ├── middleware/         # Global middleware including metrics collection
 │   └── http/               # HTTP API handlers
 │       ├── handle/         # Request handlers using domain interfaces
 │       ├── middleware/     # HTTP middleware

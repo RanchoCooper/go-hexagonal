@@ -33,6 +33,7 @@
 - **[单元测试](https://en.wikipedia.org/wiki/Unit_testing)** - 使用 [go-sqlmock](https://github.com/DATA-DOG/go-sqlmock)、[redismock](https://github.com/go-redis/redismock) 和 [testify/mock](https://github.com/stretchr/testify) 进行全面的测试覆盖
 - **事务支持** - 提供无操作事务实现，简化服务层与仓储层的交互
 - **异步事件处理** - 支持异步事件处理，包含工作池、事件持久化和重放功能
+- **监控和可观察性** - 集成 [Prometheus](https://prometheus.io) 进行指标收集，测量HTTP请求、数据库操作、缓存性能和领域事件，内置中间件跟踪请求性能
 
 ### 开发工具链
 - **代码质量** - 集成 [Golangci-lint](https://github.com/golangci/golangci-lint) 进行代码质量检查
@@ -63,6 +64,22 @@
 - 键追踪提高缓存命中率
 - 缓存一致性机制确保数据完整性
 
+### 双模式 HTTP 处理器
+- 灵活的 HTTP 处理器，可同时适用于应用层工厂和直接域服务调用
+- 支持在测试和简单用例中直接调用服务
+- 改进的可测试性，通过更好的转换器集成优化请求/响应转换
+- 当直接服务模式不可用时优雅降级到应用工厂模式
+- 通过简化的模拟设置增强测试能力
+
+### 全面的监控和可观察性
+- 基于Prometheus的全应用层次指标收集
+- HTTP请求跟踪，包括持续时间、状态码和错误率
+- 数据库操作监控，包括查询持续时间和错误计数
+- 事务性能指标，支持操作跟踪
+- 缓存性能监控，支持命中率/未命中率分析
+- 领域事件监控，提供业务流程洞察
+- 可定制的指标端点，支持健康检查
+
 ## 项目结构
 
 ```
@@ -83,6 +100,7 @@
 │   ├── dto/                # API 数据传输对象
 │   ├── error_code/         # 错误码定义
 │   ├── grpc/               # gRPC API 处理器
+│   ├── middleware/         # 全局中间件，包括指标收集
 │   └── http/               # HTTP API 处理器
 │       ├── handle/         # 使用领域接口的请求处理器
 │       ├── middleware/     # HTTP 中间件

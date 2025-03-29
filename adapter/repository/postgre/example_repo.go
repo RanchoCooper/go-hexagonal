@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"go-hexagonal/adapter/repository"
 	"go-hexagonal/domain/model"
 	"go-hexagonal/domain/repo"
 )
@@ -125,8 +126,11 @@ func (r *ExampleRepo) FindByName(ctx context.Context, tr repo.Transaction, name 
 // getDB returns the appropriate database connection based on transaction
 func (r *ExampleRepo) getDB(ctx context.Context, tr repo.Transaction) *gorm.DB {
 	if tr != nil {
-		if db, ok := tr.Conn(ctx).(*gorm.DB); ok {
-			return db
+		// Use transaction context
+		txCtx := tr.Context()
+		// Check if we can get session from transaction implementation
+		if repo, ok := tr.(*repository.Transaction); ok && repo.Session != nil {
+			return repo.Session.WithContext(txCtx)
 		}
 	}
 	return r.client.GetDB(ctx)

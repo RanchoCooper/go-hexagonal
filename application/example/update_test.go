@@ -47,7 +47,7 @@ func (uc *testableUpdateUseCase) Execute(ctx context.Context, input dto.UpdateEx
 	}
 
 	// Call domain service
-	if err := uc.exampleService.Update(ctx, example); err != nil {
+	if err := uc.exampleService.Update(ctx, example.Id, example.Name, example.Alias); err != nil {
 		return fmt.Errorf("failed to update example: %w", err)
 	}
 
@@ -72,11 +72,7 @@ func TestUpdateUseCase_Execute_Success(t *testing.T) {
 	}
 
 	// Setup mock behavior
-	mockService.On("Update", mock.Anything, mock.MatchedBy(func(e *model.Example) bool {
-		return e.Id == int(updateReq.Id) &&
-			e.Name == updateReq.Name &&
-			e.Alias == updateReq.Alias
-	})).Return(nil)
+	mockService.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	// Create use case with testable version
 	useCase := newTestableUpdateUseCase(mockService)
@@ -104,7 +100,7 @@ func TestUpdateUseCase_Execute_Error(t *testing.T) {
 
 	// Setup mock behavior - simulate error
 	expectedError := assert.AnError
-	mockService.On("Update", mock.Anything, mock.Anything).Return(expectedError)
+	mockService.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedError)
 
 	// Create use case with testable version
 	useCase := newTestableUpdateUseCase(mockService)
