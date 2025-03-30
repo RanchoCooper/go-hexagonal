@@ -1,55 +1,75 @@
-env: "local"
+env: dev
 app:
-  name: "go-hexagonal"
-  version: "v0.1.0"
+  name: go-hexagonal
   debug: true
+  version: v1.0.0
 http_server:
-  addr: ":3000"
+  addr: :8080
   pprof: false
   default_page_size: 10
   max_page_size: 100
-  read_timeout: "60s"
-  write_timeout: "60s"
+  read_timeout: 60s
+  write_timeout: 60s
+metrics_server:
+  addr: :9090
+  enabled: true
+  path: /metrics
 log:
-  save_path: "/tmp"
-  file_name: "go-hexagonal.log"
-  max_size: 512
-  max_age: 7
+  save_path: ./logs
+  file_name: app
+  max_size: 100
+  max_age: 30
   local_time: true
-  compress: false
-  level: "info"
+  compress: true
+  level: debug
   enable_console: true
   enable_color: true
   enable_caller: true
-  enable_stacktrace: true
+  enable_stacktrace: false
 mysql:
-  user: "root"
-  password: "mysqlroot"
-  host: "localhost"
+  user: root
+  password: root
+  host: 127.0.0.1
   port: 3306
-  database: "go_hexagonal"
-  char_set: "utf8mb4"
-  parse_time: true
-  time_zone: "Asia%2fShanghai"
-  max_idle_conns: 50
+  database: go_hexagonal
+  max_idle_conns: 10
   max_open_conns: 100
-  max_life_time: "36000s"
-  max_idle_time: "3600s"
+  max_life_time: 300s
+  max_idle_time: 300s
+  char_set: utf8mb4
+  parse_time: true
+  time_zone: Local
 redis:
-  host: "localhost"
+  host: 127.0.0.1
   port: 6379
-  username: ""
   password: ""
   db: 0
-  pool_size: 300
-  idle_timeout: 30
-  min_idle_conns: 100
+  poolSize: 10
+  idleTimeout: 300
+  minIdleConns: 5
 postgres:
-    host: "localhost"
-    port: 5432
-    username: "postgres"
-    password: "123456"
-    db_name: "postgres"
-    ssl_mode: "disable"
-    time_zone: "UTC"
-migration_dir: "./tests/postgre/migrations"
+  user: postgres
+  password: postgres
+  host: 127.0.0.1
+  port: 5432
+  database: go_hexagonal
+  ssl_mode: disable
+  options: ""
+  max_connections: 100
+  min_connections: 10
+  max_conn_lifetime: 300
+  idle_timeout: 300
+  connect_timeout: 10
+  time_zone: UTC
+mongodb:
+  host: 127.0.0.1
+  port: 27017
+  database: go_hexagonal
+  user: ""
+  password: ""
+  auth_source: admin
+  options: ""
+  min_pool_size: 5
+  max_pool_size: 100
+  idle_timeout: 300
+migration_dir: ./migrations

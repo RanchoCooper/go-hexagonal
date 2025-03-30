@@ -9,8 +9,9 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 
-	"go-hexagonal/api/http/middleware"
+	httpMiddleware "go-hexagonal/api/http/middleware"
 	"go-hexagonal/api/http/validator/custom"
+	metricsMiddleware "go-hexagonal/api/middleware"
 	"go-hexagonal/application"
 	"go-hexagonal/config"
 	"go-hexagonal/domain/repo"
@@ -19,12 +20,19 @@ import (
 
 // Service instances for API handlers
 var (
-	services *service.Services
+	services  *service.Services
+	converter service.Converter
 )
 
 // RegisterServices registers service instances for API handlers
 func RegisterServices(s *service.Services) {
 	services = s
+}
+
+// RegisterConverter registers a converter instance for API handlers
+// This is mainly used for testing
+func RegisterConverter(c service.Converter) {
+	converter = c
 }
 
 // InitAppFactory initializes the application factory and sets it for API handlers
@@ -35,10 +43,10 @@ func InitAppFactory(s *service.Services) {
 	// Create application factory with necessary parameters
 	factory := application.NewFactory(
 		s.ExampleService,
-		s.Converter,
 		txFactory,
 	)
 
+	// Use the external SetAppFactory function defined in example.go
 	SetAppFactory(factory)
 }
 
@@ -57,11 +65,33 @@ func NewServerRoute() *gin.Engine {
 
 	// Apply middleware
 	router.Use(gin.Recovery())
-	router.Use(middleware.RequestID()) // Add request ID middleware
-	router.Use(middleware.Cors())
-	router.Use(middleware.RequestLogger()) // Add request logging middleware
-	router.Use(middleware.Translations())
-	router.Use(middleware.ErrorHandlerMiddleware()) // Add unified error handling middleware
+	router.Use(httpMiddleware.RequestID()) // Add request ID middleware
+	router.Use(httpMiddleware.Cors())
+	router.Use(httpMiddleware.RequestLogger()) // Add request logging middleware
+	router.Use(httpMiddleware.Translations())
+	router.Use(httpMiddleware.ErrorHandlerMiddleware()) // Add unified error handling middleware
+
+	// Add metrics middleware for each handler
+	router.Use(func(c *gin.Context) {
+		// Use the path as a label for the metrics
+		handlerName := c.FullPath()
+		if handlerName == "" {
+			handlerName = "unknown"
+		}
+
+		// Record the start time
+		start := time.Now()
+
+		// Process the request
+		c.Next()
+
+		// Record metrics after request is processed
+		duration := time.Since(start)
+		statusCode := c.Writer.Status()
+
+		// Record request metrics
+		metricsMiddleware.RecordHTTPMetrics(handlerName, c.Request.Method, statusCode, duration)
+	})
 
 	// Health check
 	router.GET("/ping", func(c *gin.Context) {
@@ -70,7 +100,7 @@ func NewServerRoute() *gin.Engine {
 
 	// Debug tools
 	if config.GlobalConfig.HTTPServer.Pprof {
-		middleware.RegisterPprof(router)
+		httpMiddleware.RegisterPprof(router)
 	}
 
 	// Configure CORS

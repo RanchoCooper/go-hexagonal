@@ -36,15 +36,16 @@ func GetLastConfigChangeTime() time.Time {
 }
 
 type Config struct {
-	Env          Env               `yaml:"env" mapstructure:"env"`
-	App          *AppConfig        `yaml:"app" mapstructure:"app"`
-	HTTPServer   *HttpServerConfig `yaml:"http_server" mapstructure:"http_server"`
-	Log          *LogConfig        `yaml:"log" mapstructure:"log"`
-	MySQL        *MySQLConfig      `yaml:"mysql" mapstructure:"mysql"`
-	Redis        *RedisConfig      `yaml:"redis" mapstructure:"redis"`
-	Postgre      *PostgreSQLConfig `yaml:"postgres" mapstructure:"postgres"`
-	MongoDB      *MongoDBConfig    `yaml:"mongodb" mapstructure:"mongodb"`
-	MigrationDir string            `yaml:"migration_dir" mapstructure:"migration_dir"`
+	Env           Env               `yaml:"env" mapstructure:"env"`
+	App           *AppConfig        `yaml:"app" mapstructure:"app"`
+	HTTPServer    *HttpServerConfig `yaml:"http_server" mapstructure:"http_server"`
+	MetricsServer *MetricsConfig    `yaml:"metrics_server" mapstructure:"metrics_server"`
+	Log           *LogConfig        `yaml:"log" mapstructure:"log"`
+	MySQL         *MySQLConfig      `yaml:"mysql" mapstructure:"mysql"`
+	Redis         *RedisConfig      `yaml:"redis" mapstructure:"redis"`
+	Postgre       *PostgreSQLConfig `yaml:"postgres" mapstructure:"postgres"`
+	MongoDB       *MongoDBConfig    `yaml:"mongodb" mapstructure:"mongodb"`
+	MigrationDir  string            `yaml:"migration_dir" mapstructure:"migration_dir"`
 }
 
 type AppConfig struct {
@@ -60,6 +61,12 @@ type HttpServerConfig struct {
 	MaxPageSize     int    `yaml:"max_page_size" mapstructure:"max_page_size"`
 	ReadTimeout     string `yaml:"read_timeout" mapstructure:"read_timeout"`
 	WriteTimeout    string `yaml:"write_timeout" mapstructure:"write_timeout"`
+}
+
+type MetricsConfig struct {
+	Addr    string `yaml:"addr" mapstructure:"addr"`
+	Enabled bool   `yaml:"enabled" mapstructure:"enabled"`
+	Path    string `yaml:"path" mapstructure:"path"`
 }
 
 type LogConfig struct {
@@ -179,6 +186,7 @@ func applyEnvOverrides(conf *Config) {
 	// Apply config overrides by category
 	applyAppEnvOverrides(conf)
 	applyHTTPServerEnvOverrides(conf)
+	applyMetricsServerEnvOverrides(conf)
 	applyMySQLEnvOverrides(conf)
 	applyPostgresEnvOverrides(conf)
 	applyRedisEnvOverrides(conf)
@@ -233,6 +241,28 @@ func applyHTTPServerEnvOverrides(conf *Config) {
 	}
 	if writeTimeout := os.Getenv("APP_HTTP_SERVER_WRITE_TIMEOUT"); writeTimeout != "" {
 		conf.HTTPServer.WriteTimeout = writeTimeout
+	}
+}
+
+// applyMetricsServerEnvOverrides applies metrics server related environment variables
+func applyMetricsServerEnvOverrides(conf *Config) {
+	// Initialize MetricsServer if it doesn't exist
+	if conf.MetricsServer == nil {
+		conf.MetricsServer = &MetricsConfig{
+			Addr:    ":9090",
+			Enabled: true,
+			Path:    "/metrics",
+		}
+	}
+
+	if addr := os.Getenv("APP_METRICS_SERVER_ADDR"); addr != "" {
+		conf.MetricsServer.Addr = addr
+	}
+	if enabled := os.Getenv("APP_METRICS_SERVER_ENABLED"); enabled != "" {
+		conf.MetricsServer.Enabled = enabled == TrueStr
+	}
+	if path := os.Getenv("APP_METRICS_SERVER_PATH"); path != "" {
+		conf.MetricsServer.Path = path
 	}
 }
 

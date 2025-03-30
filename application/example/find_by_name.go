@@ -3,61 +3,53 @@ package example
 import (
 	"context"
 	"fmt"
-	"strings"
 
+	"go-hexagonal/application/core"
 	"go-hexagonal/domain/repo"
 	"go-hexagonal/domain/service"
+	"go-hexagonal/util/log"
 )
 
 // FindByNameUseCase handles the find example by name use case
 type FindByNameUseCase struct {
+	*core.UseCaseHandler
 	exampleService service.IExampleService
-	converter      service.Converter
-	txFactory      repo.TransactionFactory
 }
 
 // NewFindByNameUseCase creates a new FindByNameUseCase instance
 func NewFindByNameUseCase(
 	exampleService service.IExampleService,
-	converter service.Converter,
 	txFactory repo.TransactionFactory,
 ) *FindByNameUseCase {
 	return &FindByNameUseCase{
+		UseCaseHandler: core.NewUseCaseHandler(txFactory),
 		exampleService: exampleService,
-		converter:      converter,
-		txFactory:      txFactory,
 	}
 }
 
 // Execute processes the find example by name request
-func (uc *FindByNameUseCase) Execute(ctx context.Context, name string) (any, error) {
-	// Create a transaction for consistent read
-	tx, err := uc.txFactory.NewTransaction(ctx, repo.MySQLStore, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create transaction: %w", err)
+func (uc *FindByNameUseCase) Execute(ctx context.Context, input any) (any, error) {
+	// Convert and validate input
+	findInput, ok := input.(*FindByNameInput)
+	if !ok {
+		return nil, core.ValidationError("invalid input type", nil)
 	}
-	defer tx.Rollback()
 
-	// Call domain service
-	example, err := uc.exampleService.FindByName(ctx, name)
+	if err := findInput.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Find example by name (no transaction needed for read-only operation)
+	example, err := uc.exampleService.FindByName(ctx, findInput.Name)
 	if err != nil {
-		// Check for "record not found" error
-		if strings.Contains(err.Error(), "record not found") {
-			return nil, fmt.Errorf("record not found")
-		}
+		log.SugaredLogger.Errorf("Failed to find example by name: %v", err)
 		return nil, fmt.Errorf("failed to find example by name: %w", err)
 	}
 
-	// Commit read-only transaction
-	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	if example == nil {
+		return nil, core.NotFoundError(fmt.Sprintf("example with name '%s' not found", findInput.Name))
 	}
 
-	// Convert domain model to response using the converter
-	result, err := uc.converter.ToExampleResponse(example)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert response: %w", err)
-	}
-
-	return result, nil
+	// Create output DTO
+	return NewExampleOutput(example), nil
 }

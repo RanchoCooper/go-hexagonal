@@ -129,7 +129,7 @@ func (m *MockTransactionFactory) NewTransaction(ctx context.Context, store repo.
 
 // setupTest sets up the test environment
 func setupTest(t *testing.T) (*gin.Engine, *MockExampleRepo, *service.ExampleService, *MockConverter, func()) {
-	// Save original services and factory
+	// Save original services and appFactory
 	originalServices := services
 	originalAppFactory := appFactory
 
@@ -149,8 +149,11 @@ func setupTest(t *testing.T) (*gin.Engine, *MockExampleRepo, *service.ExampleSer
 	// Create mock converter
 	mockConverter := new(MockConverter)
 
+	// Create mock cache repository (nil is fine for tests)
+	var mockCacheRepo repo.IExampleCacheRepo = nil
+
 	// Create test service
-	testService := service.NewExampleService(mockRepo)
+	testService := service.NewExampleService(mockRepo, mockCacheRepo)
 
 	// Create test services
 	testServices := &service.Services{
@@ -160,8 +163,8 @@ func setupTest(t *testing.T) (*gin.Engine, *MockExampleRepo, *service.ExampleSer
 	// Register test services
 	RegisterServices(testServices)
 
-	// Initialize application factory
-	testAppFactory := application.NewFactory(testService, mockConverter, mockTxFactory)
+	// Initialize application factory - no longer needs converter
+	testAppFactory := application.NewFactory(testService, mockTxFactory)
 	SetAppFactory(testAppFactory)
 
 	// Set up Gin
@@ -181,7 +184,11 @@ func TestCreateExample(t *testing.T) {
 	router, mockRepo, _, mockConverter, cleanup := setupTest(t)
 	defer cleanup()
 
+	// Register handler
 	router.POST("/api/examples", CreateExample)
+
+	// Register mock converter
+	RegisterConverter(mockConverter)
 
 	// Prepare test data
 	expectedExample := &model.Example{
@@ -190,10 +197,11 @@ func TestCreateExample(t *testing.T) {
 		Alias: "test",
 	}
 
-	// Set up mock behavior
-	mockConverter.On("FromCreateRequest", mock.AnythingOfType("dto.CreateExampleReq")).Return(expectedExample, nil)
-	mockConverter.On("ToExampleResponse", expectedExample).Return(expectedExample, nil)
+	// Set up mock behavior for direct service call
 	mockRepo.On("Create", mock.Anything, mock.Anything, mock.AnythingOfType("*model.Example")).Return(expectedExample, nil)
+	// 设置转换器的预期行为
+	mockConverter.On("FromCreateRequest", mock.AnythingOfType("*dto.CreateExampleReq")).Return(expectedExample, nil)
+	mockConverter.On("ToExampleResponse", expectedExample).Return(expectedExample, nil)
 
 	// Create request
 	requestBody := map[string]any{
@@ -218,7 +226,11 @@ func TestGetExample(t *testing.T) {
 	router, mockRepo, _, mockConverter, cleanup := setupTest(t)
 	defer cleanup()
 
+	// Register handler
 	router.GET("/api/examples/:id", GetExample)
+
+	// Register mock converter
+	RegisterConverter(mockConverter)
 
 	// Prepare test data
 	expectedExample := &model.Example{
@@ -227,7 +239,7 @@ func TestGetExample(t *testing.T) {
 		Alias: "test",
 	}
 
-	// Set up mock behavior
+	// Set up mock behavior for direct service call
 	mockRepo.On("GetByID", mock.Anything, mock.Anything, 1).Return(expectedExample, nil)
 	mockConverter.On("ToExampleResponse", expectedExample).Return(expectedExample, nil)
 
@@ -248,7 +260,11 @@ func TestUpdateExample(t *testing.T) {
 	router, mockRepo, _, mockConverter, cleanup := setupTest(t)
 	defer cleanup()
 
+	// Register handler
 	router.PUT("/api/examples/:id", UpdateExample)
+
+	// Register mock converter
+	RegisterConverter(mockConverter)
 
 	// Prepare test data
 	exampleModel := &model.Example{
@@ -257,9 +273,10 @@ func TestUpdateExample(t *testing.T) {
 		Alias: "updated",
 	}
 
-	// Set up mock behavior
-	mockConverter.On("FromUpdateRequest", mock.AnythingOfType("dto.UpdateExampleReq")).Return(exampleModel, nil)
+	// Set up mock behavior for direct service call
+	mockRepo.On("GetByID", mock.Anything, mock.Anything, 1).Return(exampleModel, nil)
 	mockRepo.On("Update", mock.Anything, mock.Anything, mock.AnythingOfType("*model.Example")).Return(nil)
+	mockConverter.On("FromUpdateRequest", mock.AnythingOfType("*dto.UpdateExampleReq")).Return(exampleModel, nil)
 
 	// Create request
 	requestBody := map[string]any{
@@ -286,7 +303,15 @@ func TestDeleteExample(t *testing.T) {
 
 	router.DELETE("/api/examples/:id", DeleteExample)
 
-	// Set up mock behavior
+	// Prepare test data
+	example := &model.Example{
+		Id:    1,
+		Name:  "Test Example",
+		Alias: "test",
+	}
+
+	// Set up mock behavior - service call requires these two mocks
+	mockRepo.On("GetByID", mock.Anything, mock.Anything, 1).Return(example, nil)
 	mockRepo.On("Delete", mock.Anything, mock.Anything, 1).Return(nil)
 
 	// Create request
@@ -296,7 +321,7 @@ func TestDeleteExample(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, req)
 
-	// Check results
+	// Verify results
 	assert.Equal(t, http.StatusOK, recorder.Code)
 	mockRepo.AssertExpectations(t)
 }
@@ -305,7 +330,11 @@ func TestFindExampleByName(t *testing.T) {
 	router, mockRepo, _, mockConverter, cleanup := setupTest(t)
 	defer cleanup()
 
+	// Register handler
 	router.GET("/api/examples/name/:name", FindExampleByName)
+
+	// Register mock converter
+	RegisterConverter(mockConverter)
 
 	// Prepare test data
 	expectedExample := &model.Example{

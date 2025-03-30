@@ -10,6 +10,7 @@ import (
 
 	"go-hexagonal/adapter/dependency"
 	"go-hexagonal/adapter/repository"
+	"go-hexagonal/api/middleware"
 	"go-hexagonal/cmd/http_server"
 	"go-hexagonal/config"
 	"go-hexagonal/util/log"
@@ -23,6 +24,8 @@ const ServiceName = "go-hexagonal"
 const (
 	// DefaultShutdownTimeout is the default timeout for graceful shutdown
 	DefaultShutdownTimeout = 5 * time.Second
+	// DefaultMetricsAddr is the default address for the metrics server
+	DefaultMetricsAddr = ":9090"
 )
 
 func main() {
@@ -37,6 +40,26 @@ func main() {
 	log.Logger.Info("Application starting",
 		zap.String("service", ServiceName),
 		zap.String("env", string(config.GlobalConfig.Env)))
+
+	// Initialize metrics collection system
+	middleware.InitializeMetrics()
+	log.Logger.Info("Metrics collection system initialized")
+
+	// Start metrics server in a separate goroutine if enabled
+	if config.GlobalConfig.MetricsServer != nil && config.GlobalConfig.MetricsServer.Enabled {
+		metricsAddr := config.GlobalConfig.MetricsServer.Addr
+		if metricsAddr == "" {
+			metricsAddr = DefaultMetricsAddr
+		}
+		go func() {
+			if err := middleware.StartMetricsServer(metricsAddr); err != nil {
+				log.Logger.Error("Failed to start metrics server", zap.Error(err))
+			}
+		}()
+		log.Logger.Info("Metrics server started", zap.String("address", metricsAddr))
+	} else {
+		log.Logger.Info("Metrics server is disabled")
+	}
 
 	// Create context and cancel function
 	ctx, cancel := context.WithCancel(context.Background())

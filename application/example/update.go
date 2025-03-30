@@ -4,54 +4,64 @@ import (
 	"context"
 	"fmt"
 
+	"go-hexagonal/application/core"
 	"go-hexagonal/domain/repo"
 	"go-hexagonal/domain/service"
+	"go-hexagonal/util/log"
 )
 
 // UpdateUseCase handles the update example use case
 type UpdateUseCase struct {
+	*core.UseCaseHandler
 	exampleService service.IExampleService
-	converter      service.Converter
-	txFactory      repo.TransactionFactory
 }
 
 // NewUpdateUseCase creates a new UpdateUseCase instance
 func NewUpdateUseCase(
 	exampleService service.IExampleService,
-	converter service.Converter,
 	txFactory repo.TransactionFactory,
 ) *UpdateUseCase {
 	return &UpdateUseCase{
+		UseCaseHandler: core.NewUseCaseHandler(txFactory),
 		exampleService: exampleService,
-		converter:      converter,
-		txFactory:      txFactory,
 	}
 }
 
 // Execute processes the update example request
-func (uc *UpdateUseCase) Execute(ctx context.Context, input any) error {
-	// Convert input to domain model using the converter
-	example, err := uc.converter.FromUpdateRequest(input)
+func (uc *UpdateUseCase) Execute(ctx context.Context, input any) (any, error) {
+	// Convert and validate input
+	updateInput, ok := input.(*UpdateInput)
+	if !ok {
+		return nil, core.ValidationError("invalid input type", nil)
+	}
+
+	if err := updateInput.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Execute in transaction
+	result, err := uc.ExecuteInTransaction(ctx, repo.MySQLStore, func(ctx context.Context, tx repo.Transaction) (any, error) {
+		// Call domain service to update the example
+		err := uc.exampleService.Update(ctx, updateInput.ID, updateInput.Name, updateInput.Alias)
+		if err != nil {
+			log.SugaredLogger.Errorf("Failed to update example: %v", err)
+			return nil, fmt.Errorf("failed to update example: %w", err)
+		}
+
+		// Get the updated example
+		updatedExample, err := uc.exampleService.Get(ctx, updateInput.ID)
+		if err != nil {
+			log.SugaredLogger.Errorf("Failed to get updated example: %v", err)
+			return nil, fmt.Errorf("failed to get updated example: %w", err)
+		}
+
+		// Create output DTO
+		return NewExampleOutput(updatedExample), nil
+	})
+
 	if err != nil {
-		return fmt.Errorf("failed to convert request: %w", err)
+		return nil, err
 	}
 
-	// Create a real transaction for atomic operations
-	tx, err := uc.txFactory.NewTransaction(ctx, repo.MySQLStore, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create transaction: %w", err)
-	}
-	defer tx.Rollback()
-
-	// Call domain service
-	if err := uc.exampleService.Update(ctx, example); err != nil {
-		return fmt.Errorf("failed to update example: %w", err)
-	}
-
-	// Commit transaction
-	if err = tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
-	return nil
+	return result, nil
 }

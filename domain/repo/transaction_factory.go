@@ -4,6 +4,12 @@ import (
 	"context"
 )
 
+// TransactionFactory defines an interface for creating transactions
+type TransactionFactory interface {
+	// NewTransaction creates a new transaction with the specified store type and options
+	NewTransaction(ctx context.Context, store StoreType, opts any) (Transaction, error)
+}
+
 // NoopTransactionFactory is a no-operation transaction factory implementation
 type NoopTransactionFactory struct{}
 
