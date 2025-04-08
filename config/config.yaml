@@ -15,7 +15,7 @@ metrics_server:
   enabled: true
   path: /metrics
 log:
-  save_path: ./logs
+  save_path: ./tmp
   file_name: app
   max_size: 100
   max_age: 30
