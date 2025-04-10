@@ -11,24 +11,23 @@ import (
 	"go-hexagonal/domain/repo"
 )
 
-// mockExampleService is defined in create_test.go
-
-// Modify DeleteUseCase for testing purposes
+// testableDeleteUseCase is a testable implementation of the delete use case that replaces actual transaction handling
 type testableDeleteUseCase struct {
 	DeleteUseCase
 	txProvider func(ctx context.Context) (repo.Transaction, error)
 }
 
-func newTestableDeleteUseCase(svc *mockExampleService) *testableDeleteUseCase {
+// newTestableDeleteUseCase creates a testable delete use case
+func newTestableDeleteUseCase(svc *MockExampleService) *testableDeleteUseCase {
 	return &testableDeleteUseCase{
 		DeleteUseCase: DeleteUseCase{
 			exampleService: svc,
 		},
-		txProvider: mockTransaction,
+		txProvider: CreateTestTransaction,
 	}
 }
 
-// Override Execute method to replace transaction handling logic
+// Execute overrides the Execute method to replace transaction handling logic
 func (uc *testableDeleteUseCase) Execute(ctx context.Context, id int) error {
 	// Use mock transaction
 	tx, err := uc.txProvider(ctx)
@@ -50,17 +49,15 @@ func (uc *testableDeleteUseCase) Execute(ctx context.Context, id int) error {
 	return nil
 }
 
-// Mock transaction implementation is defined in create_test.go
-
 // TestDeleteUseCase_Execute_Success tests the successful case of deleting an example
 func TestDeleteUseCase_Execute_Success(t *testing.T) {
 	// Create mock service
-	mockService := new(mockExampleService)
+	mockService := new(MockExampleService)
 
 	// Setup mock behavior
 	mockService.On("Delete", mock.Anything, 1).Return(nil)
 
-	// Create use case with testable version
+	// Create testable use case
 	useCase := newTestableDeleteUseCase(mockService)
 
 	// Test data
@@ -70,7 +67,7 @@ func TestDeleteUseCase_Execute_Success(t *testing.T) {
 	// Execute use case
 	err := useCase.Execute(ctx, exampleId)
 
-	// Assert results
+	// Verify results
 	assert.NoError(t, err)
 	mockService.AssertExpectations(t)
 }
@@ -78,13 +75,13 @@ func TestDeleteUseCase_Execute_Success(t *testing.T) {
 // TestDeleteUseCase_Execute_Error tests the error case when deleting an example
 func TestDeleteUseCase_Execute_Error(t *testing.T) {
 	// Create mock service
-	mockService := new(mockExampleService)
+	mockService := new(MockExampleService)
 
 	// Setup mock behavior - simulate error
 	expectedError := assert.AnError
 	mockService.On("Delete", mock.Anything, 999).Return(expectedError)
 
-	// Create use case with testable version
+	// Create testable use case
 	useCase := newTestableDeleteUseCase(mockService)
 
 	// Test data
@@ -94,7 +91,7 @@ func TestDeleteUseCase_Execute_Error(t *testing.T) {
 	// Execute use case
 	err := useCase.Execute(ctx, exampleId)
 
-	// Assert results
+	// Verify results
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to delete example")
 	mockService.AssertExpectations(t)

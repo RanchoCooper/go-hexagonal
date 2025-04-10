@@ -13,24 +13,25 @@ import (
 	"go-hexagonal/domain/repo"
 )
 
-// mockExampleService is defined in create_test.go
+// MockExampleService is defined in create_test.go
 
-// Modify UpdateUseCase for testing purposes
+// testableUpdateUseCase modifies UpdateUseCase for testing purposes
 type testableUpdateUseCase struct {
 	UpdateUseCase
 	txProvider func(ctx context.Context) (repo.Transaction, error)
 }
 
-func newTestableUpdateUseCase(svc *mockExampleService) *testableUpdateUseCase {
+// newTestableUpdateUseCase creates a testable update use case
+func newTestableUpdateUseCase(svc *MockExampleService) *testableUpdateUseCase {
 	return &testableUpdateUseCase{
 		UpdateUseCase: UpdateUseCase{
 			exampleService: svc,
 		},
-		txProvider: mockTransaction,
+		txProvider: CreateTestTransaction,
 	}
 }
 
-// Override Execute method to replace transaction handling logic
+// Execute overrides the Execute method to replace transaction handling logic
 func (uc *testableUpdateUseCase) Execute(ctx context.Context, input dto.UpdateExampleReq) error {
 	// Use mock transaction
 	tx, err := uc.txProvider(ctx)
@@ -62,7 +63,7 @@ func (uc *testableUpdateUseCase) Execute(ctx context.Context, input dto.UpdateEx
 // TestUpdateUseCase_Execute_Success tests the successful case of updating an example
 func TestUpdateUseCase_Execute_Success(t *testing.T) {
 	// Create mock service
-	mockService := new(mockExampleService)
+	mockService := new(MockExampleService)
 
 	// Test data
 	updateReq := dto.UpdateExampleReq{
@@ -74,14 +75,14 @@ func TestUpdateUseCase_Execute_Success(t *testing.T) {
 	// Setup mock behavior
 	mockService.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	// Create use case with testable version
+	// Create testable use case
 	useCase := newTestableUpdateUseCase(mockService)
 
 	// Execute use case
 	ctx := context.Background()
 	err := useCase.Execute(ctx, updateReq)
 
-	// Assert results
+	// Verify results
 	assert.NoError(t, err)
 	mockService.AssertExpectations(t)
 }
@@ -89,7 +90,7 @@ func TestUpdateUseCase_Execute_Success(t *testing.T) {
 // TestUpdateUseCase_Execute_Error tests the error case when updating an example
 func TestUpdateUseCase_Execute_Error(t *testing.T) {
 	// Create mock service
-	mockService := new(mockExampleService)
+	mockService := new(MockExampleService)
 
 	// Test data
 	updateReq := dto.UpdateExampleReq{
@@ -102,14 +103,14 @@ func TestUpdateUseCase_Execute_Error(t *testing.T) {
 	expectedError := assert.AnError
 	mockService.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedError)
 
-	// Create use case with testable version
+	// Create testable use case
 	useCase := newTestableUpdateUseCase(mockService)
 
 	// Execute use case
 	ctx := context.Background()
 	err := useCase.Execute(ctx, updateReq)
 
-	// Assert results
+	// Verify results
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to update example")
 	mockService.AssertExpectations(t)

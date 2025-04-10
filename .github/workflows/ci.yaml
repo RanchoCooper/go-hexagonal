@@ -1,4 +1,4 @@
-name: CI/CD with Docker for Golang
+name: Golang Hexagonal Architecture CI
 
 on:
     push:
@@ -147,11 +147,17 @@ jobs:
                   fi
                 fi
 
-            - name: Run Unit Tests Only
-              run: go test -v ./... -short
+            - name: Run Unit Tests with Coverage
+              run: go test -v ./... -short -coverprofile=coverage.txt -covermode=atomic
               env:
                 CI: true
                 GO_ENV: test
+
+            - name: Upload coverage reports to Codecov
+              uses: codecov/codecov-action@v5
+              with:
+                token: ${{ secrets.CODECOV_TOKEN }}
+                slug: RanchoCooper/go-hexagonal
 
             - name: Run All Tests (Including Integration) with Increased Timeout
               if: false  # Disabled for now; enable when Docker setup is stable

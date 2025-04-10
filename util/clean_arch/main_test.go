@@ -1,4 +1,4 @@
-package repository
+package clean_arch
 
 import (
 	"os"

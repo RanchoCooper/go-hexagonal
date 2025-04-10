@@ -2,6 +2,11 @@
 
 Welcome to visit my [blog post](https://blog.ranchocooper.com/2025/03/20/go-hexagonal/)
 
+
+![CI Status](https://github.com/RanchoCooper/go-hexagonal/actions/workflows/ci.yaml/badge.svg)
+[![codecov](https://codecov.io/gh/RanchoCooper/go-hexagonal/branch/master/graph/badge.svg)](https://codecov.io/gh/RanchoCooper/go-hexagonal)
+
+
 ![Hexagonal Architecture](https://github.com/Sairyss/domain-driven-hexagon/raw/master/assets/images/DomainDrivenHexagon.png)
 
 ## Project Overview

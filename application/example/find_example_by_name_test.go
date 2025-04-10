@@ -15,25 +15,24 @@ import (
 	"go-hexagonal/domain/repo"
 )
 
-// mockExampleService is defined in create_test.go
-
-// Modify FindByNameUseCase for testing purposes
-type testableFindByNameUseCase struct {
+// TestableFindByNameUseCase is a testable implementation of the query use case that replaces actual transaction handling
+type TestableFindByNameUseCase struct {
 	FindByNameUseCase
 	txProvider func(ctx context.Context) (repo.Transaction, error)
 }
 
-func newTestableFindByNameUseCase(svc *mockExampleService) *testableFindByNameUseCase {
-	return &testableFindByNameUseCase{
+// NewTestableFindByNameUseCase creates a testable query use case
+func NewTestableFindByNameUseCase(svc *MockExampleService) *TestableFindByNameUseCase {
+	return &TestableFindByNameUseCase{
 		FindByNameUseCase: FindByNameUseCase{
 			exampleService: svc,
 		},
-		txProvider: mockTransaction,
+		txProvider: CreateTestTransaction,
 	}
 }
 
-// Override Execute method to replace transaction handling logic
-func (uc *testableFindByNameUseCase) Execute(ctx context.Context, name string) (*dto.GetExampleResponse, error) {
+// Execute overrides the method to replace transaction handling logic
+func (uc *TestableFindByNameUseCase) Execute(ctx context.Context, name string) (*dto.GetExampleResponse, error) {
 	// Use mock transaction
 	tx, err := uc.txProvider(ctx)
 	if err != nil {
@@ -47,7 +46,7 @@ func (uc *testableFindByNameUseCase) Execute(ctx context.Context, name string) (
 		if strings.Contains(err.Error(), "record not found") {
 			return nil, fmt.Errorf("record not found")
 		}
-		return nil, fmt.Errorf("failed to find example by name: %w", err)
+		return nil, fmt.Errorf("failed to find example: %w", err)
 	}
 
 	// Commit transaction
@@ -67,10 +66,10 @@ func (uc *testableFindByNameUseCase) Execute(ctx context.Context, name string) (
 	return result, nil
 }
 
-// TestFindByNameUseCase_Execute_Success tests the successful case of finding an example by name
-func TestFindByNameUseCase_Execute_Success(t *testing.T) {
+// TestFindByNameUseCase_Success tests the successful case of finding an example by name
+func TestFindByNameUseCase_Success(t *testing.T) {
 	// Create mock service
-	mockService := new(mockExampleService)
+	mockService := new(MockExampleService)
 
 	// Test data
 	exampleName := "Test Example"
@@ -88,7 +87,7 @@ func TestFindByNameUseCase_Execute_Success(t *testing.T) {
 	mockService.On("FindByName", mock.Anything, exampleName).Return(expectedExample, nil)
 
 	// Create use case with testable version
-	useCase := newTestableFindByNameUseCase(mockService)
+	useCase := NewTestableFindByNameUseCase(mockService)
 
 	// Execute use case
 	ctx := context.Background()
@@ -106,29 +105,27 @@ func TestFindByNameUseCase_Execute_Success(t *testing.T) {
 	mockService.AssertExpectations(t)
 }
 
-// TestFindByNameUseCase_Execute_Error tests the error case when finding an example by name
-func TestFindByNameUseCase_Execute_Error(t *testing.T) {
+// TestFindByNameUseCase_NotFound tests the case when an example is not found
+func TestFindByNameUseCase_NotFound(t *testing.T) {
 	// Create mock service
-	mockService := new(mockExampleService)
+	mockService := new(MockExampleService)
 
-	// Test data
-	exampleName := "Nonexistent Example"
-
-	// Setup mock behavior - simulate error
-	expectedError := assert.AnError
-	mockService.On("FindByName", mock.Anything, exampleName).Return(nil, expectedError)
+	// Setup mock behavior for not found case
+	mockService.On("FindByName", mock.Anything, "non-existent").Return(nil, repo.ErrNotFound)
 
 	// Create use case with testable version
-	useCase := newTestableFindByNameUseCase(mockService)
+	useCase := NewTestableFindByNameUseCase(mockService)
+
+	// Test data
+	ctx := context.Background()
+	name := "non-existent"
 
 	// Execute use case
-	ctx := context.Background()
-	result, err := useCase.Execute(ctx, exampleName)
+	result, err := useCase.Execute(ctx, name)
 
 	// Assert results
 	assert.Error(t, err)
 	assert.Nil(t, result)
 	assert.Contains(t, err.Error(), "failed to find example")
-
 	mockService.AssertExpectations(t)
 }

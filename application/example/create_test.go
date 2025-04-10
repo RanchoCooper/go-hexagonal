@@ -2,6 +2,7 @@ package example
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -9,17 +10,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"go-hexagonal/api/dto"
 	"go-hexagonal/domain/model"
 	"go-hexagonal/domain/repo"
 )
 
-// mockExampleService implements IExampleService interface for testing
-type mockExampleService struct {
+// MockExampleService mocks the example service for testing
+type MockExampleService struct {
 	mock.Mock
 }
 
-func (m *mockExampleService) Create(ctx context.Context, name string, alias string) (*model.Example, error) {
+// Create implements the Create method
+func (m *MockExampleService) Create(ctx context.Context, name, alias string) (*model.Example, error) {
 	args := m.Called(ctx, name, alias)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -27,17 +28,8 @@ func (m *mockExampleService) Create(ctx context.Context, name string, alias stri
 	return args.Get(0).(*model.Example), args.Error(1)
 }
 
-func (m *mockExampleService) Delete(ctx context.Context, id int) error {
-	args := m.Called(ctx, id)
-	return args.Error(0)
-}
-
-func (m *mockExampleService) Update(ctx context.Context, id int, name string, alias string) error {
-	args := m.Called(ctx, id, name, alias)
-	return args.Error(0)
-}
-
-func (m *mockExampleService) Get(ctx context.Context, id int) (*model.Example, error) {
+// Get implements the Get method
+func (m *MockExampleService) Get(ctx context.Context, id int) (*model.Example, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -45,7 +37,8 @@ func (m *mockExampleService) Get(ctx context.Context, id int) (*model.Example, e
 	return args.Get(0).(*model.Example), args.Error(1)
 }
 
-func (m *mockExampleService) FindByName(ctx context.Context, name string) (*model.Example, error) {
+// FindByName implements the FindByName method
+func (m *MockExampleService) FindByName(ctx context.Context, name string) (*model.Example, error) {
 	args := m.Called(ctx, name)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -53,38 +46,50 @@ func (m *mockExampleService) FindByName(ctx context.Context, name string) (*mode
 	return args.Get(0).(*model.Example), args.Error(1)
 }
 
-// Modify CreateUseCase for testing purposes
-type testableCreateUseCase struct {
+// Delete implements the Delete method
+func (m *MockExampleService) Delete(ctx context.Context, id int) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+// Update implements the Update method
+func (m *MockExampleService) Update(ctx context.Context, id int, name, alias string) error {
+	args := m.Called(ctx, id, name, alias)
+	return args.Error(0)
+}
+
+// TestablCreateUseCase modifies CreateUseCase for testing purposes
+type TestablCreateUseCase struct {
 	CreateUseCase
 	txProvider func(ctx context.Context) (repo.Transaction, error)
 }
 
-func newTestableCreateUseCase(svc *mockExampleService) *testableCreateUseCase {
-	return &testableCreateUseCase{
+// NewTestablCreateUseCase creates a testable create use case
+func NewTestablCreateUseCase(svc *MockExampleService) *TestablCreateUseCase {
+	return &TestablCreateUseCase{
 		CreateUseCase: CreateUseCase{
 			exampleService: svc,
 		},
-		txProvider: mockTransaction,
+		txProvider: CreateTestTransaction,
 	}
 }
 
-// Override Execute method to replace transaction handling logic
-func (uc *testableCreateUseCase) Execute(ctx context.Context, input dto.CreateExampleReq) (*dto.CreateExampleResp, error) {
-	// Use mock transaction
+// Execute overrides the Execute method to replace transaction handling logic
+func (uc *TestablCreateUseCase) Execute(ctx context.Context, in CreateInput) (*ExampleOutput, error) {
+	// Validate input
+	if err := in.Validate(); err != nil {
+		return nil, fmt.Errorf("input validation failed: %w", err)
+	}
+
+	// Use test transaction
 	tx, err := uc.txProvider(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create transaction: %w", err)
 	}
 	defer tx.Rollback()
 
-	// Convert DTO to domain model
-	example := &model.Example{
-		Name:  input.Name,
-		Alias: input.Alias,
-	}
-
 	// Call domain service
-	createdExample, err := uc.exampleService.Create(ctx, example.Name, example.Alias)
+	example, err := uc.exampleService.Create(ctx, in.Name, in.Alias)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create example: %w", err)
 	}
@@ -94,31 +99,61 @@ func (uc *testableCreateUseCase) Execute(ctx context.Context, input dto.CreateEx
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	// Convert domain model to DTO
-	result := &dto.CreateExampleResp{
-		Id:        uint(createdExample.Id),
-		Name:      createdExample.Name,
-		Alias:     createdExample.Alias,
-		CreatedAt: createdExample.CreatedAt,
-		UpdatedAt: createdExample.UpdatedAt,
+	// Build output
+	out := NewExampleOutput(example)
+	return out, nil
+}
+
+// TestCreateInput_Validate tests the validation logic for create input
+func TestCreateInput_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   CreateInput
+		wantErr bool
+	}{
+		{
+			name: "valid input",
+			input: CreateInput{
+				Name:  "Valid Example",
+				Alias: "valid",
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty name",
+			input: CreateInput{
+				Name:  "",
+				Alias: "valid",
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty alias",
+			input: CreateInput{
+				Name:  "Valid Example",
+				Alias: "",
+			},
+			wantErr: false, // alias can be empty
+		},
 	}
 
-	return result, nil
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.input.Validate()
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
-// Mock transaction implementation using project's NoopTransaction
-func mockTransaction(ctx context.Context) (repo.Transaction, error) {
-	return &repo.NoopTransaction{}, nil
-}
-
-// TestCreateUseCase_Execute_Success tests the successful case of creating an example
-func TestCreateUseCase_Execute_Success(t *testing.T) {
-	// Create mock service
-	mockService := new(mockExampleService)
-
-	// Set up mock behavior first, then create the use case
+// TestCreateUseCase_Success tests the successful case of creating an example
+func TestCreateUseCase_Success(t *testing.T) {
+	// Prepare test data
 	now := time.Now()
-	expectedExample := &model.Example{
+	example := &model.Example{
 		Id:        1,
 		Name:      "Test Example",
 		Alias:     "test",
@@ -126,60 +161,138 @@ func TestCreateUseCase_Execute_Success(t *testing.T) {
 		UpdatedAt: now,
 	}
 
-	// Setup any Create call to return the expected result
-	mockService.On("Create", mock.Anything, mock.Anything, mock.Anything).Return(expectedExample, nil)
+	// Create mock service
+	mockSvc := new(MockExampleService)
+	mockSvc.On("Create", mock.Anything, "Test Example", "test").Return(example, nil)
 
-	// Create use case with testable version
-	useCase := newTestableCreateUseCase(mockService)
-
-	// Test data
-	ctx := context.Background()
-	createReq := dto.CreateExampleReq{
+	// Create use case and execute
+	uc := NewTestablCreateUseCase(mockSvc)
+	result, err := uc.Execute(context.Background(), CreateInput{
 		Name:  "Test Example",
 		Alias: "test",
-	}
+	})
 
-	// Execute use case
-	result, err := useCase.Execute(ctx, createReq)
-
-	// Assert results
+	// Verify results
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, uint(expectedExample.Id), result.Id)
-	assert.Equal(t, expectedExample.Name, result.Name)
-	assert.Equal(t, expectedExample.Alias, result.Alias)
-	assert.Equal(t, expectedExample.CreatedAt, result.CreatedAt)
-	assert.Equal(t, expectedExample.UpdatedAt, result.UpdatedAt)
-
-	mockService.AssertExpectations(t)
+	assert.Equal(t, 1, result.ID)
+	assert.Equal(t, "Test Example", result.Name)
+	assert.Equal(t, "test", result.Alias)
+	mockSvc.AssertExpectations(t)
 }
 
-// TestCreateUseCase_Execute_Error tests the error case when creating an example
-func TestCreateUseCase_Execute_Error(t *testing.T) {
-	// Create mock service
-	mockService := new(mockExampleService)
-
-	// Setup mock behavior - simulate error
-	expectedError := assert.AnError
-	mockService.On("Create", mock.Anything, mock.Anything, mock.Anything).Return(nil, expectedError)
-
-	// Create use case with testable version
-	useCase := newTestableCreateUseCase(mockService)
-
-	// Test data
-	ctx := context.Background()
-	createReq := dto.CreateExampleReq{
-		Name:  "Test Example",
-		Alias: "test",
+// TestCreateUseCase_Error tests the error cases of creating an example
+func TestCreateUseCase_Error(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        CreateInput
+		setupMock    func(*MockExampleService)
+		txProvider   func(context.Context) (repo.Transaction, error)
+		wantErr      bool
+		errorMessage string
+	}{
+		{
+			name: "input validation failed",
+			input: CreateInput{
+				Name:  "",
+				Alias: "test",
+			},
+			setupMock:    func(mockSvc *MockExampleService) {},
+			txProvider:   CreateTestTransaction,
+			wantErr:      true,
+			errorMessage: "input validation failed",
+		},
+		{
+			name: "transaction creation failed",
+			input: CreateInput{
+				Name:  "Test Example",
+				Alias: "test",
+			},
+			setupMock:    func(mockSvc *MockExampleService) {},
+			txProvider:   ErrorTestTransaction,
+			wantErr:      true,
+			errorMessage: "failed to create transaction",
+		},
+		{
+			name: "service error",
+			input: CreateInput{
+				Name:  "Test Example",
+				Alias: "test",
+			},
+			setupMock: func(mockSvc *MockExampleService) {
+				mockSvc.On("Create", mock.Anything, "Test Example", "test").
+					Return(nil, errors.New("service error"))
+			},
+			txProvider:   CreateTestTransaction,
+			wantErr:      true,
+			errorMessage: "failed to create example",
+		},
+		{
+			name: "transaction commit failed",
+			input: CreateInput{
+				Name:  "Test Example",
+				Alias: "test",
+			},
+			setupMock: func(mockSvc *MockExampleService) {
+				now := time.Now()
+				example := &model.Example{
+					Id:        1,
+					Name:      "Test Example",
+					Alias:     "test",
+					CreatedAt: now,
+					UpdatedAt: now,
+				}
+				mockSvc.On("Create", mock.Anything, "Test Example", "test").Return(example, nil)
+			},
+			txProvider:   CommitErrorTestTransaction,
+			wantErr:      true,
+			errorMessage: "failed to commit transaction",
+		},
 	}
 
-	// Execute use case
-	result, err := useCase.Execute(ctx, createReq)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock service and use case
+			mockSvc := new(MockExampleService)
+			tt.setupMock(mockSvc)
 
-	// Assert results
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "failed to create example")
+			uc := NewTestablCreateUseCase(mockSvc)
+			uc.txProvider = tt.txProvider
 
-	mockService.AssertExpectations(t)
+			// Execute use case
+			result, err := uc.Execute(context.Background(), tt.input)
+
+			// Verify results
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+				assert.Contains(t, err.Error(), tt.errorMessage)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+			}
+			mockSvc.AssertExpectations(t)
+		})
+	}
+}
+
+// TestNewExampleOutput tests the creation of output object
+func TestNewExampleOutput(t *testing.T) {
+	now := time.Now()
+	example := &model.Example{
+		Id:        1,
+		Name:      "Test Example",
+		Alias:     "test",
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	output := NewExampleOutput(example)
+
+	assert.NotNil(t, output)
+	assert.Equal(t, example.Id, output.ID)
+	assert.Equal(t, example.Name, output.Name)
+	assert.Equal(t, example.Alias, output.Alias)
+	assert.Equal(t, example.CreatedAt, output.CreatedAt)
+	assert.Equal(t, example.UpdatedAt, output.UpdatedAt)
 }

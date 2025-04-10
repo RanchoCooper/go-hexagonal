@@ -1,15 +1,19 @@
-package repository
+package handle
 
 import (
 	"os"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
 	"go-hexagonal/util/log"
 )
 
 func TestMain(m *testing.M) {
+	// 设置Gin为测试模式
+	gin.SetMode(gin.TestMode)
+
 	// 初始化日志配置
 	initTestLogger()
 
