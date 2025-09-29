@@ -32,14 +32,14 @@ func TestConfig(t *testing.T) {
 // TestConfigEnvOverrides tests that environment variables correctly override config values
 func TestConfigEnvOverrides(t *testing.T) {
 	// Setup test environment variables
-	os.Setenv("APP_ENV", "prod")
-	os.Setenv("APP_APP_NAME", "test-app")
-	os.Setenv("APP_APP_DEBUG", "false")
-	os.Setenv("APP_HTTP_SERVER_ADDR", ":4000")
-	os.Setenv("APP_MYSQL_HOST", "test-mysql-host")
-	os.Setenv("APP_MYSQL_PORT", "3307")
-	os.Setenv("APP_REDIS_HOST", "test-redis-host")
-	os.Setenv("APP_LOG_COMPRESS", "true")
+	_ = os.Setenv("APP_ENV", "prod")
+	_ = os.Setenv("APP_APP_NAME", "test-app")
+	_ = os.Setenv("APP_APP_DEBUG", "false")
+	_ = os.Setenv("APP_HTTP_SERVER_ADDR", ":4000")
+	_ = os.Setenv("APP_MYSQL_HOST", "test-mysql-host")
+	_ = os.Setenv("APP_MYSQL_PORT", "3307")
+	_ = os.Setenv("APP_REDIS_HOST", "test-redis-host")
+	_ = os.Setenv("APP_LOG_COMPRESS", "true")
 
 	// Load config
 	conf, err := Load("./", "config.yaml")
@@ -47,14 +47,14 @@ func TestConfigEnvOverrides(t *testing.T) {
 
 	// Clean up environment variables after test
 	defer func() {
-		os.Unsetenv("APP_ENV")
-		os.Unsetenv("APP_APP_NAME")
-		os.Unsetenv("APP_APP_DEBUG")
-		os.Unsetenv("APP_HTTP_SERVER_ADDR")
-		os.Unsetenv("APP_MYSQL_HOST")
-		os.Unsetenv("APP_MYSQL_PORT")
-		os.Unsetenv("APP_REDIS_HOST")
-		os.Unsetenv("APP_LOG_COMPRESS")
+		_ = os.Unsetenv("APP_ENV")
+		_ = os.Unsetenv("APP_APP_NAME")
+		_ = os.Unsetenv("APP_APP_DEBUG")
+		_ = os.Unsetenv("APP_HTTP_SERVER_ADDR")
+		_ = os.Unsetenv("APP_MYSQL_HOST")
+		_ = os.Unsetenv("APP_MYSQL_PORT")
+		_ = os.Unsetenv("APP_REDIS_HOST")
+		_ = os.Unsetenv("APP_LOG_COMPRESS")
 	}()
 
 	// Verify environment variables were applied correctly
@@ -73,7 +73,7 @@ func TestConfigWatchChanges(t *testing.T) {
 	// Create a temporary directory for the test config file
 	tempDir, err := os.MkdirTemp("", "config-test")
 	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	// Create a temporary config file
 	configContent := `

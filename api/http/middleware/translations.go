@@ -30,9 +30,9 @@ func Translations() gin.HandlerFunc {
 		if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 			switch locale {
 			case "zh":
-				zh_translations.RegisterDefaultTranslations(v, trans)
+				_ = zh_translations.RegisterDefaultTranslations(v, trans)
 			default:
-				en_translations.RegisterDefaultTranslations(v, trans)
+				_ = en_translations.RegisterDefaultTranslations(v, trans)
 			}
 
 			// Store translator in context

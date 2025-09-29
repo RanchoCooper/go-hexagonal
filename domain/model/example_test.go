@@ -49,12 +49,12 @@ func TestNewExample(t *testing.T) {
 				assert.NotEmpty(t, example.CreatedAt)
 				assert.NotEmpty(t, example.UpdatedAt)
 
-				// 检查事件
+				// Check events
 				events := example.Events()
 				assert.Len(t, events, 1)
 				assert.Equal(t, "example.created", events[0].EventType())
 
-				// 确保事件已被消费（清空）
+				// Ensure events are consumed (cleared)
 				assert.Empty(t, example.Events())
 			}
 		})
@@ -153,9 +153,9 @@ func TestExample_Update(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// 记录更新前的时间
+			// Record time before update
 			beforeUpdate := time.Now()
-			time.Sleep(10 * time.Millisecond) // 确保时间戳有变化
+			time.Sleep(10 * time.Millisecond) // Ensure timestamp changes
 
 			err := tt.example.Update(tt.newName, tt.newAlias)
 
@@ -164,7 +164,7 @@ func TestExample_Update(t *testing.T) {
 				if tt.errType != nil {
 					assert.Equal(t, tt.errType, err)
 				}
-				// 验证值未变化
+				// Verify values haven't changed
 				assert.NotEqual(t, tt.newName, tt.example.Name)
 				assert.NotEqual(t, tt.newAlias, tt.example.Alias)
 			} else {
@@ -173,12 +173,12 @@ func TestExample_Update(t *testing.T) {
 				assert.Equal(t, tt.newAlias, tt.example.Alias)
 				assert.True(t, tt.example.UpdatedAt.After(beforeUpdate), "UpdatedAt should be updated")
 
-				// 检查事件
+				// Check events
 				events := tt.example.Events()
 				assert.Len(t, events, 1)
 				assert.Equal(t, "example.updated", events[0].EventType())
 
-				// 确保事件已被消费（清空）
+				// Ensure events are consumed (cleared)
 				assert.Empty(t, tt.example.Events())
 			}
 		})
@@ -195,15 +195,15 @@ func TestExample_MarkDeleted(t *testing.T) {
 
 	example.MarkDeleted()
 
-	// 验证事件
+	// Verify events
 	events := example.Events()
 	assert.Len(t, events, 1)
 	assert.Equal(t, "example.deleted", events[0].EventType())
 
-	// 验证事件已清空
+	// Verify events are cleared
 	assert.Empty(t, example.Events())
 
-	// 类型断言事件以验证详情
+	// Type assert event to verify details
 	deletedEvent, ok := events[0].(ExampleDeletedEvent)
 	assert.True(t, ok)
 	assert.Equal(t, example.Id, deletedEvent.ExampleID)
@@ -215,7 +215,7 @@ func TestExample_TableName(t *testing.T) {
 }
 
 func TestExampleEvents(t *testing.T) {
-	// 测试创建事件
+	// Test creation event
 	t.Run("Created Event", func(t *testing.T) {
 		example := &Example{
 			Id:    1,
@@ -230,7 +230,7 @@ func TestExampleEvents(t *testing.T) {
 		assert.Equal(t, example.Alias, event.Alias)
 	})
 
-	// 测试更新事件
+	// Test update event
 	t.Run("Updated Event", func(t *testing.T) {
 		example := &Example{
 			Id:    1,
@@ -245,7 +245,7 @@ func TestExampleEvents(t *testing.T) {
 		assert.Equal(t, example.Alias, event.Alias)
 	})
 
-	// 测试删除事件
+	// Test deletion event
 	t.Run("Deleted Event", func(t *testing.T) {
 		example := &Example{
 			Id:    1,
@@ -267,55 +267,55 @@ func TestExample_addEvent(t *testing.T) {
 		events: make([]DomainEvent, 0),
 	}
 
-	// 创建一个事件
+	// Create an event
 	event := NewExampleCreatedEvent(example)
 
-	// 手动调用addEvent
+	// Manually call addEvent
 	example.addEvent(event)
 
-	// 验证事件是否已添加
+	// Verify event was added
 	assert.Len(t, example.events, 1)
 	assert.Equal(t, event, example.events[0])
 
-	// 再添加一个事件
+	// Add another event
 	updateEvent := NewExampleUpdatedEvent(example)
 	example.addEvent(updateEvent)
 
-	// 验证两个事件都存在
+	// Verify both events exist
 	assert.Len(t, example.events, 2)
 	assert.Equal(t, event, example.events[0])
 	assert.Equal(t, updateEvent, example.events[1])
 }
 
 func TestDomainEvents(t *testing.T) {
-	// 测试事件收集和清空
+	// Test event collection and clearing
 	example, err := NewExample("Test Example", "test-alias")
 	require.NoError(t, err)
 
-	// 初始应该有一个创建事件
+	// Initially should have a creation event
 	events := example.Events()
 	assert.Len(t, events, 1)
 	assert.Equal(t, "example.created", events[0].EventType())
 
-	// 消费后应该被清空
+	// Should be cleared after consumption
 	assert.Empty(t, example.Events())
 
-	// 更新触发新事件
+	// Update triggers new event
 	err = example.Update("Updated Name", "updated-alias")
 	require.NoError(t, err)
 
-	// 验证更新事件
+	// Verify update event
 	events = example.Events()
 	assert.Len(t, events, 1)
 	assert.Equal(t, "example.updated", events[0].EventType())
 
-	// 清空后
+	// After clearing
 	assert.Empty(t, example.Events())
 
-	// 标记删除
+	// Mark as deleted
 	example.MarkDeleted()
 
-	// 验证删除事件
+	// Verify deletion event
 	events = example.Events()
 	assert.Len(t, events, 1)
 	assert.Equal(t, "example.deleted", events[0].EventType())

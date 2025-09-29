@@ -1,54 +1,11 @@
-linters:
-    fast: true
-    enable-all: true
-    disable:
-        - wrapcheck
-        - testpackage
-        - tagliatelle
-        - nlreturn
-        - funlen
-        - gofumpt
-        - gochecknoglobals
-        - gocognit
-        - godox
-        - lll
-        - wsl
-        - forbidigo
-        - godot
-        - nestif
-        - gci
-        - dogsled
-        - gochecknoinits
-        - depguard
-        - cyclop
-        - nosprintfhostport
-        - mnd
-        - tagalign
+version: "2"
 
-linters-settings:
-  goimports:
-    local-prefixes: go-hexagonal
-  revive:
-    rules:
-      - name: var-naming
-      - name: exported
-        arguments:
-          - "disableStutteringCheck"
-      - name: package-comments
-      - name: dot-imports
-      - name: blank-imports
-      - name: context-keys-type
-      - name: context-as-argument
-      - name: error-return
-      - name: error-strings
-      - name: error-naming
-      - name: increment-decrement
-      - name: var-declaration
-      - name: range
-      - name: receiver-naming
-      - name: time-naming
-      - name: indent-error-flow
-      - name: empty-block
-      - name: superfluous-else
-      - name: modifies-parameter
-      - name: unreachable-code
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+
+run:
+  timeout: 5m

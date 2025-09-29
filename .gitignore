@@ -110,3 +110,4 @@ hs_err_pid*
 go.work
 
 config/config.private.yaml
+tmp/

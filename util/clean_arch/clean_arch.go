@@ -67,7 +67,7 @@ func (v *Validator) Validate(root string, ignoreTests bool, ignoredPackages []st
 	errors := make([]ValidationError, 0)
 	count := 0
 
-	err := filepath.Walk(root, func(path string, fi os.FileInfo, err error) error {
+	err := filepath.Walk(root, func(path string, fi os.FileInfo, walkErr error) error {
 		for _, ignored := range ignoredPackages {
 			if strings.Contains(path, ignored) {
 				return nil
@@ -86,7 +86,7 @@ func (v *Validator) Validate(root string, ignoreTests bool, ignoredPackages []st
 		}
 
 		if strings.Contains(path, "/vendor/") {
-			// TODO - better check and flag
+			// Skip vendor directory - contains third-party dependencies
 			return nil
 		}
 
@@ -96,9 +96,9 @@ func (v *Validator) Validate(root string, ignoreTests bool, ignoredPackages []st
 
 		fset := token.NewFileSet()
 
-		f, err := parser.ParseFile(fset, path, nil, parser.ImportsOnly)
-		if err != nil {
-			panic(err)
+		f, parseErr := parser.ParseFile(fset, path, nil, parser.ImportsOnly)
+		if parseErr != nil {
+			panic(parseErr)
 		}
 
 		importerMeta := v.fileMetadata(path)
@@ -106,7 +106,7 @@ func (v *Validator) Validate(root string, ignoreTests bool, ignoredPackages []st
 		count++
 
 		if importerMeta.Layer == "" || importerMeta.Module == "" {
-			// TODO - error from meta parser?
+			// Unable to parse layer metadata - skip validation for this file
 			log.SugaredLogger.Warnf("cannot parse metadata for file %s, meta: %+v", path, importerMeta)
 
 			return nil

@@ -13,20 +13,20 @@ import (
 	"go-hexagonal/domain/repo"
 )
 
-// 创建Mock存储库
+// Create Mock repository
 type MockExampleRepo struct {
 	mock.Mock
 }
 
 func (m *MockExampleRepo) Create(ctx context.Context, tr repo.Transaction, example *model.Example) (*model.Example, error) {
-	// 为参数example设置Id，这样它就会有正确的Id用于生成事件
+	// Set Id for parameter example so it has correct Id for event generation
 	if example.Id == 0 {
-		example.Id = 1 // 设置一个默认ID
+		example.Id = 1 // Set a default ID
 	}
 
 	args := m.Called(ctx, tr, example)
 
-	// 如果mock配置为返回一个Example，确保使用它作为返回值
+	// If mock is configured to return an Example, ensure using it as return value
 	if e, ok := args.Get(0).(*model.Example); ok {
 		return e, args.Error(1)
 	}
@@ -39,28 +39,28 @@ func (m *MockExampleRepo) Delete(ctx context.Context, tr repo.Transaction, id in
 	return args.Error(0)
 }
 
-func (m *MockExampleRepo) Update(ctx context.Context, tr repo.Transaction, example *model.Example) error {
-	args := m.Called(ctx, tr, example)
+func (m *MockExampleRepo) Update(ctx context.Context, tr repo.Transaction, entity *model.Example) error {
+	args := m.Called(ctx, tr, entity)
 	return args.Error(0)
 }
 
-func (m *MockExampleRepo) GetByID(ctx context.Context, tr repo.Transaction, id int) (*model.Example, error) {
-	args := m.Called(ctx, tr, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
+func (m *MockExampleRepo) GetByID(ctx context.Context, tr repo.Transaction, Id int) (*model.Example, error) {
+	args := m.Called(ctx, tr, Id)
+	if e, ok := args.Get(0).(*model.Example); ok {
+		return e, args.Error(1)
 	}
-	return args.Get(0).(*model.Example), args.Error(1)
+	return nil, args.Error(1)
 }
 
 func (m *MockExampleRepo) FindByName(ctx context.Context, tr repo.Transaction, name string) (*model.Example, error) {
 	args := m.Called(ctx, tr, name)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
+	if e, ok := args.Get(0).(*model.Example); ok {
+		return e, args.Error(1)
 	}
-	return args.Get(0).(*model.Example), args.Error(1)
+	return nil, args.Error(1)
 }
 
-// 创建Mock缓存存储库
+// Create Mock cache repository
 type MockExampleCacheRepo struct {
 	mock.Mock
 }
@@ -72,18 +72,18 @@ func (m *MockExampleCacheRepo) HealthCheck(ctx context.Context) error {
 
 func (m *MockExampleCacheRepo) GetByID(ctx context.Context, id int) (*model.Example, error) {
 	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
+	if e, ok := args.Get(0).(*model.Example); ok {
+		return e, args.Error(1)
 	}
-	return args.Get(0).(*model.Example), args.Error(1)
+	return nil, args.Error(1)
 }
 
 func (m *MockExampleCacheRepo) GetByName(ctx context.Context, name string) (*model.Example, error) {
 	args := m.Called(ctx, name)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
+	if e, ok := args.Get(0).(*model.Example); ok {
+		return e, args.Error(1)
 	}
-	return args.Get(0).(*model.Example), args.Error(1)
+	return nil, args.Error(1)
 }
 
 func (m *MockExampleCacheRepo) Set(ctx context.Context, example *model.Example) error {
@@ -101,79 +101,59 @@ func (m *MockExampleCacheRepo) Invalidate(ctx context.Context) error {
 	return args.Error(0)
 }
 
-// 创建Mock事件总线
+// Create Mock event bus
 type MockEventBus struct {
 	mock.Mock
 }
 
-// Publish 实现EventBus接口的Publish方法
+// Publish implements EventBus interface's Publish method
 func (m *MockEventBus) Publish(ctx context.Context, event event.Event) error {
 	args := m.Called(ctx, event)
 	return args.Error(0)
 }
 
-// Subscribe 实现EventBus接口的Subscribe方法
+// Subscribe implements EventBus interface's Subscribe method
 func (m *MockEventBus) Subscribe(handler event.EventHandler) {
 	m.Called(handler)
 }
 
-// Unsubscribe 实现EventBus接口的Unsubscribe方法
+// Unsubscribe implements EventBus interface's Unsubscribe method
 func (m *MockEventBus) Unsubscribe(handler event.EventHandler) {
 	m.Called(handler)
 }
 
-// 创建Mock事务对象
+// Create Mock transaction object
 type MockTransaction struct {
 	mock.Mock
 }
 
-func (m *MockTransaction) Begin() error {
-	args := m.Called()
-	return args.Error(0)
-}
-
-func (m *MockTransaction) Commit() error {
-	args := m.Called()
-	return args.Error(0)
-}
-
-func (m *MockTransaction) Rollback() error {
-	args := m.Called()
-	return args.Error(0)
-}
-
-func (m *MockTransaction) Conn(ctx context.Context) interface{} {
-	args := m.Called(ctx)
-	return args.Get(0)
-}
-
-// 为测试定义一个辅助函数来设置EventBus
+// Define a helper function for testing to set EventBus
 func withEventBus(service *ExampleService, bus event.EventBus) *ExampleService {
 	service.EventBus = bus
 	return service
 }
 
-// 测试ExampleService的创建
+// Test ExampleService creation
 func TestNewExampleService(t *testing.T) {
 	mockRepo := new(MockExampleRepo)
 	mockCacheRepo := new(MockExampleCacheRepo)
 	mockEventBus := new(MockEventBus)
 
-	// 测试不带可选参数的创建
+	// Test creation without optional parameters
 	service := NewExampleService(mockRepo, nil)
 	assert.NotNil(t, service)
 	assert.Equal(t, mockRepo, service.Repository)
 	assert.Nil(t, service.CacheRepo)
 	assert.Nil(t, service.EventBus)
 
-	// 测试带缓存的创建
+	// Test creation with cache
 	service = NewExampleService(mockRepo, mockCacheRepo)
 	assert.NotNil(t, service)
 	assert.Equal(t, mockRepo, service.Repository)
 	assert.Equal(t, mockCacheRepo, service.CacheRepo)
 	assert.Nil(t, service.EventBus)
 
-	// 测试设置事件总线
+	// Test setting event bus
 	service = NewExampleService(mockRepo, mockCacheRepo)
 	service.EventBus = mockEventBus
 	assert.NotNil(t, service)
@@ -181,7 +161,7 @@ func TestNewExampleService(t *testing.T) {
 	assert.Equal(t, mockCacheRepo, service.CacheRepo)
 	assert.Equal(t, mockEventBus, service.EventBus)
 
-	// 测试使用辅助函数设置事件总线
+	// Test using helper function to set event bus
 	service = withEventBus(NewExampleService(mockRepo, mockCacheRepo), mockEventBus)
 	assert.NotNil(t, service)
 	assert.Equal(t, mockRepo, service.Repository)
@@ -189,9 +169,9 @@ func TestNewExampleService(t *testing.T) {
 	assert.Equal(t, mockEventBus, service.EventBus)
 }
 
-// TestExampleService_Create 测试Create方法
+// TestExampleService_Create tests Create method
 func TestExampleService_Create(t *testing.T) {
-	// 准备
+	// Prepare
 	mockRepo := new(MockExampleRepo)
 	mockCacheRepo := new(MockExampleCacheRepo)
 	mockEventBus := new(MockEventBus)
@@ -199,43 +179,43 @@ func TestExampleService_Create(t *testing.T) {
 	service := NewExampleService(mockRepo, mockCacheRepo)
 	service.EventBus = mockEventBus
 
-	// 创建一个正确的Example实例以便获取事件
+	// Create a correct Example instance to get events
 	input, err := model.NewExample("Test", "test-alias")
 	assert.NoError(t, err)
-	input.Id = 1 // 确保ID已设置
+	input.Id = 1 // Ensure ID is set
 
-	// 模拟依赖行为
+	// Mock dependency behavior
 	mockRepo.On("Create", mock.Anything, mock.Anything, mock.AnythingOfType("*model.Example")).Run(func(args mock.Arguments) {
-		// 当创建被调用时，为创建好的对象添加事件并确保ID已经设置
+		// When Create is called, add events to created object and ensure ID is set
 		example := args.Get(2).(*model.Example)
 		example.Id = 1
-	}).Return(input, nil) // 返回带有事件的对象
+	}).Return(input, nil) // Return object with events
 
 	mockCacheRepo.On("Set", mock.Anything, mock.Anything).Return(nil)
 	mockEventBus.On("Publish", mock.Anything, mock.AnythingOfType("event.ExampleCreatedEvent")).Return(nil)
 
-	// 执行
+	// Execute
 	result, err := service.Create(context.Background(), "Test", "test-alias")
 
-	// 断言
+	// Assert
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "Test", result.Name)
 	assert.Equal(t, "test-alias", result.Alias)
 
-	// 验证所有模拟调用
+	// Verify all mock calls
 	mockRepo.AssertExpectations(t)
 	mockCacheRepo.AssertExpectations(t)
 	mockEventBus.AssertExpectations(t)
 }
 
-// 测试Delete方法
+// Test Delete method
 func TestExampleService_Delete(t *testing.T) {
 	mockRepo := new(MockExampleRepo)
 	mockCacheRepo := new(MockExampleCacheRepo)
 	mockEventBus := new(MockEventBus)
 
-	// 创建服务实例
+	// Create service instance
 	service := NewExampleService(mockRepo, mockCacheRepo)
 	service.EventBus = mockEventBus
 
@@ -247,7 +227,7 @@ func TestExampleService_Delete(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name: "成功删除示例",
+			name: "Successfully delete example",
 			setupMocks: func() {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything, 1).Return(&model.Example{
 					Id:    1,
@@ -262,7 +242,7 @@ func TestExampleService_Delete(t *testing.T) {
 			wantErr:   false,
 		},
 		{
-			name: "示例不存在",
+			name: "Example does not exist",
 			setupMocks: func() {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything, 2).Return(nil, repo.ErrNotFound)
 			},
@@ -271,7 +251,7 @@ func TestExampleService_Delete(t *testing.T) {
 			expectedErr: repo.ErrNotFound,
 		},
 		{
-			name: "删除错误",
+			name: "Delete error",
 			setupMocks: func() {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything, 3).Return(&model.Example{
 					Id:    3,
@@ -287,17 +267,17 @@ func TestExampleService_Delete(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// 设置模拟行为
+			// Set mock behavior
 			mockRepo.ExpectedCalls = nil
 			mockCacheRepo.ExpectedCalls = nil
 			mockEventBus.ExpectedCalls = nil
 			tc.setupMocks()
 
-			// 执行测试
+			// Execute test
 			ctx := context.Background()
 			err := service.Delete(ctx, tc.exampleId)
 
-			// 验证结果
+			// Verify results
 			if tc.wantErr {
 				assert.Error(t, err)
 				if tc.expectedErr != nil {
@@ -307,7 +287,7 @@ func TestExampleService_Delete(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			// 验证Mock调用
+			// Verify Mock calls
 			mockRepo.AssertExpectations(t)
 			mockCacheRepo.AssertExpectations(t)
 			mockEventBus.AssertExpectations(t)
@@ -315,13 +295,13 @@ func TestExampleService_Delete(t *testing.T) {
 	}
 }
 
-// 测试Update方法
+// Test Update method
 func TestExampleService_Update(t *testing.T) {
 	mockRepo := new(MockExampleRepo)
 	mockCacheRepo := new(MockExampleCacheRepo)
 	mockEventBus := new(MockEventBus)
 
-	// 创建服务实例
+	// Create service instance
 	service := NewExampleService(mockRepo, mockCacheRepo)
 	service.EventBus = mockEventBus
 
@@ -335,7 +315,7 @@ func TestExampleService_Update(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name: "成功更新示例",
+			name: "Successfully update example",
 			setupMocks: func() {
 				example := &model.Example{
 					Id:    1,
@@ -353,7 +333,7 @@ func TestExampleService_Update(t *testing.T) {
 			wantErr:   false,
 		},
 		{
-			name: "示例不存在",
+			name: "Example does not exist",
 			setupMocks: func() {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything, 2).Return(nil, repo.ErrNotFound)
 			},
@@ -364,7 +344,7 @@ func TestExampleService_Update(t *testing.T) {
 			expectedErr: repo.ErrNotFound,
 		},
 		{
-			name: "更新验证失败",
+			name: "Update validation failed",
 			setupMocks: func() {
 				example := &model.Example{
 					Id:    3,
@@ -372,16 +352,16 @@ func TestExampleService_Update(t *testing.T) {
 					Alias: "original-alias",
 				}
 				mockRepo.On("GetByID", mock.Anything, mock.Anything, 3).Return(example, nil)
-				// 不会调用Update，因为验证失败
+				// Update won't be called due to validation failure
 			},
 			exampleId:   3,
-			newName:     "", // 空名称会导致验证错误
+			newName:     "", // Empty name will cause validation error
 			newAlias:    "updated-alias",
 			wantErr:     true,
 			expectedErr: model.ErrEmptyExampleName,
 		},
 		{
-			name: "更新存储错误",
+			name: "Update storage error",
 			setupMocks: func() {
 				example := &model.Example{
 					Id:    4,
@@ -400,17 +380,17 @@ func TestExampleService_Update(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// 设置模拟行为
+			// Set mock behavior
 			mockRepo.ExpectedCalls = nil
 			mockCacheRepo.ExpectedCalls = nil
 			mockEventBus.ExpectedCalls = nil
 			tc.setupMocks()
 
-			// 执行测试
+			// Execute test
 			ctx := context.Background()
 			err := service.Update(ctx, tc.exampleId, tc.newName, tc.newAlias)
 
-			// 验证结果
+			// Verify results
 			if tc.wantErr {
 				assert.Error(t, err)
 				if tc.expectedErr != nil {
@@ -420,7 +400,7 @@ func TestExampleService_Update(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			// 验证Mock调用
+			// Verify Mock calls
 			mockRepo.AssertExpectations(t)
 			mockCacheRepo.AssertExpectations(t)
 			mockEventBus.AssertExpectations(t)
@@ -428,12 +408,12 @@ func TestExampleService_Update(t *testing.T) {
 	}
 }
 
-// 测试Get方法
+// Test Get method
 func TestExampleService_Get(t *testing.T) {
 	mockRepo := new(MockExampleRepo)
 	mockCacheRepo := new(MockExampleCacheRepo)
 
-	// 创建服务实例
+	// Create service instance
 	service := NewExampleService(mockRepo, mockCacheRepo)
 
 	testCases := []struct {
@@ -444,42 +424,42 @@ func TestExampleService_Get(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name: "从缓存获取示例",
+			name: "Get example from cache",
 			setupMocks: func() {
-				// 模拟缓存命中
+				// Mock cache hit
 				mockCacheRepo.On("GetByID", mock.Anything, 1).Return(&model.Example{
 					Id:    1,
 					Name:  "Cached Example",
 					Alias: "cached-alias",
 				}, nil)
-				// 存储库不应该被调用
+				// Repository should not be called
 			},
 			exampleId: 1,
 			wantErr:   false,
 		},
 		{
-			name: "从存储库获取示例（缓存未命中）",
+			name: "Get example from repository (cache miss)",
 			setupMocks: func() {
-				// 模拟缓存未命中
+				// Mock cache miss
 				mockCacheRepo.On("GetByID", mock.Anything, 2).Return(nil, errors.New("cache miss"))
-				// 从存储库获取
+				// Get from repository
 				mockRepo.On("GetByID", mock.Anything, mock.Anything, 2).Return(&model.Example{
 					Id:    2,
 					Name:  "Database Example",
 					Alias: "db-alias",
 				}, nil)
-				// 更新缓存
+				// Update cache
 				mockCacheRepo.On("Set", mock.Anything, mock.AnythingOfType("*model.Example")).Return(nil)
 			},
 			exampleId: 2,
 			wantErr:   false,
 		},
 		{
-			name: "缓存和存储库都未找到示例",
+			name: "Example not found in both cache and repository",
 			setupMocks: func() {
-				// 模拟缓存未命中
+				// Mock cache miss
 				mockCacheRepo.On("GetByID", mock.Anything, 3).Return(nil, errors.New("cache miss"))
-				// 存储库也未找到
+				// Repository also not found
 				mockRepo.On("GetByID", mock.Anything, mock.Anything, 3).Return(nil, repo.ErrNotFound)
 			},
 			exampleId:   3,
@@ -487,11 +467,11 @@ func TestExampleService_Get(t *testing.T) {
 			expectedErr: repo.ErrNotFound,
 		},
 		{
-			name: "无缓存情况下从存储库获取",
+			name: "Get from repository without cache",
 			setupMocks: func() {
-				// 创建不带缓存的服务
+				// Create service without cache
 				service = NewExampleService(mockRepo, nil)
-				// 只使用存储库
+				// Only use repository
 				mockRepo.On("GetByID", mock.Anything, mock.Anything, 4).Return(&model.Example{
 					Id:    4,
 					Name:  "Database Example",
@@ -505,16 +485,16 @@ func TestExampleService_Get(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// 设置模拟行为
+			// Set mock behavior
 			mockRepo.ExpectedCalls = nil
 			mockCacheRepo.ExpectedCalls = nil
 			tc.setupMocks()
 
-			// 执行测试
+			// Execute test
 			ctx := context.Background()
 			result, err := service.Get(ctx, tc.exampleId)
 
-			// 验证结果
+			// Verify results
 			if tc.wantErr {
 				assert.Error(t, err)
 				if tc.expectedErr != nil {
@@ -527,19 +507,19 @@ func TestExampleService_Get(t *testing.T) {
 				assert.Equal(t, tc.exampleId, result.Id)
 			}
 
-			// 验证Mock调用
+			// Verify Mock calls
 			mockRepo.AssertExpectations(t)
 			mockCacheRepo.AssertExpectations(t)
 		})
 	}
 }
 
-// 测试FindByName方法
+// Test FindByName method
 func TestExampleService_FindByName(t *testing.T) {
 	mockRepo := new(MockExampleRepo)
 	mockCacheRepo := new(MockExampleCacheRepo)
 
-	// 创建服务实例
+	// Create service instance
 	service := NewExampleService(mockRepo, mockCacheRepo)
 
 	testCases := []struct {
@@ -550,42 +530,42 @@ func TestExampleService_FindByName(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name: "从缓存获取示例",
+			name: "Get example from cache",
 			setupMocks: func() {
-				// 模拟缓存命中
+				// Mock cache hit
 				mockCacheRepo.On("GetByName", mock.Anything, "test-name").Return(&model.Example{
 					Id:    1,
 					Name:  "test-name",
 					Alias: "cached-alias",
 				}, nil)
-				// 存储库不应该被调用
+				// Repository should not be called
 			},
 			searchName: "test-name",
 			wantErr:    false,
 		},
 		{
-			name: "从存储库获取示例（缓存未命中）",
+			name: "Get example from repository (cache miss)",
 			setupMocks: func() {
-				// 模拟缓存未命中
+				// Mock cache miss
 				mockCacheRepo.On("GetByName", mock.Anything, "db-name").Return(nil, errors.New("cache miss"))
-				// 从存储库获取
+				// Get from repository
 				mockRepo.On("FindByName", mock.Anything, mock.Anything, "db-name").Return(&model.Example{
 					Id:    2,
 					Name:  "db-name",
 					Alias: "db-alias",
 				}, nil)
-				// 更新缓存
+				// Update cache
 				mockCacheRepo.On("Set", mock.Anything, mock.AnythingOfType("*model.Example")).Return(nil)
 			},
 			searchName: "db-name",
 			wantErr:    false,
 		},
 		{
-			name: "缓存和存储库都未找到示例",
+			name: "Example not found in both cache and repository",
 			setupMocks: func() {
-				// 模拟缓存未命中
+				// Mock cache miss
 				mockCacheRepo.On("GetByName", mock.Anything, "missing-name").Return(nil, errors.New("cache miss"))
-				// 存储库也未找到
+				// Repository also not found
 				mockRepo.On("FindByName", mock.Anything, mock.Anything, "missing-name").Return(nil, repo.ErrNotFound)
 			},
 			searchName:  "missing-name",
@@ -596,16 +576,16 @@ func TestExampleService_FindByName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// 设置模拟行为
+			// Set mock behavior
 			mockRepo.ExpectedCalls = nil
 			mockCacheRepo.ExpectedCalls = nil
 			tc.setupMocks()
 
-			// 执行测试
+			// Execute test
 			ctx := context.Background()
 			result, err := service.FindByName(ctx, tc.searchName)
 
-			// 验证结果
+			// Verify results
 			if tc.wantErr {
 				assert.Error(t, err)
 				if tc.expectedErr != nil {
@@ -618,7 +598,7 @@ func TestExampleService_FindByName(t *testing.T) {
 				assert.Equal(t, tc.searchName, result.Name)
 			}
 
-			// 验证Mock调用
+			// Verify Mock calls
 			mockRepo.AssertExpectations(t)
 			mockCacheRepo.AssertExpectations(t)
 		})

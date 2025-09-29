@@ -34,7 +34,7 @@ func (uc *testableDeleteUseCase) Execute(ctx context.Context, id int) error {
 	if err != nil {
 		return fmt.Errorf("failed to create transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// Call domain service
 	if err := uc.exampleService.Delete(ctx, id); err != nil {

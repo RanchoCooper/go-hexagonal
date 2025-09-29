@@ -199,7 +199,7 @@ func TestCreateExample(t *testing.T) {
 
 	// Set up mock behavior for direct service call
 	mockRepo.On("Create", mock.Anything, mock.Anything, mock.AnythingOfType("*model.Example")).Return(expectedExample, nil)
-	// 设置转换器的预期行为
+	// Set up converter expectations
 	mockConverter.On("FromCreateRequest", mock.AnythingOfType("*dto.CreateExampleReq")).Return(expectedExample, nil)
 	mockConverter.On("ToExampleResponse", expectedExample).Return(expectedExample, nil)
 

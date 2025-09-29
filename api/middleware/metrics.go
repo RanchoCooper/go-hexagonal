@@ -50,11 +50,9 @@ func (w *MetricsResponseWriter) Flush() {
 	}
 }
 
-// CloseNotify implements http.CloseNotifier if the underlying ResponseWriter does
+// CloseNotify is deprecated and no longer implemented
+// The http.CloseNotifier interface was deprecated in Go 1.11
 func (w *MetricsResponseWriter) CloseNotify() <-chan bool {
-	if cn, ok := w.ResponseWriter.(http.CloseNotifier); ok {
-		return cn.CloseNotify()
-	}
 	return make(<-chan bool)
 }
 
@@ -78,8 +76,12 @@ func RecordHTTPMetrics(handlerName, method string, statusCode int, duration time
 			errorType = "server_error"
 		}
 		metrics.RecordError(errorType, handlerName)
-		log.SugaredLogger.Debugf("HTTP %s error for %s %s (handler: %s): %d",
-			errorType, method, handlerName, handlerName, statusCode)
+
+		// Only log if logger is initialized
+		if log.SugaredLogger != nil {
+			log.SugaredLogger.Debugf("HTTP %s error for %s %s (handler: %s): %d",
+				errorType, method, handlerName, handlerName, statusCode)
+		}
 	}
 }
 
@@ -111,12 +113,19 @@ func MetricsMiddleware(handlerName string) func(http.Handler) http.Handler {
 // InitializeMetrics initializes the metrics collection system
 func InitializeMetrics() {
 	metrics.Init()
-	log.SugaredLogger.Info("Metrics collection system initialized")
+
+	// Only log if logger is initialized
+	if log.SugaredLogger != nil {
+		log.SugaredLogger.Info("Metrics collection system initialized")
+	}
 }
 
 // StartMetricsServer starts the metrics server
 func StartMetricsServer(addr string) error {
-	log.SugaredLogger.Infof("Starting metrics server on %s", addr)
+	// Only log if logger is initialized
+	if log.SugaredLogger != nil {
+		log.SugaredLogger.Infof("Starting metrics server on %s", addr)
+	}
 	ctx := context.Background()
 	return metrics.StartServer(ctx, addr)
 }

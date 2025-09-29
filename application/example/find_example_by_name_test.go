@@ -38,7 +38,7 @@ func (uc *TestableFindByNameUseCase) Execute(ctx context.Context, name string) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to create transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// Call domain service
 	example, err := uc.exampleService.FindByName(ctx, name)
