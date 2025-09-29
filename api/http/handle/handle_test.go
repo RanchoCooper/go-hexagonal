@@ -13,25 +13,25 @@ import (
 )
 
 func init() {
-	// 设置Gin为测试模式
+	// Set Gin to test mode
 	gin.SetMode(gin.TestMode)
 }
 
 func TestNewResponse(t *testing.T) {
-	// 创建Gin上下文
+	// Create Gin context
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
-	// 创建Response
+	// Create Response
 	response := NewResponse(c)
 
-	// 验证结果
+	// Verify results
 	assert.NotNil(t, response)
 	assert.Equal(t, c, response.Ctx)
 }
 
 func TestResponse_ToResponse(t *testing.T) {
-	// 测试场景
+	// Test scenarios
 	testCases := []struct {
 		name           string
 		data           interface{}
@@ -39,13 +39,13 @@ func TestResponse_ToResponse(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			name:           "返回数据",
+			name:           "Return data",
 			data:           map[string]interface{}{"key": "value"},
 			expectedStatus: http.StatusOK,
 			expectedBody:   `{"code":0,"message":"success","data":{"key":"value"}}`,
 		},
 		{
-			name:           "返回nil数据",
+			name:           "Return nil data",
 			data:           nil,
 			expectedStatus: http.StatusOK,
 			expectedBody:   `{"code":0,"message":"success","data":{}}`,
@@ -54,15 +54,15 @@ func TestResponse_ToResponse(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// 创建测试环境
+			// Create test environment
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 			response := NewResponse(c)
 
-			// 调用方法
+			// Call method
 			response.ToResponse(tc.data)
 
-			// 验证结果
+			// Verify results
 			assert.Equal(t, tc.expectedStatus, w.Code)
 			assert.JSONEq(t, tc.expectedBody, w.Body.String())
 		})
@@ -70,7 +70,7 @@ func TestResponse_ToResponse(t *testing.T) {
 }
 
 func TestResponse_ToResponseList(t *testing.T) {
-	// 测试场景
+	// Test scenarios
 	testCases := []struct {
 		name           string
 		list           interface{}
@@ -81,7 +81,7 @@ func TestResponse_ToResponseList(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			name:           "返回列表数据",
+			name:           "Return list data",
 			list:           []map[string]interface{}{{"id": 1}, {"id": 2}},
 			totalRows:      10,
 			page:           1,
@@ -93,17 +93,17 @@ func TestResponse_ToResponseList(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// 创建测试环境并设置分页参数
+			// Create test environment and set pagination parameters
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 			c.Request = httptest.NewRequest("GET", "/?page="+
 				""+strconv.Itoa(tc.page)+"&page_size="+strconv.Itoa(tc.pageSize), nil)
 
-			// 设置分页中间件的上下文
+			// Set pagination middleware context
 			c.Set("page", tc.page)
 			c.Set("page_size", tc.pageSize)
 
-			// 不再直接调用ToResponseList，而是自己构建响应
+			// No longer directly call ToResponseList, build response manually
 			c.JSON(http.StatusOK, StandardResponse{
 				Code:    0,
 				Message: "success",
@@ -117,7 +117,7 @@ func TestResponse_ToResponseList(t *testing.T) {
 				},
 			})
 
-			// 验证结果
+			// Verify results
 			assert.Equal(t, tc.expectedStatus, w.Code)
 			assert.JSONEq(t, tc.expectedBody, w.Body.String())
 		})
@@ -125,7 +125,7 @@ func TestResponse_ToResponseList(t *testing.T) {
 }
 
 func TestResponse_ToErrorResponse(t *testing.T) {
-	// 测试场景
+	// Test scenarios
 	testCases := []struct {
 		name           string
 		err            *error_code.Error
@@ -133,36 +133,36 @@ func TestResponse_ToErrorResponse(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			name:           "基本错误",
+			name:           "Basic error",
 			err:            error_code.ServerError,
 			expectedStatus: http.StatusInternalServerError,
 			expectedBody:   `{"code":10000,"message":"server internal error"}`,
 		},
 		{
-			name:           "带详情的错误",
-			err:            error_code.InvalidParams.WithDetails("字段不能为空"),
+			name:           "Error with details",
+			err:            error_code.InvalidParams.WithDetails("Field cannot be empty"),
 			expectedStatus: http.StatusBadRequest,
-			expectedBody:   `{"code":10001,"message":"invalid params","data":{"details":["字段不能为空"]}}`,
+			expectedBody:   `{"code":10001,"message":"invalid params","data":{"details":["Field cannot be empty"]}}`,
 		},
 		{
-			name:           "带文档引用的错误",
-			err:            &error_code.Error{Code: 10002, Msg: "自定义错误", HTTP: http.StatusBadRequest, DocRef: "https://example.com/docs"},
+			name:           "Error with document reference",
+			err:            &error_code.Error{Code: 10002, Msg: "Custom error", HTTP: http.StatusBadRequest, DocRef: "https://example.com/docs"},
 			expectedStatus: http.StatusBadRequest,
-			expectedBody:   `{"code":10002,"message":"自定义错误","doc_ref":"https://example.com/docs"}`,
+			expectedBody:   `{"code":10002,"message":"Custom error","doc_ref":"https://example.com/docs"}`,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// 创建测试环境
+			// Create test environment
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 			response := NewResponse(c)
 
-			// 调用方法
+			// Call method
 			response.ToErrorResponse(tc.err)
 
-			// 验证结果
+			// Verify results
 			assert.Equal(t, tc.expectedStatus, w.Code)
 			assert.JSONEq(t, tc.expectedBody, w.Body.String())
 		})
@@ -170,21 +170,21 @@ func TestResponse_ToErrorResponse(t *testing.T) {
 }
 
 func TestSuccess(t *testing.T) {
-	// 创建测试环境
+	// Create test environment
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
-	// 调用Success方法
+	// Call Success method
 	data := map[string]interface{}{"test": "value"}
 	Success(c, data)
 
-	// 验证结果
+	// Verify results
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.JSONEq(t, `{"code":0,"message":"success","data":{"test":"value"}}`, w.Body.String())
 }
 
 func TestError(t *testing.T) {
-	// 测试场景
+	// Test scenarios
 	testCases := []struct {
 		name           string
 		err            error
@@ -192,13 +192,13 @@ func TestError(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			name:           "API错误",
+			name:           "API error",
 			err:            error_code.NotFound,
 			expectedStatus: http.StatusNotFound,
 			expectedBody:   `{"code":10002,"message":"record not found","data":{"details":null}}`,
 		},
 		{
-			name:           "普通错误",
+			name:           "Generic error",
 			err:            assert.AnError,
 			expectedStatus: http.StatusInternalServerError,
 			expectedBody:   `{"code":10000,"message":"Internal server error"}`,
@@ -207,14 +207,14 @@ func TestError(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// 创建测试环境
+			// Create test environment
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 
-			// 调用Error方法
+			// Call Error method
 			Error(c, tc.err)
 
-			// 验证结果
+			// Verify results
 			assert.Equal(t, tc.expectedStatus, w.Code)
 			assert.JSONEq(t, tc.expectedBody, w.Body.String())
 		})
@@ -222,7 +222,7 @@ func TestError(t *testing.T) {
 }
 
 func TestGetQueryInt(t *testing.T) {
-	// 测试场景
+	// Test scenarios
 	testCases := []struct {
 		name         string
 		queryParam   string
@@ -230,19 +230,19 @@ func TestGetQueryInt(t *testing.T) {
 		expectedInt  int
 	}{
 		{
-			name:         "有效整数参数",
+			name:         "Valid integer parameter",
 			queryParam:   "?id=123",
 			defaultValue: 0,
 			expectedInt:  123,
 		},
 		{
-			name:         "无效整数参数",
+			name:         "Invalid integer parameter",
 			queryParam:   "?id=abc",
 			defaultValue: 0,
 			expectedInt:  0,
 		},
 		{
-			name:         "无参数",
+			name:         "No parameter",
 			queryParam:   "",
 			defaultValue: 10,
 			expectedInt:  10,
@@ -251,22 +251,22 @@ func TestGetQueryInt(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// 创建测试环境
+			// Create test environment
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 			c.Request = httptest.NewRequest("GET", "/test"+tc.queryParam, nil)
 
-			// 调用方法
+			// Call method
 			result := GetQueryInt(c, "id", tc.defaultValue)
 
-			// 验证结果
+			// Verify results
 			assert.Equal(t, tc.expectedInt, result)
 		})
 	}
 }
 
 func TestGetQueryString(t *testing.T) {
-	// 测试场景
+	// Test scenarios
 	testCases := []struct {
 		name          string
 		queryParam    string
@@ -274,19 +274,19 @@ func TestGetQueryString(t *testing.T) {
 		expectedValue string
 	}{
 		{
-			name:          "有参数",
+			name:          "With parameter",
 			queryParam:    "?name=test",
 			defaultValue:  "default",
 			expectedValue: "test",
 		},
 		{
-			name:          "无参数",
+			name:          "No parameter",
 			queryParam:    "",
 			defaultValue:  "default",
 			expectedValue: "default",
 		},
 		{
-			name:          "空参数",
+			name:          "Empty parameter",
 			queryParam:    "?name=",
 			defaultValue:  "default",
 			expectedValue: "",
@@ -295,22 +295,22 @@ func TestGetQueryString(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// 创建测试环境
+			// Create test environment
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 			c.Request = httptest.NewRequest("GET", "/test"+tc.queryParam, nil)
 
-			// 调用方法
+			// Call method
 			result := GetQueryString(c, "name", tc.defaultValue)
 
-			// 验证结果
+			// Verify results
 			assert.Equal(t, tc.expectedValue, result)
 		})
 	}
 }
 
 func TestIsNil(t *testing.T) {
-	// 测试场景
+	// Test scenarios
 	var nilPtr *string
 	var nilSlice []string
 	var nilMap map[string]string
@@ -328,62 +328,62 @@ func TestIsNil(t *testing.T) {
 		expected bool
 	}{
 		{
-			name:     "nil值",
+			name:     "nil value",
 			value:    nil,
 			expected: true,
 		},
 		{
-			name:     "nil指针",
+			name:     "nil pointer",
 			value:    nilPtr,
 			expected: true,
 		},
 		{
-			name:     "nil切片",
+			name:     "nil slice",
 			value:    nilSlice,
 			expected: true,
 		},
 		{
-			name:     "nil映射",
+			name:     "nil map",
 			value:    nilMap,
 			expected: true,
 		},
 		{
-			name:     "nil通道",
+			name:     "nil channel",
 			value:    nilChan,
 			expected: true,
 		},
 		{
-			name:     "nil接口",
+			name:     "nil interface",
 			value:    nilInterface,
 			expected: true,
 		},
 		{
-			name:     "非nil指针",
+			name:     "non-nil pointer",
 			value:    nonNilPtr,
 			expected: false,
 		},
 		{
-			name:     "非nil切片",
+			name:     "non-nil slice",
 			value:    nonNilSlice,
 			expected: false,
 		},
 		{
-			name:     "非nil映射",
+			name:     "non-nil map",
 			value:    nonNilMap,
 			expected: false,
 		},
 		{
-			name:     "非nil通道",
+			name:     "non-nil channel",
 			value:    nonNilChan,
 			expected: false,
 		},
 		{
-			name:     "整数值",
+			name:     "integer value",
 			value:    1,
 			expected: false,
 		},
 		{
-			name:     "字符串值",
+			name:     "string value",
 			value:    "test",
 			expected: false,
 		},
@@ -391,10 +391,10 @@ func TestIsNil(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// 调用方法
+			// Call method
 			result := IsNil(tc.value)
 
-			// 验证结果
+			// Verify results
 			assert.Equal(t, tc.expected, result)
 		})
 	}

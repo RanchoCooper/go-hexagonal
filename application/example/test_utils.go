@@ -9,60 +9,60 @@ import (
 	"go-hexagonal/domain/repo"
 )
 
-// TestTransaction 测试用事务实现
+// TestTransaction test transaction implementation
 type TestTransaction struct {
 	mock.Mock
 }
 
-// Begin 开始事务
+// Begin starts transaction
 func (tx *TestTransaction) Begin() error {
 	args := tx.Called()
 	return args.Error(0)
 }
 
-// Commit 提交事务
+// Commit commits transaction
 func (tx *TestTransaction) Commit() error {
 	args := tx.Called()
 	return args.Error(0)
 }
 
-// Rollback 回滚事务
+// Rollback rolls back transaction
 func (tx *TestTransaction) Rollback() error {
 	args := tx.Called()
 	return args.Error(0)
 }
 
-// Conn 获取底层连接
+// Conn gets underlying connection
 func (tx *TestTransaction) Conn(ctx context.Context) any {
 	args := tx.Called(ctx)
 	return args.Get(0)
 }
 
-// Context 获取事务上下文
+// Context gets transaction context
 func (tx *TestTransaction) Context() context.Context {
 	args := tx.Called()
 	return args.Get(0).(context.Context)
 }
 
-// WithContext 设置事务上下文
+// WithContext sets transaction context
 func (tx *TestTransaction) WithContext(ctx context.Context) repo.Transaction {
 	args := tx.Called(ctx)
 	return args.Get(0).(repo.Transaction)
 }
 
-// StoreType 获取存储类型
+// StoreType gets storage type
 func (tx *TestTransaction) StoreType() repo.StoreType {
 	args := tx.Called()
 	return args.Get(0).(repo.StoreType)
 }
 
-// Options 获取事务选项
+// Options gets transaction options
 func (tx *TestTransaction) Options() *repo.TransactionOptions {
 	args := tx.Called()
 	return args.Get(0).(*repo.TransactionOptions)
 }
 
-// CreateTestTransaction 创建测试用事务
+// CreateTestTransaction creates test transaction
 func CreateTestTransaction(ctx context.Context) (repo.Transaction, error) {
 	tx := new(TestTransaction)
 	tx.On("Begin").Return(nil)
@@ -75,16 +75,16 @@ func CreateTestTransaction(ctx context.Context) (repo.Transaction, error) {
 	return tx, nil
 }
 
-// ErrorTestTransaction 创建一个会失败的事务
+// ErrorTestTransaction creates a transaction that will fail
 func ErrorTestTransaction(ctx context.Context) (repo.Transaction, error) {
-	return nil, errors.New("创建事务失败")
+	return nil, errors.New("failed to create transaction")
 }
 
-// CommitErrorTestTransaction 创建一个提交会失败的事务
+// CommitErrorTestTransaction creates a transaction that will fail on commit
 func CommitErrorTestTransaction(ctx context.Context) (repo.Transaction, error) {
 	tx := new(TestTransaction)
 	tx.On("Begin").Return(nil)
-	tx.On("Commit").Return(errors.New("提交事务失败"))
+	tx.On("Commit").Return(errors.New("failed to commit transaction"))
 	tx.On("Rollback").Return(nil)
 	tx.On("Context").Return(ctx)
 	tx.On("StoreType").Return(repo.MySQLStore)

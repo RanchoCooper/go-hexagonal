@@ -38,7 +38,7 @@ func (uc *testableUpdateUseCase) Execute(ctx context.Context, input dto.UpdateEx
 	if err != nil {
 		return fmt.Errorf("failed to create transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// Convert DTO to domain model
 	example := &model.Example{

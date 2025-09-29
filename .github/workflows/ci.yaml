@@ -50,7 +50,7 @@ jobs:
 
             - name: Create CI Helper
               run: |
-                # 创建CI跳过测试帮助函数
+                # Create CI skip test helper function
                 mkdir -p tests/migrations/migrate
                 cat > tests/ci_helper_test.go << EOF
                 package tests
@@ -70,9 +70,9 @@ jobs:
 
             - name: Create Migration Files
               run: |
-                # 检查是否已存在迁移文件
+                # Check if migration files already exist
                 if [ ! -f tests/migrations/migrate/migrate.go ]; then
-                  # 如果不存在，创建MySQL迁移帮助实现
+                  # If not exists, create MySQL migration helper implementation
                   cat > tests/migrations/migrate/mysql.go << EOF
                 package migrate
 
@@ -93,7 +93,7 @@ jobs:
                 }
                 EOF
 
-                  # 创建PostgreSQL迁移帮助实现
+                  # Create PostgreSQL migration helper implementation
                   cat > tests/migrations/migrate/postgresql.go << EOF
                 package migrate
 
@@ -119,7 +119,7 @@ jobs:
 
             - name: Update Test Files for CI
               run: |
-                # 修改测试文件以在CI环境中跳过
+                # Modify test files to skip in CI environment
                 if [ -f tests/mysql_example_test.go ]; then
                   if ! grep -q "+build !ci" tests/mysql_example_test.go; then
                     sed -i '1s/^/\/\/ +build !ci\n\n/' tests/mysql_example_test.go

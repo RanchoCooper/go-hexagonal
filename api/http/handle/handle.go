@@ -94,6 +94,46 @@ func Error(c *gin.Context, err error) {
 		return
 	}
 
+	// Handle util/errors AppError
+	if appErr, ok := err.(interface {
+		Error() string
+		Code() string
+		Message() string
+		Details() []string
+	}); ok {
+		// Map AppError to appropriate HTTP status code
+		statusCode := http.StatusInternalServerError
+		errorCode := error_code.ServerErrorCode
+
+		// Map error types to appropriate status codes
+		switch appErr.Code() {
+		case "validation", "invalid_input":
+			statusCode = http.StatusBadRequest
+			errorCode = error_code.InvalidParamsCode
+		case "not_found", "resource_not_found":
+			statusCode = http.StatusNotFound
+			errorCode = error_code.NotFoundCode
+		case "unauthorized", "forbidden":
+			statusCode = http.StatusForbidden
+			errorCode = error_code.UnauthorizedTokenErrorCode
+		case "conflict", "already_exists":
+			statusCode = http.StatusConflict
+			errorCode = error_code.AccountExistErrorCode
+		}
+
+		response := StandardResponse{
+			Code:    errorCode,
+			Message: appErr.Message(),
+		}
+
+		if details := appErr.Details(); len(details) > 0 {
+			response.Data = gin.H{"details": details}
+		}
+
+		c.JSON(statusCode, response)
+		return
+	}
+
 	// Log unexpected errors
 	log.SugaredLogger.Errorf("Unexpected error: %v", err)
 

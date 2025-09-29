@@ -49,7 +49,7 @@ func (h *MonitoredUseCaseHandler) ExecuteInTransaction(
 			log.SugaredLogger.Errorf("Failed to create transaction: %v", err)
 			return errors.Wrapf(err, errors.ErrorTypeSystem, "failed to create transaction")
 		}
-		defer tx.Rollback()
+		defer func() { _ = tx.Rollback() }()
 
 		// Execute function within transaction
 		result, txErr = fn(ctx, tx)

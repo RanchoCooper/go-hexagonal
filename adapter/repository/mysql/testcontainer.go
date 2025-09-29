@@ -31,7 +31,7 @@ func SetupMySQLContainer(t *testing.T) *config.MySQLConfig {
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
-	defer os.Remove(tempFile.Name())
+	defer func() { _ = os.Remove(tempFile.Name()) }()
 
 	// Write SQL schema directly
 	initSQL := "CREATE TABLE IF NOT EXISTS `example` (\n" +
@@ -49,7 +49,7 @@ func SetupMySQLContainer(t *testing.T) *config.MySQLConfig {
 	if _, err := tempFile.WriteString(initSQL); err != nil {
 		t.Fatalf("Failed to write to temp file: %v", err)
 	}
-	tempFile.Close()
+	_ = tempFile.Close()
 
 	// Define MySQL port
 	mysqlPort := "3306/tcp"
@@ -80,7 +80,7 @@ func SetupMySQLContainer(t *testing.T) *config.MySQLConfig {
 		WaitingFor: wait.ForAll(
 			wait.ForListeningPort("3306/tcp"),
 			wait.ForLog("port: 3306  MySQL Community Server - GPL"),
-		).WithStartupTimeout(MySQLStartTimeout),
+		).WithDeadline(MySQLStartTimeout),
 	}
 
 	// Start MySQL container

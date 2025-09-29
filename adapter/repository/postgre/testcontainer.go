@@ -32,7 +32,7 @@ func SetupPostgreSQLContainer(t *testing.T) *config.PostgreSQLConfig {
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
-	defer os.Remove(tempFile.Name())
+	defer func() { _ = os.Remove(tempFile.Name()) }()
 
 	// Write SQL schema directly - note PostgreSQL syntax differences from MySQL
 	initSQL := "CREATE TABLE IF NOT EXISTS example (\n" +
@@ -56,7 +56,7 @@ func SetupPostgreSQLContainer(t *testing.T) *config.PostgreSQLConfig {
 	if _, err := tempFile.WriteString(initSQL); err != nil {
 		t.Fatalf("Failed to write to temp file: %v", err)
 	}
-	tempFile.Close()
+	_ = tempFile.Close()
 
 	// Define PostgreSQL port
 	postgresPort := "5432/tcp"
@@ -91,7 +91,7 @@ func SetupPostgreSQLContainer(t *testing.T) *config.PostgreSQLConfig {
 					return exitCode == 0
 				}),
 			wait.ForLog("database system is ready to accept connections"),
-		).WithStartupTimeout(PostgreSQLStartTimeout),
+		).WithDeadline(PostgreSQLStartTimeout),
 	}
 
 	// Start PostgreSQL container

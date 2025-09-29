@@ -2,11 +2,11 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"go-hexagonal/domain/event"
 	"go-hexagonal/domain/model"
 	"go-hexagonal/domain/repo"
+	"go-hexagonal/util/error_handler"
 	"go-hexagonal/util/log"
 )
 
@@ -33,8 +33,7 @@ func (s *ExampleService) Create(ctx context.Context, name string, alias string) 
 	// Create a new example entity
 	example, err := model.NewExample(name, alias)
 	if err != nil {
-		log.SugaredLogger.Errorf("Invalid example data: %v", err)
-		return nil, fmt.Errorf("invalid example data: %w", err)
+		return nil, error_handler.HandleAndConvertError(ctx, err, "create example entity", "validation")
 	}
 
 	// Create a no-operation transaction
@@ -43,8 +42,7 @@ func (s *ExampleService) Create(ctx context.Context, name string, alias string) 
 	// Persist the entity
 	createdExample, err := s.Repository.Create(ctx, tr, example)
 	if err != nil {
-		log.SugaredLogger.Errorf("Failed to create example: %v", err)
-		return nil, fmt.Errorf("failed to create example: %w", err)
+		return nil, error_handler.HandleAndWrapError(ctx, err, "persist example", "failed to create example")
 	}
 
 	// Update cache if available
@@ -84,7 +82,7 @@ func (s *ExampleService) Delete(ctx context.Context, id int) error {
 	// Get the example to be deleted
 	example, err := s.Repository.GetByID(ctx, tr, id)
 	if err != nil {
-		return fmt.Errorf("example not found: %w", err)
+		return error_handler.HandleAndWrapError(ctx, err, "get example for deletion", "example not found")
 	}
 
 	// Mark example as deleted (generates domain event)
@@ -92,7 +90,7 @@ func (s *ExampleService) Delete(ctx context.Context, id int) error {
 
 	// Delete from repository
 	if err := s.Repository.Delete(ctx, tr, id); err != nil {
-		return fmt.Errorf("failed to delete example: %w", err)
+		return error_handler.HandleAndWrapError(ctx, err, "delete example", "failed to delete example")
 	}
 
 	// Invalidate cache if available
@@ -128,17 +126,17 @@ func (s *ExampleService) Update(ctx context.Context, id int, name string, alias 
 	// Get the example to be updated
 	example, err := s.Repository.GetByID(ctx, tr, id)
 	if err != nil {
-		return fmt.Errorf("example not found: %w", err)
+		return error_handler.HandleAndWrapError(ctx, err, "get example for update", "example not found")
 	}
 
 	// Update the entity (generates domain event)
 	if err := example.Update(name, alias); err != nil {
-		return fmt.Errorf("invalid update data: %w", err)
+		return error_handler.HandleAndConvertError(ctx, err, "update example entity", "invalid update data")
 	}
 
 	// Persist the changes
 	if err := s.Repository.Update(ctx, tr, example); err != nil {
-		return fmt.Errorf("failed to update example: %w", err)
+		return error_handler.HandleAndWrapError(ctx, err, "persist example update", "failed to update example")
 	}
 
 	// Update cache if available
@@ -187,7 +185,7 @@ func (s *ExampleService) Get(ctx context.Context, id int) (*model.Example, error
 	// Get from repository
 	example, err := s.Repository.GetByID(ctx, tr, id)
 	if err != nil {
-		return nil, err
+		return nil, error_handler.HandleError(ctx, err, "get example by ID")
 	}
 
 	// Update cache if available
@@ -217,7 +215,7 @@ func (s *ExampleService) FindByName(ctx context.Context, name string) (*model.Ex
 	// Get from repository
 	example, err := s.Repository.FindByName(ctx, tr, name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find example: %w", err)
+		return nil, error_handler.HandleAndWrapError(ctx, err, "find example by name", "failed to find example")
 	}
 
 	// Update cache if available

@@ -124,7 +124,7 @@ func provideEventBus() *event.InMemoryEventBus {
 
 // provideExampleService creates and configures the example service
 func provideExampleService(repo2 repo.IExampleRepo, eventBus event.EventBus) *service.ExampleService {
-	// 暂时使用nil代替缓存存储库，未来可实现真正的缓存
+	// Temporarily use nil instead of cache repository, can implement real cache in the future
 	var cacheRepo repo.IExampleCacheRepo = nil
 	exampleService := service.NewExampleService(repo2, cacheRepo)
 	exampleService.EventBus = eventBus

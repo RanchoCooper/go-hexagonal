@@ -378,12 +378,11 @@ func (l *AppLogger) createLumberjackHook() func(zapcore.Entry) error {
 		}
 
 		format := "[%-32s]\t %s\t [%s]\t %s\n"
-		_, err := lum.Write([]byte(fmt.Sprintf(format,
+		_, err := fmt.Fprintf(lum, format,
 			e.Time.Format(time.RFC3339Nano),
 			e.Level.CapitalString(),
 			e.Caller.TrimmedPath(),
-			e.Message)),
-		)
+			e.Message)
 		return err
 	}
 }

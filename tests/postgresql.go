@@ -16,7 +16,7 @@ import (
 
 func SetupPostgreSQL(t *testing.T) (postgreSQLConfig *config.PostgreSQLConfig) {
 	t.Log("Setting up an instance of PostgreSQL with testcontainers-go")
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	user, dbName, password := "postgres", "postgres", "123456"
 

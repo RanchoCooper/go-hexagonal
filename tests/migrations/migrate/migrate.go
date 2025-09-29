@@ -33,7 +33,7 @@ func PostgreMigrateUp(conf *config.Config) error {
 	if err != nil {
 		return err
 	}
-	defer m.Close()
+	defer func() { _, _ = m.Close() }()
 
 	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return err
@@ -58,7 +58,7 @@ func PostgreMigrateDrop(conf *config.Config) error {
 	if err != nil {
 		return err
 	}
-	defer m.Close()
+	defer func() { _, _ = m.Close() }()
 
 	if err := m.Drop(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return err
@@ -86,7 +86,7 @@ func MySQLMigrateUp(conf *config.Config) error {
 	if err != nil {
 		return err
 	}
-	defer m.Close()
+	defer func() { _, _ = m.Close() }()
 
 	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return err
@@ -110,7 +110,7 @@ func MySQLMigrateDrop(conf *config.Config) error {
 	if err != nil {
 		return err
 	}
-	defer m.Close()
+	defer func() { _, _ = m.Close() }()
 
 	if err := m.Drop(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return err

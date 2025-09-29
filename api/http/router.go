@@ -69,7 +69,7 @@ func NewServerRoute() *gin.Engine {
 	router.Use(httpMiddleware.Cors())
 	router.Use(httpMiddleware.RequestLogger()) // Add request logging middleware
 	router.Use(httpMiddleware.Translations())
-	router.Use(httpMiddleware.ErrorHandlerMiddleware()) // Add unified error handling middleware
+	router.Use(httpMiddleware.EnhancedErrorHandlerMiddleware()) // Add enhanced unified error handling middleware
 
 	// Add metrics middleware for each handler
 	router.Use(func(c *gin.Context) {

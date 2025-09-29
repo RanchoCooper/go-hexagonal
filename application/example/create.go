@@ -2,12 +2,11 @@ package example
 
 import (
 	"context"
-	"fmt"
 
 	"go-hexagonal/application/core"
 	"go-hexagonal/domain/repo"
 	"go-hexagonal/domain/service"
-	"go-hexagonal/util/log"
+	"go-hexagonal/util/error_handler"
 )
 
 // CreateUseCase handles the create example use case
@@ -36,7 +35,7 @@ func (uc *CreateUseCase) Execute(ctx context.Context, input any) (any, error) {
 	}
 
 	if err := createInput.Validate(); err != nil {
-		return nil, err
+		return nil, error_handler.HandleAndConvertError(ctx, err, "input validation", "validation")
 	}
 
 	// Execute in transaction
@@ -44,8 +43,7 @@ func (uc *CreateUseCase) Execute(ctx context.Context, input any) (any, error) {
 		// Call domain service
 		example, err := uc.exampleService.Create(ctx, createInput.Name, createInput.Alias)
 		if err != nil {
-			log.SugaredLogger.Errorf("Failed to create example: %v", err)
-			return nil, fmt.Errorf("failed to create example: %w", err)
+			return nil, error_handler.HandleAndWrapError(ctx, err, "create example", "failed to create example")
 		}
 
 		// Create output DTO
@@ -53,7 +51,7 @@ func (uc *CreateUseCase) Execute(ctx context.Context, input any) (any, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, error_handler.HandleError(ctx, err, "execute create use case")
 	}
 
 	return result, nil

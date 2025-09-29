@@ -1,7 +1,6 @@
 package log
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -95,9 +94,9 @@ func TestNew(t *testing.T) {
 	require.NotNil(t, logger.sugar)
 
 	// Test creation with file configuration
-	tempDir, err := ioutil.TempDir("", "logger-test")
+	tempDir, err := os.MkdirTemp("", "logger-test")
 	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	fileConfig := &FileConfig{
 		SavePath:   tempDir,
@@ -171,10 +170,10 @@ func TestLogContext(t *testing.T) {
 
 func TestLogContextMethods(t *testing.T) {
 	// Create a temporary file to capture log output
-	tempFile, err := ioutil.TempFile("", "logger-test-*.log")
+	tempFile, err := os.CreateTemp("", "logger-test-*.log")
 	require.NoError(t, err)
-	defer os.Remove(tempFile.Name())
-	defer tempFile.Close()
+	defer func() { _ = os.Remove(tempFile.Name()) }()
+	defer func() { _ = tempFile.Close() }()
 
 	// Create a logger for testing
 	encoderConfig := zapcore.EncoderConfig{
@@ -225,11 +224,11 @@ func TestLogContextMethods(t *testing.T) {
 	logger.SugaredErrorContext(ctx, "sugar error %v", assert.AnError)
 
 	// Ensure all logs are written to file
-	logger.Sync()
+	_ = logger.Sync()
 
 	// Read log content for verification
-	tempFile.Seek(0, 0)
-	content, err := ioutil.ReadAll(tempFile)
+	_, _ = tempFile.Seek(0, 0)
+	content, err := os.ReadFile(tempFile.Name())
 	require.NoError(t, err)
 
 	logContent := string(content)

@@ -16,7 +16,7 @@ import (
 
 // MockExampleService is defined in create_test.go
 
-// TestablGetUseCase 为测试目的修改GetUseCase
+// TestablGetUseCase modifies GetUseCase for testing purposes
 type TestablGetUseCase struct {
 	GetUseCase
 	txProvider func(ctx context.Context) (repo.Transaction, error)
@@ -31,27 +31,27 @@ func NewTestablGetUseCase(svc *MockExampleService) *TestablGetUseCase {
 	}
 }
 
-// Execute 重写Execute方法以替换事务处理逻辑
+// Execute overrides Execute method to replace transaction handling logic
 func (uc *TestablGetUseCase) Execute(ctx context.Context, id int) (*dto.GetExampleResponse, error) {
-	// 使用测试事务
+	// Use test transaction
 	tx, err := uc.txProvider(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("创建事务失败: %w", err)
+		return nil, fmt.Errorf("failed to create transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
-	// 调用领域服务
+	// Call domain service
 	example, err := uc.exampleService.Get(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("获取样例失败: %w", err)
+		return nil, fmt.Errorf("failed to get example: %w", err)
 	}
 
-	// 提交事务
+	// Commit transaction
 	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("提交事务失败: %w", err)
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	// 将领域模型转换为DTO
+	// Convert domain model to DTO
 	result := &dto.GetExampleResponse{
 		Id:        example.Id,
 		Name:      example.Name,
@@ -63,12 +63,12 @@ func (uc *TestablGetUseCase) Execute(ctx context.Context, id int) (*dto.GetExamp
 	return result, nil
 }
 
-// TestGetUseCase_Success 测试通过ID获取样例的成功情况
+// TestGetUseCase_Success tests successful retrieval of example by ID
 func TestGetUseCase_Success(t *testing.T) {
-	// 创建mock服务
+	// Create mock service
 	mockService := new(MockExampleService)
 
-	// 测试数据
+	// Test data
 	exampleId := 1
 
 	now := time.Now()
@@ -80,17 +80,17 @@ func TestGetUseCase_Success(t *testing.T) {
 		UpdatedAt: now,
 	}
 
-	// 设置mock行为
+	// Set mock behavior
 	mockService.On("Get", mock.Anything, exampleId).Return(expectedExample, nil)
 
-	// 使用可测试版本创建用例
+	// Create use case with testable version
 	useCase := NewTestablGetUseCase(mockService)
 
-	// 执行用例
+	// Execute use case
 	ctx := context.Background()
 	result, err := useCase.Execute(ctx, exampleId)
 
-	// 断言结果
+	// Assert results
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, expectedExample.Id, result.Id)
@@ -102,29 +102,29 @@ func TestGetUseCase_Success(t *testing.T) {
 	mockService.AssertExpectations(t)
 }
 
-// TestGetUseCase_Error 测试通过ID获取样例时出错的情况
+// TestGetUseCase_Error tests error scenario when retrieving example by ID
 func TestGetUseCase_Error(t *testing.T) {
-	// 创建mock服务
+	// Create mock service
 	mockService := new(MockExampleService)
 
-	// 测试数据
-	exampleId := 999 // 不存在的ID
+	// Test data
+	exampleId := 999 // Non-existent ID
 
-	// 设置mock行为 - 模拟错误
+	// Set mock behavior - simulate error
 	expectedError := assert.AnError
 	mockService.On("Get", mock.Anything, exampleId).Return(nil, expectedError)
 
-	// 使用可测试版本创建用例
+	// Create use case with testable version
 	useCase := NewTestablGetUseCase(mockService)
 
-	// 执行用例
+	// Execute use case
 	ctx := context.Background()
 	result, err := useCase.Execute(ctx, exampleId)
 
-	// 断言结果
+	// Assert results
 	assert.Error(t, err)
 	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "获取样例失败")
+	assert.Contains(t, err.Error(), "failed to get example")
 
 	mockService.AssertExpectations(t)
 }

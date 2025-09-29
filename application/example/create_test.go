@@ -86,7 +86,7 @@ func (uc *TestablCreateUseCase) Execute(ctx context.Context, in CreateInput) (*E
 	if err != nil {
 		return nil, fmt.Errorf("failed to create transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// Call domain service
 	example, err := uc.exampleService.Create(ctx, in.Name, in.Alias)

@@ -11,26 +11,26 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	// 设置Gin为测试模式
+	// Set Gin to test mode
 	gin.SetMode(gin.TestMode)
 
-	// 初始化日志配置
+	// Initialize logging configuration
 	initTestLogger()
 
-	// 运行测试
+	// Run tests
 	exitCode := m.Run()
 
-	// 退出
+	// Exit
 	os.Exit(exitCode)
 }
 
-// initTestLogger 初始化测试环境的日志配置
+// Initialize logging configuration for test environment
 func initTestLogger() {
-	// 使用最简单的控制台日志配置
+	// Use simplest console logging configuration
 	logger, _ := zap.NewDevelopment()
 	zap.ReplaceGlobals(logger)
 
-	// 初始化全局日志变量
+	// Initialize global logger variable
 	log.Logger = logger
 	log.SugaredLogger = logger.Sugar()
 }

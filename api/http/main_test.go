@@ -16,7 +16,7 @@ import (
 	"go-hexagonal/util/log"
 )
 
-var ctx = context.TODO()
+var ctx = context.Background()
 
 func TestMain(m *testing.M) {
 	// Parse command line arguments, support -short flag

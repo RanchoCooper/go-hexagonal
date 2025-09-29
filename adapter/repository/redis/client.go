@@ -132,7 +132,7 @@ func (c *RedisClient) HealthCheck(ctx context.Context) error {
 
 	status := c.Client.Ping(timeoutCtx)
 	if status.Err() != nil {
-		return fmt.Errorf("Redis health check failed: %w", status.Err())
+		return fmt.Errorf("redis health check failed: %w", status.Err())
 	}
 	return nil
 }
