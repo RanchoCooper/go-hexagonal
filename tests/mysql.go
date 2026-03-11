@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"testing"
 	"time"
 
@@ -21,6 +22,13 @@ const (
 )
 
 func SetupMySQL(t *testing.T) *config.MySQLConfig {
+	// Check if Docker is available
+	if _, err := os.Stat("/var/run/docker.sock"); os.IsNotExist(err) {
+		if _, err := os.Stat(os.Getenv("DOCKER_HOST")); os.IsNotExist(err) {
+			t.Skip("Docker is not available")
+		}
+	}
+
 	t.Log("Setting up an instance of MySQL with testcontainers-go")
 	ctx := context.Background()
 

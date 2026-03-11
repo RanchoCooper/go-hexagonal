@@ -138,23 +138,24 @@ func TestNewExampleService(t *testing.T) {
 	mockRepo := new(MockExampleRepo)
 	mockCacheRepo := new(MockExampleCacheRepo)
 	mockEventBus := new(MockEventBus)
+	noopTxFactory := repo.NewNoOpTransactionFactory()
 
 	// Test creation without optional parameters
-	service := NewExampleService(mockRepo, nil)
+	service := NewExampleService(mockRepo, nil, noopTxFactory)
 	assert.NotNil(t, service)
 	assert.Equal(t, mockRepo, service.Repository)
 	assert.Nil(t, service.CacheRepo)
 	assert.Nil(t, service.EventBus)
 
 	// Test creation with cache
-	service = NewExampleService(mockRepo, mockCacheRepo)
+	service = NewExampleService(mockRepo, mockCacheRepo, noopTxFactory)
 	assert.NotNil(t, service)
 	assert.Equal(t, mockRepo, service.Repository)
 	assert.Equal(t, mockCacheRepo, service.CacheRepo)
 	assert.Nil(t, service.EventBus)
 
 	// Test setting event bus
-	service = NewExampleService(mockRepo, mockCacheRepo)
+	service = NewExampleService(mockRepo, mockCacheRepo, noopTxFactory)
 	service.EventBus = mockEventBus
 	assert.NotNil(t, service)
 	assert.Equal(t, mockRepo, service.Repository)
@@ -162,7 +163,7 @@ func TestNewExampleService(t *testing.T) {
 	assert.Equal(t, mockEventBus, service.EventBus)
 
 	// Test using helper function to set event bus
-	service = withEventBus(NewExampleService(mockRepo, mockCacheRepo), mockEventBus)
+	service = withEventBus(NewExampleService(mockRepo, mockCacheRepo, noopTxFactory), mockEventBus)
 	assert.NotNil(t, service)
 	assert.Equal(t, mockRepo, service.Repository)
 	assert.Equal(t, mockCacheRepo, service.CacheRepo)
@@ -176,7 +177,9 @@ func TestExampleService_Create(t *testing.T) {
 	mockCacheRepo := new(MockExampleCacheRepo)
 	mockEventBus := new(MockEventBus)
 
-	service := NewExampleService(mockRepo, mockCacheRepo)
+	noopTxFactory := repo.NewNoOpTransactionFactory()
+
+	service := NewExampleService(mockRepo, mockCacheRepo, noopTxFactory)
 	service.EventBus = mockEventBus
 
 	// Create a correct Example instance to get events
@@ -214,9 +217,10 @@ func TestExampleService_Delete(t *testing.T) {
 	mockRepo := new(MockExampleRepo)
 	mockCacheRepo := new(MockExampleCacheRepo)
 	mockEventBus := new(MockEventBus)
+	noopTxFactory := repo.NewNoOpTransactionFactory()
 
 	// Create service instance
-	service := NewExampleService(mockRepo, mockCacheRepo)
+	service := NewExampleService(mockRepo, mockCacheRepo, noopTxFactory)
 	service.EventBus = mockEventBus
 
 	testCases := []struct {
@@ -300,9 +304,10 @@ func TestExampleService_Update(t *testing.T) {
 	mockRepo := new(MockExampleRepo)
 	mockCacheRepo := new(MockExampleCacheRepo)
 	mockEventBus := new(MockEventBus)
+	noopTxFactory := repo.NewNoOpTransactionFactory()
 
 	// Create service instance
-	service := NewExampleService(mockRepo, mockCacheRepo)
+	service := NewExampleService(mockRepo, mockCacheRepo, noopTxFactory)
 	service.EventBus = mockEventBus
 
 	testCases := []struct {
@@ -412,9 +417,10 @@ func TestExampleService_Update(t *testing.T) {
 func TestExampleService_Get(t *testing.T) {
 	mockRepo := new(MockExampleRepo)
 	mockCacheRepo := new(MockExampleCacheRepo)
+	noopTxFactory := repo.NewNoOpTransactionFactory()
 
 	// Create service instance
-	service := NewExampleService(mockRepo, mockCacheRepo)
+	service := NewExampleService(mockRepo, mockCacheRepo, noopTxFactory)
 
 	testCases := []struct {
 		name        string
@@ -470,7 +476,7 @@ func TestExampleService_Get(t *testing.T) {
 			name: "Get from repository without cache",
 			setupMocks: func() {
 				// Create service without cache
-				service = NewExampleService(mockRepo, nil)
+				service = NewExampleService(mockRepo, nil, noopTxFactory)
 				// Only use repository
 				mockRepo.On("GetByID", mock.Anything, mock.Anything, 4).Return(&model.Example{
 					Id:    4,
@@ -518,9 +524,10 @@ func TestExampleService_Get(t *testing.T) {
 func TestExampleService_FindByName(t *testing.T) {
 	mockRepo := new(MockExampleRepo)
 	mockCacheRepo := new(MockExampleCacheRepo)
+	noopTxFactory := repo.NewNoOpTransactionFactory()
 
 	// Create service instance
-	service := NewExampleService(mockRepo, mockCacheRepo)
+	service := NewExampleService(mockRepo, mockCacheRepo, noopTxFactory)
 
 	testCases := []struct {
 		name        string

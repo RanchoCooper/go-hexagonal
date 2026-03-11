@@ -15,17 +15,40 @@ var _ IExampleService = (*ExampleService)(nil)
 
 // ExampleService handles business logic for Example entity
 type ExampleService struct {
-	Repository repo.IExampleRepo
-	CacheRepo  repo.IExampleCacheRepo
-	EventBus   event.EventBus
+	Repository         repo.IExampleRepo
+	CacheRepo          repo.IExampleCacheRepo
+	EventBus           event.EventBus
+	TransactionFactory repo.TransactionFactory
 }
 
 // NewExampleService creates a new example service instance
-func NewExampleService(repository repo.IExampleRepo, cacheRepo repo.IExampleCacheRepo) *ExampleService {
+func NewExampleService(repository repo.IExampleRepo, cacheRepo repo.IExampleCacheRepo, txFactory repo.TransactionFactory) *ExampleService {
 	return &ExampleService{
-		Repository: repository,
-		CacheRepo:  cacheRepo,
+		Repository:         repository,
+		CacheRepo:          cacheRepo,
+		TransactionFactory: txFactory,
 	}
+}
+
+// getTransaction returns a transaction, using real transaction if factory is available
+func (s *ExampleService) getTransaction(ctx context.Context) repo.Transaction {
+	if s.TransactionFactory != nil {
+		tx, err := s.TransactionFactory.NewTransaction(ctx, repo.MySQLStore, repo.DefaultTransactionOptions())
+		if err == nil && tx != nil {
+			return tx
+		}
+	}
+	// Fallback to noop transaction
+	return repo.NewNoopTransaction(s.Repository)
+}
+
+// commitTransaction commits the transaction if it's not a noop transaction
+func (s *ExampleService) commitTransaction(tr repo.Transaction) error {
+	// Skip commit for noop transactions
+	if _, ok := tr.(*repo.NoopTransaction); ok {
+		return nil
+	}
+	return tr.Commit()
 }
 
 // Create creates a new example
@@ -36,13 +59,19 @@ func (s *ExampleService) Create(ctx context.Context, name string, alias string) 
 		return nil, error_handler.HandleAndConvertError(ctx, err, "create example entity", "validation")
 	}
 
-	// Create a no-operation transaction
-	tr := repo.NewNoopTransaction(s.Repository)
+	// Get transaction
+	tr := s.getTransaction(ctx)
 
 	// Persist the entity
 	createdExample, err := s.Repository.Create(ctx, tr, example)
 	if err != nil {
+		_ = tr.Rollback()
 		return nil, error_handler.HandleAndWrapError(ctx, err, "persist example", "failed to create example")
+	}
+
+	// Commit transaction
+	if err := s.commitTransaction(tr); err != nil {
+		return nil, error_handler.HandleAndWrapError(ctx, err, "commit transaction", "failed to commit transaction")
 	}
 
 	// Update cache if available
@@ -76,8 +105,8 @@ func (s *ExampleService) Create(ctx context.Context, name string, alias string) 
 
 // Delete deletes an example by ID
 func (s *ExampleService) Delete(ctx context.Context, id int) error {
-	// Create a no-operation transaction
-	tr := repo.NewNoopTransaction(s.Repository)
+	// Get transaction
+	tr := s.getTransaction(ctx)
 
 	// Get the example to be deleted
 	example, err := s.Repository.GetByID(ctx, tr, id)
@@ -90,7 +119,13 @@ func (s *ExampleService) Delete(ctx context.Context, id int) error {
 
 	// Delete from repository
 	if err := s.Repository.Delete(ctx, tr, id); err != nil {
+		_ = tr.Rollback()
 		return error_handler.HandleAndWrapError(ctx, err, "delete example", "failed to delete example")
+	}
+
+	// Commit transaction
+	if err := s.commitTransaction(tr); err != nil {
+		return error_handler.HandleAndWrapError(ctx, err, "commit transaction", "failed to commit transaction")
 	}
 
 	// Invalidate cache if available
@@ -120,8 +155,8 @@ func (s *ExampleService) Delete(ctx context.Context, id int) error {
 
 // Update updates an existing example
 func (s *ExampleService) Update(ctx context.Context, id int, name string, alias string) error {
-	// Create a no-operation transaction
-	tr := repo.NewNoopTransaction(s.Repository)
+	// Get transaction
+	tr := s.getTransaction(ctx)
 
 	// Get the example to be updated
 	example, err := s.Repository.GetByID(ctx, tr, id)
@@ -136,7 +171,13 @@ func (s *ExampleService) Update(ctx context.Context, id int, name string, alias 
 
 	// Persist the changes
 	if err := s.Repository.Update(ctx, tr, example); err != nil {
+		_ = tr.Rollback()
 		return error_handler.HandleAndWrapError(ctx, err, "persist example update", "failed to update example")
+	}
+
+	// Commit transaction
+	if err := s.commitTransaction(tr); err != nil {
+		return error_handler.HandleAndWrapError(ctx, err, "commit transaction", "failed to commit transaction")
 	}
 
 	// Update cache if available
@@ -179,8 +220,8 @@ func (s *ExampleService) Get(ctx context.Context, id int) (*model.Example, error
 		log.SugaredLogger.Debugf("Cache miss for example ID %d: %v", id, err)
 	}
 
-	// Create a no-operation transaction
-	tr := repo.NewNoopTransaction(s.Repository)
+	// Get transaction
+	tr := s.getTransaction(ctx)
 
 	// Get from repository
 	example, err := s.Repository.GetByID(ctx, tr, id)
@@ -209,8 +250,8 @@ func (s *ExampleService) FindByName(ctx context.Context, name string) (*model.Ex
 		log.SugaredLogger.Debugf("Cache miss for example name %s: %v", name, err)
 	}
 
-	// Create a no-operation transaction
-	tr := repo.NewNoopTransaction(s.Repository)
+	// Get transaction
+	tr := s.getTransaction(ctx)
 
 	// Get from repository
 	example, err := s.Repository.FindByName(ctx, tr, name)

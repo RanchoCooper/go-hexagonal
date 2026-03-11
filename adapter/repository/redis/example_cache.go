@@ -11,6 +11,7 @@ import (
 
 	"go-hexagonal/domain/model"
 	"go-hexagonal/domain/repo"
+	"go-hexagonal/util/metrics"
 )
 
 const (
@@ -18,13 +19,27 @@ const (
 	exampleKeyPrefix  = "example:id:"
 	exampleNamePrefix = "example:name:"
 
-	// Default cache durations
+	// Default cache duration
 	defaultCacheDuration = 30 * time.Minute
-	shortCacheDuration   = 5 * time.Minute
 )
 
 // ErrCacheMiss is returned when a requested item is not found in cache
 var ErrCacheMiss = errors.New("cache miss")
+
+// exampleIDKey generates a Redis key for example by ID
+func exampleIDKey(id int) string {
+	return fmt.Sprintf("%s%d", exampleKeyPrefix, id)
+}
+
+// exampleNameKey generates a Redis key for example by name
+func exampleNameKey(name string) string {
+	return fmt.Sprintf("%s%s", exampleNamePrefix, name)
+}
+
+// exampleIDStrKey generates a Redis key for example by string ID
+func exampleIDStrKey(idStr string) string {
+	return fmt.Sprintf("%s%s", exampleKeyPrefix, idStr)
+}
 
 // ExampleCacheRepo implements the example cache repository
 type ExampleCacheRepo struct {
@@ -45,14 +60,16 @@ func (c *ExampleCacheRepo) HealthCheck(ctx context.Context) error {
 
 // GetByID gets an example by ID from the cache
 func (c *ExampleCacheRepo) GetByID(ctx context.Context, id int) (*model.Example, error) {
-	key := fmt.Sprintf("%s%d", exampleKeyPrefix, id)
+	key := exampleIDKey(id)
 
 	// Try to get from cache
 	data, err := c.client.Client.Get(ctx, key).Bytes()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
+			metrics.RecordCacheHit("example_cache", "GetByID_miss")
 			return nil, ErrCacheMiss
 		}
+		metrics.RecordCacheHit("example_cache", "GetByID_error")
 		return nil, fmt.Errorf("failed to get example from cache: %w", err)
 	}
 
@@ -62,26 +79,30 @@ func (c *ExampleCacheRepo) GetByID(ctx context.Context, id int) (*model.Example,
 		return nil, fmt.Errorf("failed to unmarshal cached example: %w", err)
 	}
 
+	metrics.RecordCacheHit("example_cache", "GetByID_hit")
 	return &example, nil
 }
 
 // GetByName gets an example by name from the cache
 func (c *ExampleCacheRepo) GetByName(ctx context.Context, name string) (*model.Example, error) {
-	key := fmt.Sprintf("%s%s", exampleNamePrefix, name)
+	key := exampleNameKey(name)
 
 	// Try to get example ID from cache
 	idStr, err := c.client.Client.Get(ctx, key).Result()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
+			metrics.RecordCacheHit("example_cache", "GetByName_miss")
 			return nil, ErrCacheMiss
 		}
+		metrics.RecordCacheHit("example_cache", "GetByName_error")
 		return nil, fmt.Errorf("failed to get example ID by name from cache: %w", err)
 	}
 
 	// Get the example data using the ID
-	data, err := c.client.Client.Get(ctx, fmt.Sprintf("%s%s", exampleKeyPrefix, idStr)).Bytes()
+	data, err := c.client.Client.Get(ctx, exampleIDStrKey(idStr)).Bytes()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
+			metrics.RecordCacheHit("example_cache", "GetByName_miss")
 			return nil, ErrCacheMiss
 		}
 		return nil, fmt.Errorf("failed to get example from cache: %w", err)
@@ -92,6 +113,8 @@ func (c *ExampleCacheRepo) GetByName(ctx context.Context, name string) (*model.E
 	if err := json.Unmarshal(data, &example); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal cached example: %w", err)
 	}
+
+	metrics.RecordCacheHit("example_cache", "GetByName_hit")
 
 	return &example, nil
 }
@@ -104,18 +127,28 @@ func (c *ExampleCacheRepo) Set(ctx context.Context, example *model.Example) erro
 		return fmt.Errorf("failed to marshal example: %w", err)
 	}
 
+	// Use pipeline for batch operations
+	pipe := c.client.Client.Pipeline()
+
 	// Set the example data
-	exampleKey := fmt.Sprintf("%s%d", exampleKeyPrefix, example.Id)
-	if err := c.client.Client.Set(ctx, exampleKey, data, defaultCacheDuration).Err(); err != nil {
-		return fmt.Errorf("failed to cache example: %w", err)
-	}
+	exampleKey := exampleIDKey(example.Id)
+	pipe.Set(ctx, exampleKey, data, defaultCacheDuration)
 
 	// Set the name to ID mapping
-	nameKey := fmt.Sprintf("%s%s", exampleNamePrefix, example.Name)
-	if err := c.client.Client.Set(ctx, nameKey, example.Id, defaultCacheDuration).Err(); err != nil {
-		return fmt.Errorf("failed to cache example name mapping: %w", err)
+	nameKey := exampleNameKey(example.Name)
+	pipe.Set(ctx, nameKey, example.Id, defaultCacheDuration)
+
+	// Execute pipeline
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		// Check if it's a Redis nil response (not an actual error)
+		if err.Error() != "redis: nil" {
+			metrics.RecordCacheHit("example_cache", "Set_error")
+			return fmt.Errorf("failed to cache example: %w", err)
+		}
 	}
 
+	metrics.RecordCacheHit("example_cache", "Set_success")
 	return nil
 }
 
@@ -127,20 +160,30 @@ func (c *ExampleCacheRepo) Delete(ctx context.Context, id int) error {
 		return fmt.Errorf("failed to get example for deletion: %w", err)
 	}
 
+	// Use pipeline for batch operations
+	pipe := c.client.Client.Pipeline()
+
 	// Delete the name to ID mapping if the example exists
 	if example != nil {
-		nameKey := fmt.Sprintf("%s%s", exampleNamePrefix, example.Name)
-		if err := c.client.Client.Del(ctx, nameKey).Err(); err != nil {
-			return fmt.Errorf("failed to delete example name mapping: %w", err)
-		}
+		nameKey := exampleNameKey(example.Name)
+		pipe.Del(ctx, nameKey)
 	}
 
 	// Delete the example data
-	exampleKey := fmt.Sprintf("%s%d", exampleKeyPrefix, id)
-	if err := c.client.Client.Del(ctx, exampleKey).Err(); err != nil {
-		return fmt.Errorf("failed to delete example: %w", err)
+	exampleKey := exampleIDKey(id)
+	pipe.Del(ctx, exampleKey)
+
+	// Execute pipeline
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		// Check if it's a Redis nil response (not an actual error)
+		if err.Error() != "redis: nil" {
+			metrics.RecordCacheHit("example_cache", "Delete_error")
+			return fmt.Errorf("failed to delete example: %w", err)
+		}
 	}
 
+	metrics.RecordCacheHit("example_cache", "Delete_success")
 	return nil
 }
 

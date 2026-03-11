@@ -54,7 +54,11 @@ func TestMain(m *testing.M) {
 	_ = repository.Clients.MySQL.GetDB(ctx).AutoMigrate(&entity.Example{})
 
 	// Initialize services using dependency injection
-	svcs, err := dependency.InitializeServices(ctx, dependency.WithExampleService())
+	// Create transaction factory with clients
+	txFactory := repository.NewTransactionFactory(map[repository.StoreType]any{
+		repository.MySQLStore: clients.MySQL,
+	})
+	svcs, err := dependency.InitializeServices(ctx, clients.Redis, txFactory, dependency.WithExampleService())
 	if err != nil {
 		log.SugaredLogger.Fatalf("Failed to initialize services: %v", err)
 	}

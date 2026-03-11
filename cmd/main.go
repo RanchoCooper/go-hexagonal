@@ -80,7 +80,11 @@ func main() {
 
 	// Initialize services using dependency injection
 	log.Logger.Info("Initializing services")
-	services, err := dependency.InitializeServices(ctx, dependency.WithExampleService())
+	// Create transaction factory with MySQL client
+	txFactory := repository.NewTransactionFactory(map[repository.StoreType]any{
+		repository.MySQLStore: clients.MySQL,
+	})
+	services, err := dependency.InitializeServices(ctx, clients.Redis, txFactory, dependency.WithExampleService())
 	if err != nil {
 		log.Logger.Fatal("Failed to initialize services",
 			zap.Error(err))

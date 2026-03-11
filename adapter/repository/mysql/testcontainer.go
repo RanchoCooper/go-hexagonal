@@ -24,6 +24,13 @@ const (
 func SetupMySQLContainer(t *testing.T) *config.MySQLConfig {
 	t.Helper()
 
+	// Check if Docker is available by testing the docker socket
+	if _, err := os.Stat("/var/run/docker.sock"); os.IsNotExist(err) {
+		if _, err := os.Stat(os.Getenv("DOCKER_HOST")); os.IsNotExist(err) {
+			t.Skip("Docker is not available")
+		}
+	}
+
 	ctx := context.Background()
 
 	// Create a temporary SQL file with init script
