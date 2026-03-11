@@ -84,18 +84,19 @@ type LogConfig struct {
 }
 
 type MySQLConfig struct {
-	User         string `yaml:"user" mapstructure:"user"`
-	Password     string `yaml:"password" mapstructure:"password"`
-	Host         string `yaml:"host" mapstructure:"host"`
-	Port         int    `yaml:"port" mapstructure:"port"`
-	Database     string `yaml:"database" mapstructure:"database"`
-	MaxIdleConns int    `yaml:"max_idle_conns" mapstructure:"max_idle_conns"`
-	MaxOpenConns int    `yaml:"max_open_conns" mapstructure:"max_open_conns"`
-	MaxLifeTime  string `yaml:"max_life_time" mapstructure:"max_life_time"`
-	MaxIdleTime  string `yaml:"max_idle_time" mapstructure:"max_idle_time"`
-	CharSet      string `yaml:"char_set" mapstructure:"char_set"`
-	ParseTime    bool   `yaml:"parse_time" mapstructure:"parse_time"`
-	TimeZone     string `yaml:"time_zone" mapstructure:"time_zone"`
+	User           string `yaml:"user" mapstructure:"user"`
+	Password       string `yaml:"password" mapstructure:"password"`
+	Host           string `yaml:"host" mapstructure:"host"`
+	Port           int    `yaml:"port" mapstructure:"port"`
+	Database       string `yaml:"database" mapstructure:"database"`
+	MaxIdleConns   int    `yaml:"max_idle_conns" mapstructure:"max_idle_conns"`
+	MaxOpenConns   int    `yaml:"max_open_conns" mapstructure:"max_open_conns"`
+	MaxLifeTime    string `yaml:"max_life_time" mapstructure:"max_life_time"`
+	MaxIdleTime    string `yaml:"max_idle_time" mapstructure:"max_idle_time"`
+	ConnectTimeout int    `yaml:"connect_timeout" mapstructure:"connect_timeout"`
+	CharSet        string `yaml:"char_set" mapstructure:"char_set"`
+	ParseTime      bool   `yaml:"parse_time" mapstructure:"parse_time"`
+	TimeZone       string `yaml:"time_zone" mapstructure:"time_zone"`
 }
 
 type PostgreSQLConfig struct {

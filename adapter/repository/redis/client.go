@@ -158,3 +158,11 @@ func NewClientFromConfig(cfg *config.RedisConfig) (*RedisClient, error) {
 	opts := ClientOptionsFromConfig(cfg)
 	return NewClient(opts)
 }
+
+// NewClientFromRedis wraps an existing redis.Client
+func NewClientFromRedis(client *redis.Client) *RedisClient {
+	return &RedisClient{
+		Client: client,
+		opts:   DefaultClientOptions(),
+	}
+}

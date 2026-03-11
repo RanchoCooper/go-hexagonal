@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"sync"
 	"time"
 
@@ -76,8 +77,18 @@ func NewEnhancedCache(client *RedisClient, options CacheOptions) *EnhancedCache 
 	return cache
 }
 
+// isValid checks if the cache client is valid
+func (c *EnhancedCache) isValid() bool {
+	return c != nil && c.client != nil && c.client.Client != nil
+}
+
 // Get retrieves a value from the cache
 func (c *EnhancedCache) Get(ctx context.Context, key string, dest interface{}) error {
+	// Check if client is valid
+	if !c.isValid() {
+		return apperrors.New(apperrors.ErrorTypeSystem, "cache client not initialized")
+	}
+
 	// Check tracked keys first if enabled
 	if c.options.EnableKeyTracking {
 		c.keysMutex.RLock()
@@ -93,7 +104,7 @@ func (c *EnhancedCache) Get(ctx context.Context, key string, dest interface{}) e
 	// Try to get from Redis
 	data, err := c.client.Client.Get(ctx, key).Bytes()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			return apperrors.New(apperrors.ErrorTypeNotFound, "cache miss")
 		}
 		return apperrors.Wrapf(err, apperrors.ErrorTypePersistence, "failed to get value from cache: %s", key)
@@ -120,6 +131,11 @@ func (c *EnhancedCache) Get(ctx context.Context, key string, dest interface{}) e
 
 // Set stores a value in the cache
 func (c *EnhancedCache) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	// Check if client is valid
+	if !c.isValid() {
+		return apperrors.New(apperrors.ErrorTypeSystem, "cache client not initialized")
+	}
+
 	// Marshal the value
 	valueBytes, err := json.Marshal(value)
 	if err != nil {
@@ -152,9 +168,20 @@ func (c *EnhancedCache) Set(ctx context.Context, key string, value interface{}, 
 	// Add to tracked keys if enabled
 	if c.options.EnableKeyTracking {
 		c.keysMutex.Lock()
-		// If map is full, clear half of it (simple LRU approximation)
+		// If map is full, evict half of the keys (simple LRU approximation)
 		if len(c.trackedKeys) >= c.options.MaxTrackedKeys {
+			evictCount := c.options.MaxTrackedKeys / 2
+			// Simple eviction: keep only half of the keys
 			newMap := make(map[string]struct{}, c.options.MaxTrackedKeys)
+			count := 0
+			for k := range c.trackedKeys {
+				if count < evictCount {
+					// Evict this key
+					count++
+					continue
+				}
+				newMap[k] = struct{}{}
+			}
 			c.trackedKeys = newMap
 		}
 		c.trackedKeys[key] = struct{}{}
@@ -166,6 +193,11 @@ func (c *EnhancedCache) Set(ctx context.Context, key string, value interface{}, 
 
 // SetNegative stores a negative cache entry (for cache miss protection)
 func (c *EnhancedCache) SetNegative(ctx context.Context, key string) error {
+	// Check if client is valid
+	if !c.isValid() {
+		return apperrors.New(apperrors.ErrorTypeSystem, "cache client not initialized")
+	}
+
 	// Only proceed if negative caching is enabled
 	if !c.options.EnableNegativeCache {
 		return nil
@@ -201,6 +233,11 @@ func (c *EnhancedCache) SetNegative(ctx context.Context, key string) error {
 
 // Delete removes a value from the cache
 func (c *EnhancedCache) Delete(ctx context.Context, key string) error {
+	// Check if client is valid
+	if !c.isValid() {
+		return apperrors.New(apperrors.ErrorTypeSystem, "cache client not initialized")
+	}
+
 	// Delete from Redis
 	if err := c.client.Client.Del(ctx, key).Err(); err != nil {
 		return apperrors.Wrapf(err, apperrors.ErrorTypePersistence, "failed to delete from cache: %s", key)
@@ -218,6 +255,11 @@ func (c *EnhancedCache) Delete(ctx context.Context, key string) error {
 
 // DeleteWithPattern removes values matching a pattern from the cache
 func (c *EnhancedCache) DeleteWithPattern(ctx context.Context, pattern string) error {
+	// Check if client is valid
+	if !c.isValid() {
+		return apperrors.New(apperrors.ErrorTypeSystem, "cache client not initialized")
+	}
+
 	// Find all keys matching the pattern
 	keys, err := c.client.Client.Keys(ctx, pattern).Result()
 	if err != nil {
@@ -245,6 +287,11 @@ func (c *EnhancedCache) DeleteWithPattern(ctx context.Context, pattern string) e
 
 // WithLock executes a function with a distributed lock
 func (c *EnhancedCache) WithLock(ctx context.Context, lockKey string, fn func() error) error {
+	// Check if client is valid
+	if !c.isValid() {
+		return apperrors.New(apperrors.ErrorTypeSystem, "cache client not initialized")
+	}
+
 	lockKey = "lock:" + lockKey
 
 	// Try to acquire lock
@@ -286,6 +333,11 @@ func (c *EnhancedCache) WithLock(ctx context.Context, lockKey string, fn func() 
 
 // TryGetSet tries to get a value from cache, if not found executes the loader and sets the result
 func (c *EnhancedCache) TryGetSet(ctx context.Context, key string, dest interface{}, ttl time.Duration, loader func() (interface{}, error)) error {
+	// Check if client is valid
+	if !c.isValid() {
+		return apperrors.New(apperrors.ErrorTypeSystem, "cache client not initialized")
+	}
+
 	// Try to get from cache first
 	err := c.Get(ctx, key, dest)
 	if err == nil {
@@ -348,6 +400,11 @@ func (c *EnhancedCache) TryGetSet(ctx context.Context, key string, dest interfac
 
 // RefreshTrackedKeys refreshes the tracked keys from existing Redis keys
 func (c *EnhancedCache) RefreshTrackedKeys(ctx context.Context, patterns []string) error {
+	// Check if client is valid
+	if !c.isValid() {
+		return apperrors.New(apperrors.ErrorTypeSystem, "cache client not initialized")
+	}
+
 	if !c.options.EnableKeyTracking {
 		return nil
 	}

@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"testing"
@@ -92,7 +93,7 @@ func AssertRedisData(t *testing.T, client *RedisClient, key string, expected int
 	// Get value from Redis
 	val, err := client.Client.Get(ctx, key).Result()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			t.Fatalf("Key %s does not exist in Redis", key)
 		}
 		t.Fatalf("Failed to get Redis data for key %s: %v", key, err)

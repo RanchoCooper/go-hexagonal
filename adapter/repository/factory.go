@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -24,10 +25,23 @@ type TransactionFactoryImpl struct {
 }
 
 // NewTransactionFactory creates a new transaction factory with the provided clients
+// If clients is nil, returns a noop transaction factory that falls back to noop transactions
 func NewTransactionFactory(clients map[StoreType]any) repo.TransactionFactory {
+	if clients == nil || len(clients) == 0 {
+		// Return a noop factory that falls back to noop transactions
+		return &NoopTransactionFactoryAdapter{}
+	}
 	return &TransactionFactoryImpl{
 		clients: clients,
 	}
+}
+
+// NoopTransactionFactoryAdapter adapts NoopTransactionFactory to TransactionFactory interface
+type NoopTransactionFactoryAdapter struct{}
+
+// NewTransaction creates a noop transaction
+func (f *NoopTransactionFactoryAdapter) NewTransaction(ctx context.Context, store repo.StoreType, opts any) (repo.Transaction, error) {
+	return repo.NewNoopTransaction(nil), nil
 }
 
 // NewTransaction creates a new transaction for the specified store
@@ -63,15 +77,22 @@ func OpenGormDB() (*gorm.DB, error) {
 	}
 
 	// Construct DSN from configuration
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=%v&loc=%s",
+	dsnParts := []string{
+		fmt.Sprintf("charset=%s", config.GlobalConfig.MySQL.CharSet),
+		fmt.Sprintf("parseTime=%v", config.GlobalConfig.MySQL.ParseTime),
+		fmt.Sprintf("loc=%s", config.GlobalConfig.MySQL.TimeZone),
+	}
+	// Add connection timeout if configured
+	if config.GlobalConfig.MySQL.ConnectTimeout > 0 {
+		dsnParts = append(dsnParts, fmt.Sprintf("timeout=%ds", config.GlobalConfig.MySQL.ConnectTimeout))
+	}
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s",
 		config.GlobalConfig.MySQL.User,
 		config.GlobalConfig.MySQL.Password,
 		config.GlobalConfig.MySQL.Host,
 		config.GlobalConfig.MySQL.Port,
 		config.GlobalConfig.MySQL.Database,
-		config.GlobalConfig.MySQL.CharSet,
-		config.GlobalConfig.MySQL.ParseTime,
-		config.GlobalConfig.MySQL.TimeZone,
+		strings.Join(dsnParts, "&"),
 	)
 
 	// Configure GORM

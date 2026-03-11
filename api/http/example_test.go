@@ -109,9 +109,24 @@ func (m *MockTransaction) Rollback() error {
 	return args.Error(0)
 }
 
-func (m *MockTransaction) Conn(ctx context.Context) any {
+func (m *MockTransaction) WithContext(ctx context.Context) repo.Transaction {
 	args := m.Called(ctx)
-	return args.Get(0)
+	if args.Get(0) == nil {
+		return nil
+	}
+	return args.Get(0).(repo.Transaction)
+}
+
+func (m *MockTransaction) Context() context.Context {
+	return context.Background()
+}
+
+func (m *MockTransaction) StoreType() repo.StoreType {
+	return repo.MySQLStore
+}
+
+func (m *MockTransaction) Options() *repo.TransactionOptions {
+	return repo.DefaultTransactionOptions()
 }
 
 // MockTransactionFactory mocks the TransactionFactory interface
@@ -153,7 +168,7 @@ func setupTest(t *testing.T) (*gin.Engine, *MockExampleRepo, *service.ExampleSer
 	var mockCacheRepo repo.IExampleCacheRepo = nil
 
 	// Create test service
-	testService := service.NewExampleService(mockRepo, mockCacheRepo)
+	testService := service.NewExampleService(mockRepo, mockCacheRepo, mockTxFactory)
 
 	// Create test services
 	testServices := &service.Services{

@@ -11,6 +11,7 @@ import (
 
 	"go-hexagonal/adapter/repository"
 	"go-hexagonal/adapter/repository/mysql/entity"
+	"go-hexagonal/adapter/repository/redis"
 	"go-hexagonal/config"
 	"go-hexagonal/domain/event"
 	"go-hexagonal/domain/repo"
@@ -18,20 +19,20 @@ import (
 )
 
 // ServiceOption defines an option for service initialization
-type ServiceOption func(*service.Services, event.EventBus)
+type ServiceOption func(*service.Services, event.EventBus, *repository.Redis, repo.TransactionFactory)
 
 // WithExampleService returns an option to initialize the Example service
 func WithExampleService() ServiceOption {
-	return func(s *service.Services, eventBus event.EventBus) {
+	return func(s *service.Services, eventBus event.EventBus, redisClient *repository.Redis, txFactory repo.TransactionFactory) {
 		if s.ExampleService == nil {
 			exampleRepo := entity.NewExample()
-			s.ExampleService = provideExampleService(exampleRepo, eventBus)
+			s.ExampleService = provideExampleService(exampleRepo, eventBus, redisClient, txFactory)
 		}
 	}
 }
 
 // InitializeServices initializes services based on the provided options
-func InitializeServices(ctx context.Context, opts ...ServiceOption) (*service.Services, error) {
+func InitializeServices(ctx context.Context, redisClient *repository.Redis, txFactory repo.TransactionFactory, opts ...ServiceOption) (*service.Services, error) {
 	// Initialize services container
 	eventBus := provideEventBus()
 	services := &service.Services{
@@ -40,7 +41,7 @@ func InitializeServices(ctx context.Context, opts ...ServiceOption) (*service.Se
 
 	// Apply service options
 	for _, opt := range opts {
-		opt(services, eventBus)
+		opt(services, eventBus, redisClient, txFactory)
 	}
 
 	return services, nil
@@ -123,10 +124,16 @@ func provideEventBus() *event.InMemoryEventBus {
 }
 
 // provideExampleService creates and configures the example service
-func provideExampleService(repo2 repo.IExampleRepo, eventBus event.EventBus) *service.ExampleService {
-	// Temporarily use nil instead of cache repository, can implement real cache in the future
-	var cacheRepo repo.IExampleCacheRepo = nil
-	exampleService := service.NewExampleService(repo2, cacheRepo)
+func provideExampleService(repo2 repo.IExampleRepo, eventBus event.EventBus, redisRepo *repository.Redis, txFactory repo.TransactionFactory) *service.ExampleService {
+	// Create cache repository from Redis client
+	var cacheRepo repo.IExampleCacheRepo
+	if redisRepo != nil {
+		redisClient := redis.NewClientFromRedis(redisRepo.DB)
+		if redisClient != nil {
+			cacheRepo = redis.NewExampleCacheRepo(redisClient)
+		}
+	}
+	exampleService := service.NewExampleService(repo2, cacheRepo, txFactory)
 	exampleService.EventBus = eventBus
 	return exampleService
 }

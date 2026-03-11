@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -15,6 +16,13 @@ import (
 )
 
 func SetupPostgreSQL(t *testing.T) (postgreSQLConfig *config.PostgreSQLConfig) {
+	// Check if Docker is available
+	if _, err := os.Stat("/var/run/docker.sock"); os.IsNotExist(err) {
+		if _, err := os.Stat(os.Getenv("DOCKER_HOST")); os.IsNotExist(err) {
+			t.Skip("Docker is not available")
+		}
+	}
+
 	t.Log("Setting up an instance of PostgreSQL with testcontainers-go")
 	ctx := context.Background()
 

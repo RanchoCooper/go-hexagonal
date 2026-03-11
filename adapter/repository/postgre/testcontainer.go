@@ -25,6 +25,13 @@ const (
 func SetupPostgreSQLContainer(t *testing.T) *config.PostgreSQLConfig {
 	t.Helper()
 
+	// Check if Docker is available
+	if _, err := os.Stat("/var/run/docker.sock"); os.IsNotExist(err) {
+		if _, err := os.Stat(os.Getenv("DOCKER_HOST")); os.IsNotExist(err) {
+			t.Skip("Docker is not available")
+		}
+	}
+
 	ctx := context.Background()
 
 	// Create a temporary SQL file with init script
